@@ -8,6 +8,12 @@
 # Dev-only credentials: this stack binds to localhost and never leaves the
 # dev machine; Phase 4 (VPS deploy) replaces these with real secrets (SOPS + age).
 #
+# Divergence from upstream: postgres/redis/clickhouse/worker host-port
+# bindings are removed — services reach each other over the compose network,
+# and publishing them collides with other local stacks (e.g. another
+# Postgres on 5432). Only the web UI (3000) and MinIO (9090/9091) are
+# exposed, localhost-only.
+#
 # Usage:
 #   docker compose -f docker-compose.dev.yml up -d
 #   open http://localhost:3000  → create org/project → copy API keys into .env
@@ -24,8 +30,6 @@ services:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
-    ports:
-      - 127.0.0.1:3030:3030
     environment: &langfuse-worker-env
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/postgres}
@@ -107,9 +111,6 @@ services:
     volumes:
       - langfuse_clickhouse_data:/var/lib/clickhouse
       - langfuse_clickhouse_logs:/var/log/clickhouse-server
-    ports:
-      - 127.0.0.1:8123:8123
-      - 127.0.0.1:9000:9000
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
       interval: 5s
@@ -146,8 +147,6 @@ services:
     command: >
       --requirepass ${REDIS_AUTH:-fie-dev-redis}
       --maxmemory-policy noeviction
-    ports:
-      - 127.0.0.1:6379:6379
     volumes:
       - langfuse_redis_data:/data
     healthcheck:
@@ -170,8 +169,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
       TZ: UTC
       PGTZ: UTC
-    ports:
-      - 127.0.0.1:5432:5432
     volumes:
       - langfuse_postgres_data:/var/lib/postgresql/data
 
