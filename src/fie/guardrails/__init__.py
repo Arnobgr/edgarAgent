@@ -1,6 +1,19 @@
 """Guardrails: budgets, timeouts, iteration caps, sanitization.
 
-Placeholder in Phase 0 — real enforcement (per-run token/cost budgets,
-bounded loop iterations, retry-with-backoff) arrives in Phase 1;
-input/output sanitization in Phase 6.
+Phase 1 ships the real enforcement: per-run token/cost budgets (abort with a
+partial-result error state on cap), an async timeout wrapper applied to every
+node, and retry-with-backoff for LLM/tool calls in one place. Iteration caps
+live in the graph's conditional edges (`fie.graph`). Input/output
+sanitization arrives in Phase 6.
 """
+
+from fie.guardrails.budget import BudgetExceededError, BudgetTracker
+from fie.guardrails.execution import NodeFn, ainvoke_with_retry, guarded
+
+__all__ = [
+    "BudgetExceededError",
+    "BudgetTracker",
+    "NodeFn",
+    "ainvoke_with_retry",
+    "guarded",
+]

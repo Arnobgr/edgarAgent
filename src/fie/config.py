@@ -10,7 +10,7 @@ from pathlib import Path
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PHASE = "phase-0"
+PHASE = "phase-1"
 
 
 class Settings(BaseSettings):
@@ -51,6 +51,26 @@ class Settings(BaseSettings):
 
     # --- Retrieval ---
     retrieval_k: int = 6
+
+    # --- Guardrails (Phase 1) ---
+    # Iteration caps count node passes: 2 verify passes = 1 loop-back.
+    max_verify_iterations: int = 2
+    max_critic_iterations: int = 2
+    node_timeout_seconds: float = 300.0
+    llm_retry_attempts: int = 3
+    llm_retry_base_delay_seconds: float = 1.0
+    budget_max_tokens: int = 500_000
+    budget_max_cost_usd: float = 5.0
+    # USD per million input/output tokens, matched by substring against the
+    # model id reported in callbacks; unmatched models cost $0 (tokens still
+    # count against the token cap).
+    model_prices: dict[str, tuple[float, float]] = Field(
+        default={
+            "claude-opus-4-8": (5.0, 25.0),
+            "claude-sonnet-5": (3.0, 15.0),
+            "gemini-2.5-flash": (0.30, 2.50),
+        }
+    )
 
 
 @lru_cache
