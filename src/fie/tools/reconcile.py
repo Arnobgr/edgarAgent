@@ -23,9 +23,14 @@ _SCALES = {
     "trillion": 1e12,
 }
 
+# Filings print accounting negatives in parentheses: "(8)%", "$(1,234)".
+# These parse as magnitudes — matching is sign-blind, because claims state
+# direction in words ("declined 8%"), not signs.
 _NUM_RE = re.compile(
     r"(?P<currency>\$\s*)?"
+    r"(?P<lparen>\(\s*)?"
     r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
+    r"(?P<rparen>\s*\))?"
     r"(?:\s*(?P<scale>thousand|million|billion|trillion))?"
     r"(?P<pct>\s*(?:%|percent\b))?",
     re.IGNORECASE,

@@ -21,6 +21,10 @@ Details that matter:
   scale words on the figure itself always win.
 - **Years:** bare 4-digit integers in 1900–2099 (no `$`, `%`, comma, decimal,
   or scale word) are skipped on both sides as year noise.
+- **Accounting negatives:** parenthesized figures — `(8)%`, `$(1,234)` — parse
+  as magnitudes. Matching is sign-blind, because claims state direction in
+  words ("declined 8%"), not signs; a direction/sign mismatch is therefore
+  invisible to this tool (another gap the XBRL swap closes).
 - **Partial:** some figures matched, some not → `partial`; none → `unsupported`,
   with feedback naming the missing figures and the cited chunks.
 

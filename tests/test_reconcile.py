@@ -33,6 +33,16 @@ def _reconcile(claim: str, chunk_text: str) -> str:
         ("Gross margin was 46.2%", "margin of 46.2 percent", "grounded"),
         # Scale words on both sides at different scales.
         ("a $2.5 million charge", "charges of 2,500 thousand", "grounded"),
+        # Accounting-negative parentheses: "(8)%" is a percent, matched
+        # sign-blind against the claim's worded direction ("declined 8%").
+        (
+            "In fiscal 2024, Greater China net sales declined 8% to $66,952 million",
+            "(dollars in millions) Greater China64,377 (4)%66,952 (8)%72,559",
+            "grounded",
+        ),
+        ("a net loss of $1,234 million", "(in millions) net loss of $(1,234)", "grounded"),
+        # A parenthesized percent still never matches a different figure.
+        ("Greater China declined 12%", "Greater China66,952 (8)%72,559", "unsupported"),
         # Years are skipped on both sides; the real figure still matches.
         (
             "In fiscal 2024, net sales were $391.0 billion",
@@ -88,6 +98,14 @@ def test_claim_with_no_parseable_number_is_unsupported() -> None:
 def test_no_cited_chunks_is_unsupported() -> None:
     outcome = RECONCILER.reconcile("Revenue was $1.0 billion", [])
     assert outcome.verdict == "unsupported"
+
+
+def test_parse_numbers_parenthesized_negatives() -> None:
+    numbers = parse_numbers("Greater China64,377 (4)%66,952 (8)%72,559")
+    values = [(n.value, n.is_percent) for n in numbers]
+    assert (4.0, True) in values
+    assert (8.0, True) in values
+    assert (66952.0, False) in values
 
 
 def test_parse_numbers_normalization() -> None:
