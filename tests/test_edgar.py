@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 from pydantic import SecretStr
 
 from fie.config import Settings
@@ -50,3 +51,10 @@ def test_fetch_recent_filings_zero_quarters_is_annual_only(tmp_path: Path) -> No
     docs = fetch_recent_filings("AAPL", quarters=0, settings=settings)
 
     assert [d.accession_no for d in docs] == ["acc-k"]
+
+
+def test_fetch_without_identity_fails_fast_before_any_network(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)  # edgar_identity defaults to "" (repo holds no personal data)
+
+    with pytest.raises(RuntimeError, match="EDGAR_IDENTITY is not set"):
+        fetch_recent_filings("AAPL", settings=settings)

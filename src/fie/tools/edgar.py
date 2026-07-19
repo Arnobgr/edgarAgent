@@ -20,6 +20,17 @@ logger = logging.getLogger(__name__)
 _MIN_SECTION_CHARS = 200
 
 
+def _require_identity(s: Settings) -> str:
+    """SEC rejects requests without a real identity in the user agent, and the
+    identity is personal data that lives only in `.env` — never in the repo."""
+    if not s.edgar_identity.strip():
+        raise RuntimeError(
+            "EDGAR_IDENTITY is not set — add it to .env as "
+            '"Firstname Lastname email@example.com" (SEC requires it)'
+        )
+    return s.edgar_identity
+
+
 class FilingDocument(BaseModel):
     """A parsed filing: ordered sections plus the citation metadata."""
 
@@ -46,9 +57,10 @@ def fetch_filing(
         logger.info("Loading cached filing from %s", cache_path)
         return FilingDocument.model_validate_json(cache_path.read_text())
 
+    identity = _require_identity(s)
     from edgar import Company, set_identity
 
-    set_identity(s.edgar_identity)
+    set_identity(identity)
     logger.info("Fetching latest %s for %s from EDGAR", form_type, ticker)
     filing = Company(ticker).get_filings(form=form_type).latest()
     doc = _parse_filing(filing, ticker, form_type)
@@ -89,9 +101,10 @@ def fetch_recent_filings(
         docs.extend(_FilingSet.model_validate_json(cache_path.read_text()).documents)
         return docs
 
+    identity = _require_identity(s)
     from edgar import Company, set_identity
 
-    set_identity(s.edgar_identity)
+    set_identity(identity)
     logger.info("Fetching last %d 10-Q filings for %s from EDGAR", quarters, ticker)
     latest = Company(ticker).get_filings(form="10-Q").latest(quarters)
     filings = [latest] if quarters == 1 else list(latest)

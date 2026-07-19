@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     synthesis_max_tokens: int = 16000
 
     # --- EDGAR (SEC requires a declared identity in the user agent) ---
-    edgar_identity: str = "Firstname Lastname email@example.com"
+    # Personal data stays out of the repo: set EDGAR_IDENTITY in .env
+    # ("Firstname Lastname email@example.com"). Fetches fail fast if unset.
+    edgar_identity: str = ""
     data_dir: Path = Path("data")
 
     # --- Corpus (Phase 2: latest 10-K + recent 10-Qs so parallelism is real) ---
