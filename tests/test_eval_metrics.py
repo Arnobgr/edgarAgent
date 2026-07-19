@@ -60,6 +60,14 @@ def test_ndcg_perfect_ranking_is_one() -> None:
     assert 0.0 < ndcg_at_10([chunk("Item 1"), chunk("Item 7")], REL) < 1.0
 
 
+def test_ndcg_stays_bounded_with_many_relevant_chunks() -> None:
+    # Section labels make many chunks relevant; nDCG must stay <= 1.
+    retrieved = [chunk("Item 7") for _ in range(10)]
+    assert ndcg_at_10(retrieved, REL) == 1.0
+    mixed = [chunk("Item 1"), *[chunk("Item 7") for _ in range(9)]]
+    assert 0.0 < ndcg_at_10(mixed, REL) < 1.0
+
+
 def result(
     rows: list[GroundingRow], retracted: list[GroundingRow] | None = None, answer: str = ""
 ) -> RunResult:

@@ -104,7 +104,13 @@ class IngestStore:
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self.path)
+        # The reconciler reads from graph worker threads (asyncio.to_thread
+        # in the verify node), so the connection must cross threads. CPython
+        # ships SQLite in serialized mode (threadsafety 3) which makes the
+        # shared connection safe; fail loudly rather than corrupt if not.
+        if sqlite3.threadsafety < 3:  # pragma: no cover - build-dependent
+            raise RuntimeError("SQLite build is not serialized-mode; cannot share connections")
+        self._conn = sqlite3.connect(self.path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)
         self._conn.commit()

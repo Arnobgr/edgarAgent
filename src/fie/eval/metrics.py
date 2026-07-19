@@ -61,10 +61,15 @@ def mrr(retrieved: list[EvidenceChunk], relevant: list[SectionRef]) -> float:
 
 
 def ndcg_at_10(retrieved: list[EvidenceChunk], relevant: list[SectionRef]) -> float:
-    """Binary-gain nDCG@10 against the labeled section set."""
-    flags = _relevant_flags(retrieved, relevant)[:10]
-    dcg = sum(1.0 / math.log2(i + 2) for i, flag in enumerate(flags) if flag)
-    ideal_hits = min(len(relevant), 10)
+    """Binary-gain nDCG@10 against the labeled section set.
+
+    Section-level labels make several retrieved chunks relevant at once, so
+    the ideal ranking is the *retrieved* list perfectly reordered (all
+    relevant chunks first) — the standard normalization when judgments
+    exist only for retrieved items. Always in [0, 1]."""
+    flags = _relevant_flags(retrieved, relevant)
+    dcg = sum(1.0 / math.log2(i + 2) for i, flag in enumerate(flags[:10]) if flag)
+    ideal_hits = min(sum(flags), 10)
     idcg = sum(1.0 / math.log2(i + 2) for i in range(ideal_hits))
     return dcg / idcg if idcg else 0.0
 

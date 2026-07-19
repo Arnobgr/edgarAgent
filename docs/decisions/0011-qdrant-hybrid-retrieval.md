@@ -43,7 +43,17 @@ uv run eval-retrieval --embedding both --rerank both
 
 | variant | recall@5 | recall@10 | recall@20 | MRR | nDCG@10 |
 |---|---|---|---|---|---|
-| _pending — requires VOYAGE_API_KEY / OPENAI_API_KEY_ | | | | | |
+| openai+rrf-only (2026-07-19, seed labels) | 0.660 | 0.760 | 0.880 | 0.578 | 0.526 |
+| voyage+rrf-only | _blocked: Voyage trial rate limits (3 RPM / 10K TPM) — needs a billing method_ | | | | |
+| openai+rerank / voyage+rerank | _blocked: rerank-2.5 under the same trial limits_ | | | | |
+
+**Status of the numbers:** the openai row is measured on the full ingested
+corpus (4,181 chunks) but against **unverified seed labels** — treat as
+provisional until the operator hand-verifies `eval/retrieval_queries.jsonl`
+(`label_status: seed → verified`) and the eval is re-run. The embedding
+and reranker *decisions* stay open until the voyage and rerank arms run;
+nDCG@10 is normalized against the perfectly reordered retrieved list
+(section-level labels make several chunks relevant at once).
 
 ## Rationale
 

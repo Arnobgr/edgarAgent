@@ -20,7 +20,7 @@
 services:
   # Vector store for Phase 3 hybrid retrieval (dense + sparse named vectors).
   qdrant:
-    image: docker.io/qdrant/qdrant:v1.15.1
+    image: docker.io/qdrant/qdrant:v1.18.0
     restart: always
     ports:
       - 127.0.0.1:6333:6333
