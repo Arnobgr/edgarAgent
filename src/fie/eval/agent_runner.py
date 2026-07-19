@@ -49,8 +49,8 @@ TARGETS = {"hallucination_rate": 0.02, "numeric_fidelity": 0.95, "grounding_rate
 
 
 def judge_citations(results: list[RunResult], settings: Settings) -> list[CitationJudgment]:
-    """LLM-judge every grounded claim's supporting span (eval_judge role,
-    claude-opus-4-8). The report marks a deterministic 20% sample for the
+    """LLM-judge every grounded claim's supporting span (eval_judge role;
+    model per config). The report marks a deterministic 20% sample for the
     hand spot-check."""
     judge = get_model("eval_judge", settings).with_structured_output(JudgeOutput)
     judgments: list[CitationJudgment] = []

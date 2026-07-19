@@ -113,7 +113,7 @@ class CitationJudgment:
 
 def citation_accuracy(judgments: list[CitationJudgment]) -> float:
     """% of judged (claim, span) pairs where the span supports the claim.
-    Judged by `eval_judge` (claude-opus-4-8) in the runner; spot-check 20%
+    Judged by the `eval_judge` role (see config) in the runner; spot-check 20%
     by hand — the report lists a deterministic sample for that."""
     if not judgments:
         return 0.0

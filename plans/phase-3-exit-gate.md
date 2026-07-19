@@ -7,20 +7,44 @@ steps in order — the benchmark (step 2) is meaningless before the labels
 are trustworthy (step 3) only in the sense that final ADR numbers should
 come from verified labels; running it earlier for a preview is fine.
 
+## Progress (updated 2026-07-19)
+
+- **Step 1 — Voyage embed: DONE.** Voyage billing enabled; both
+  collections resident in Qdrant at 4,181 points each
+  (`fie_chunks__voyage-finance-2`, `fie_chunks__text-embedding-3-small`).
+- **Step 2 — Benchmark: DONE (provisional, seed labels).** All four
+  variants measured (report `eval/reports/retrieval-20260719-190054.md`),
+  decisions recorded in ADR 0011. **Winners: OpenAI embedding, reranker
+  off** — a near-tie on embedding (OpenAI leads deeper recall, Voyage leads
+  top-rank ordering); reranker adds ≈0. Defaults now live in
+  `src/fie/config.py` (`embedding_provider="openai"`,
+  `reranker_provider="none"`); the redundant `.env` overrides were removed.
+- **Model switch: DONE.** For this cheaper pass the three Anthropic roles
+  (`synthesis`, `critic`, `eval_judge`) are set to `claude-sonnet-5` in
+  `config.py` (production default is Opus). Flip back before recording the
+  canonical Opus baseline — it's a one-line change.
+- **Step 3 — label verification: NOT STARTED (needs the operator).** All 80 labels
+  (50 retrieval + 30 gold) are still `label_status: seed`. This gates the
+  *canonical* ADR/baseline numbers; re-run step 2 after verifying.
+- **Step 4 — agent baseline: NOT RUN (needs approval, ≈ $8–10 on Sonnet).**
+  Ideally run after step 3; a seed-label preview is allowed. Writes a
+  *Sonnet* baseline, not the canonical Opus one.
+- **Step 5 — exit-gate judgment: PENDING** the step-4 run.
+
 Current state, for orientation:
 
 - Corpus ingested: 78 filings → 4,181 chunks (1,750 tables), 25,937 XBRL
-  facts in `data/ingest.db`. OpenAI collection live in Qdrant
-  (`fie_chunks__text-embedding-3-small`, 4,181 points).
-- `.env` currently carries `EMBEDDING_PROVIDER=openai` and
-  `RERANKER_PROVIDER=none` because the Voyage trial is rate-limited to
-  3 RPM / 10K TPM — unusable at corpus scale.
-- Provisional numbers (seed labels, openai+rrf-only): recall@5 0.660,
-  recall@10 0.760, recall@20 0.880, MRR 0.578, nDCG@10 0.526 (ADR 0011).
+  facts in `data/ingest.db`. Both embedding collections live in Qdrant at
+  4,181 points each.
+- `.env` no longer carries retrieval overrides — the ADR-0011 winners
+  (`embedding=openai`, `reranker=none`) are the `config.py` defaults.
+- Provisional numbers (seed labels): see ADR 0011's table for all four
+  variants. Chosen variant `openai+rrf-only`: recall@5 0.660, recall@10
+  0.760, recall@20 0.880, MRR 0.591, nDCG@10 0.530.
 
 ---
 
-## 1. Unlock Voyage and embed the second collection
+## 1. Unlock Voyage and embed the second collection — ✅ DONE
 
 1. Add a payment method at https://dashboard.voyageai.com (Billing).
    Your trial's free tokens still apply — this only lifts the
@@ -40,7 +64,7 @@ Current state, for orientation:
    `curl -s localhost:6333/collections/fie_chunks__voyage-finance-2 | jq .result.points_count`
    → 4181.
 
-## 2. Run the benchmark (embedding + reranker decisions)
+## 2. Run the benchmark (embedding + reranker decisions) — ✅ DONE (re-run after step 3)
 
 ```bash
 uv run eval-retrieval --embedding both --rerank both

@@ -29,12 +29,15 @@ class Settings(BaseSettings):
 
     # --- Model routing (plans/00-overview.md §4) ---
     # Roles served by Anthropic models (native SDK path, adaptive thinking).
+    # Phase-3 exit-gate pass runs on Sonnet to conserve credits (the operator's call,
+    # 2026-07). Production default is Opus (5x/25x); flip back before recording
+    # the canonical Opus baseline — the numbers below reflect the model in use.
     anthropic_models: dict[str, str] = Field(
         default={
-            "synthesis": "claude-opus-4-8",
-            "critic": "claude-opus-4-8",
+            "synthesis": "claude-sonnet-5",
+            "critic": "claude-sonnet-5",
             # Citation-accuracy LLM judge (eval only, blueprint §6).
-            "eval_judge": "claude-opus-4-8",
+            "eval_judge": "claude-sonnet-5",
         }
     )
     # Mechanical roles served by a cheap model via OpenRouter.
@@ -77,14 +80,17 @@ class Settings(BaseSettings):
     qdrant_collection_prefix: str = "fie_chunks"
     # Embedding candidates for the benchmark (decision 3.4); the provider in
     # use is picked by measurement on the retrieval eval set.
-    embedding_provider: str = "voyage"  # "voyage" | "openai"
+    # Provisional benchmark winner (ADR 0011, seed labels 2026-07-19): OpenAI
+    # ~ties Voyage but leads deeper recall; reranker adds ≈0 — confirm on
+    # verified labels. Both collections remain resident for the re-run.
+    embedding_provider: str = "openai"  # "voyage" | "openai"
     embedding_models: dict[str, tuple[str, int]] = Field(
         default={
             "voyage": ("voyage-finance-2", 1024),
             "openai": ("text-embedding-3-small", 1536),
         }
     )
-    reranker_provider: str = "voyage"  # "voyage" | "none"
+    reranker_provider: str = "none"  # "voyage" | "none"
     reranker_model: str = "rerank-2.5"
     retrieval_k: int = 8
     retrieval_prefetch: int = 50  # per-vector prefetch depth before RRF
