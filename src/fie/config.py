@@ -10,7 +10,7 @@ from pathlib import Path
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PHASE = "phase-1"
+PHASE = "phase-2"
 
 
 class Settings(BaseSettings):
@@ -49,8 +49,17 @@ class Settings(BaseSettings):
     edgar_identity: str = "Firstname Lastname email@example.com"
     data_dir: Path = Path("data")
 
+    # --- Corpus (Phase 2: latest 10-K + recent 10-Qs so parallelism is real) ---
+    quarterly_filings: int = 4
+
     # --- Retrieval ---
     retrieval_k: int = 6
+
+    # --- Fan-out (Phase 2) ---
+    max_sub_questions: int = 5
+    max_concurrent_research: int = 5
+    # Fan-in chunk budget per sub-question (context packing at synthesis).
+    chunks_per_sub_question: int = 8
 
     # --- Guardrails (Phase 1) ---
     # Iteration caps count node passes: 2 verify passes = 1 loop-back.

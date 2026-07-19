@@ -15,7 +15,7 @@ from fie.guardrails import BudgetTracker
 from fie.llm import get_model
 from fie.observability import get_langfuse_handler, new_run_id, trace_metadata
 from fie.state import EngineState, EvidenceChunk, RunBudget, RunResult, build_run_result
-from fie.tools import BM25Retriever, InterimNumericReconciler, chunk_document, fetch_filing
+from fie.tools import BM25Retriever, InterimNumericReconciler, chunk_document, fetch_recent_filings
 
 app = typer.Typer(no_args_is_help=True, help="Financial Intelligence Engine")
 
@@ -30,17 +30,21 @@ def main() -> None:
 @app.command()
 def ask(
     question: str = typer.Argument(..., help="The analyst question to answer."),
-    ticker: str = typer.Option("AAPL", help="Company ticker (Phase 1 corpus: AAPL)."),
-    form_type: str = typer.Option("10-K", "--form", help="Filing form type."),
+    ticker: str = typer.Option("AAPL", help="Company ticker (Phase 2 corpus: AAPL)."),
+    form_type: str = typer.Option("10-K", "--form", help="Annual filing form type."),
+    quarters: int = typer.Option(
+        4, "--quarters", help="Recent 10-Qs to add to the corpus (0 = annual filing only)."
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show info-level logs."),
     json_output: bool = typer.Option(False, "--json", help="Print the RunResult JSON contract."),
 ) -> None:
-    """Answer a question over the company's latest filing, with a grounding table."""
+    """Answer a question over the company's recent filings, with a grounding table."""
     result = asyncio.run(
         _run(
             question=question,
             ticker=ticker,
             form_type=form_type,
+            quarters=quarters,
             run_id=new_run_id(),
             verbose=verbose,
         )
@@ -53,26 +57,40 @@ def resume(
     run_id: str = typer.Argument(..., help="Run id of the interrupted run."),
     ticker: str = typer.Option("AAPL", help="Same ticker as the original run."),
     form_type: str = typer.Option("10-K", "--form", help="Same form type as the original run."),
+    quarters: int = typer.Option(4, "--quarters", help="Same 10-Q count as the original run."),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show info-level logs."),
     json_output: bool = typer.Option(False, "--json", help="Print the RunResult JSON contract."),
 ) -> None:
     """Resume a killed run from its checkpoint (completed nodes are not re-run)."""
     result = asyncio.run(
-        _run(question=None, ticker=ticker, form_type=form_type, run_id=run_id, verbose=verbose)
+        _run(
+            question=None,
+            ticker=ticker,
+            form_type=form_type,
+            quarters=quarters,
+            run_id=run_id,
+            verbose=verbose,
+        )
     )
     _print_result(result, json_output)
 
 
 async def _run(
-    *, question: str | None, ticker: str, form_type: str, run_id: str, verbose: bool
+    *, question: str | None, ticker: str, form_type: str, quarters: int, run_id: str, verbose: bool
 ) -> RunResult:
     """Build the corpus and graph, then run (question given) or resume (None)."""
     logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
     settings = get_settings()
 
-    doc = fetch_filing(ticker, form_type, settings)
-    chunks = chunk_document(doc)
-    typer.echo(f"Corpus: {doc.doc_id} ({len(doc.sections)} sections, {len(chunks)} chunks)")
+    docs = fetch_recent_filings(ticker, form_type, quarters, settings)
+    chunks: list[EvidenceChunk] = []
+    for i, doc in enumerate(docs):
+        # Namespace citation ids per document so they never collide across
+        # filings; a single-document corpus keeps the bare c1..cN ids.
+        prefix = "" if len(docs) == 1 else f"d{i + 1}-"
+        chunks.extend(chunk_document(doc, id_prefix=prefix))
+    corpus = ", ".join(d.doc_id for d in docs)
+    typer.echo(f"Corpus: {len(docs)} filing(s), {len(chunks)} chunks — {corpus}")
     typer.echo(f"Run: {run_id} (resume an interrupted run with `fie resume {run_id}`)")
 
     tracker = BudgetTracker(
@@ -122,6 +140,7 @@ def _build_graph(
 ) -> CompiledStateGraph[EngineState]:
     return build_graph(
         retriever=BM25Retriever(chunks),
+        decompose_model=get_model("decompose", settings),
         synthesis_model=get_model("synthesis", settings),
         qualitative_model=get_model("verify_qualitative", settings),
         forward_model=get_model("verify_forward", settings),
@@ -131,11 +150,14 @@ def _build_graph(
         limits=GraphLimits(
             max_verify_iterations=settings.max_verify_iterations,
             max_critic_iterations=settings.max_critic_iterations,
+            max_sub_questions=settings.max_sub_questions,
+            max_concurrent_research=settings.max_concurrent_research,
             node_timeout_seconds=settings.node_timeout_seconds,
             retry_attempts=settings.llm_retry_attempts,
             retry_base_delay_seconds=settings.llm_retry_base_delay_seconds,
         ),
         k=settings.retrieval_k,
+        chunks_per_sub_question=settings.chunks_per_sub_question,
         checkpointer=saver,
     )
 
@@ -144,6 +166,11 @@ def _print_result(result: RunResult, json_output: bool) -> None:
     if json_output:
         typer.echo(result.model_dump_json(indent=2))
         return
+
+    if result.sub_questions:
+        typer.echo("\n=== Decomposition ===")
+        for sq in result.sub_questions:
+            typer.echo(f"[{sq.status:>10}] {sq.id}: {sq.text}")
 
     typer.echo("\n=== Answer ===\n")
     typer.echo(result.answer or "(no answer produced)")

@@ -15,7 +15,7 @@ from pydantic import Field
 
 from fie.graph import GraphLimits, build_graph
 from fie.guardrails import BudgetTracker
-from fie.state import EngineState, EvidenceChunk
+from fie.state import DecomposeOutput, EngineState, EvidenceChunk
 from fie.tools.reconcile import InterimNumericReconciler, ReconcileOutcome
 
 
@@ -121,8 +121,9 @@ def big_tracker() -> BudgetTracker:
 
 def make_graph(
     *,
-    retriever: StubRetriever,
+    retriever: Any,
     synthesis: StructuredFakeModel,
+    decompose: StructuredFakeModel | None = None,
     qualitative: StructuredFakeModel | None = None,
     forward: StructuredFakeModel | None = None,
     critic: StructuredFakeModel | None = None,
@@ -132,8 +133,13 @@ def make_graph(
     k: int = 6,
     checkpointer: Checkpointer = None,
 ) -> CompiledStateGraph[EngineState]:
+    # Default decomposer: empty split → the single-part passthrough (one
+    # sub-question carrying the question verbatim), so Phase 1-era tests see
+    # the same research query they always did.
+    decompose = decompose or StructuredFakeModel(default_output=DecomposeOutput())
     return build_graph(
         retriever=retriever,
+        decompose_model=decompose,
         synthesis_model=synthesis,
         qualitative_model=qualitative or StructuredFakeModel(),
         forward_model=forward or StructuredFakeModel(),

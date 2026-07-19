@@ -73,8 +73,11 @@ async def test_planted_lie_is_caught_looped_back_and_retracted() -> None:
     state = EngineState.model_validate(result)
 
     # The verifier flagged both lies and the loop-back re-researched exactly
-    # the failed claims' topics.
-    assert retriever.queries == [QUESTION, LIE_NUMERIC, LIE_QUAL]
+    # the failed claims' topics (the two loop-back branches run in parallel,
+    # so their relative order is not fixed).
+    assert retriever.queries[0] == QUESTION
+    assert set(retriever.queries[1:]) == {LIE_NUMERIC, LIE_QUAL}
+    assert len(retriever.queries) == 3
     # The feedback was carried back into the revision prompt.
     assert len(synthesis.calls) == 2
     revision_prompt = _human_text(synthesis.calls[1])

@@ -1,8 +1,10 @@
 """EDGAR document source (edgartools).
 
-Fetches a company's latest filing of a given form type, parses it into
-sections via edgartools' structured accessors, and caches the parsed result
-under the gitignored `data/` dir so reruns don't hit EDGAR.
+Fetches a company's latest filing of a given form type — or, from Phase 2,
+the latest 10-K plus recent 10-Qs as a naive multi-filing corpus — parses
+them into sections via edgartools' structured accessors, and caches the
+parsed results under the gitignored `data/` dir so reruns don't hit EDGAR.
+Production ingestion of the full corpus is Phase 3.
 """
 
 import logging
@@ -49,6 +51,60 @@ def fetch_filing(
     set_identity(s.edgar_identity)
     logger.info("Fetching latest %s for %s from EDGAR", form_type, ticker)
     filing = Company(ticker).get_filings(form=form_type).latest()
+    doc = _parse_filing(filing, ticker, form_type)
+
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(doc.model_dump_json(indent=2))
+    logger.info("Cached %d sections to %s", len(doc.sections), cache_path)
+    return doc
+
+
+class _FilingSet(BaseModel):
+    """JSON cache envelope for a multi-filing corpus."""
+
+    documents: list[FilingDocument] = Field(default_factory=list)
+
+
+def fetch_recent_filings(
+    ticker: str,
+    form_type: str = "10-K",
+    quarters: int = 4,
+    settings: Settings | None = None,
+) -> list[FilingDocument]:
+    """Return the latest `form_type` filing plus the last `quarters` 10-Qs —
+    the Phase 2 naive corpus, wide enough that parallel research branches hit
+    genuinely different documents.
+
+    The annual filing reuses the `fetch_filing` cache; the quarterlies are
+    cached together (keyed by ticker + count) and hold whatever was recent
+    when first fetched — delete the file to refresh."""
+    s = settings or get_settings()
+    docs = [fetch_filing(ticker, form_type, s)]
+    if quarters <= 0:
+        return docs
+
+    cache_path = s.data_dir / "filings" / f"{ticker.upper()}_10-Q_last{quarters}.json"
+    if cache_path.exists():
+        logger.info("Loading cached quarterly filings from %s", cache_path)
+        docs.extend(_FilingSet.model_validate_json(cache_path.read_text()).documents)
+        return docs
+
+    from edgar import Company, set_identity
+
+    set_identity(s.edgar_identity)
+    logger.info("Fetching last %d 10-Q filings for %s from EDGAR", quarters, ticker)
+    latest = Company(ticker).get_filings(form="10-Q").latest(quarters)
+    filings = [latest] if quarters == 1 else list(latest)
+    quarterlies = [_parse_filing(filing, ticker, "10-Q") for filing in filings]
+
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(_FilingSet(documents=quarterlies).model_dump_json(indent=2))
+    logger.info("Cached %d quarterly filings to %s", len(quarterlies), cache_path)
+    return [*docs, *quarterlies]
+
+
+def _parse_filing(filing: Any, ticker: str, form_type: str) -> FilingDocument:
+    """Parse one edgartools filing into a FilingDocument (sections extracted)."""
     doc = FilingDocument(
         doc_id=f"{ticker.upper()}-{form_type}-{filing.accession_no}",
         ticker=ticker.upper(),
@@ -59,10 +115,6 @@ def fetch_filing(
     )
     if not doc.sections:
         raise RuntimeError(f"No sections could be extracted from {doc.doc_id}")
-
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(doc.model_dump_json(indent=2))
-    logger.info("Cached %d sections to %s", len(doc.sections), cache_path)
     return doc
 
 

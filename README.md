@@ -5,10 +5,13 @@ filings — every factual claim verified against a source or explicitly
 retracted. See `financial-intelligence-engine-blueprint.md` for the design and
 `plans/` for the phase-by-phase build.
 
-**Current phase: 0 — harness skeleton.** A minimal LangGraph
-(research → synthesize) over Apple's latest 10-K with naive BM25 retrieval,
-full Langfuse tracing, and the repo scaffolded on the blueprint's harness
-layers.
+**Current phase: 2 — fan-out.** The full blueprint topology (minus the
+Phase 4 human gate): a decomposer splits multi-part questions, research
+sub-agents fan out in parallel (LangGraph `Send`) over Apple's latest 10-K
+plus recent 10-Qs, synthesis fans the evidence back in, and the Phase 1
+cyclic core — per-claim verification with targeted loop-backs, deterministic
+retraction, the critic gate (now able to demand a re-decomposition) — runs
+on top, with guardrails, SQLite checkpointing, and full Langfuse tracing.
 
 ## Setup
 

@@ -59,3 +59,11 @@ def test_chunk_ids_are_sequential_across_sections() -> None:
 
     assert [c.chunk_id for c in chunks] == [f"c{i + 1}" for i in range(len(chunks))]
     assert {c.section for c in chunks} == {"Item 1", "Item 1A", "Item 7"}
+
+
+def test_id_prefix_namespaces_chunk_ids_across_documents() -> None:
+    doc = make_doc({"Item 1": "Business description. " * 30})
+
+    chunks = chunk_document(doc, id_prefix="d2-")
+
+    assert [c.chunk_id for c in chunks] == [f"d2-c{i + 1}" for i in range(len(chunks))]

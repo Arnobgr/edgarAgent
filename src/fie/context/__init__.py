@@ -8,11 +8,34 @@ from collections.abc import Sequence
 
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
-from fie.state import Claim, EvidenceChunk
+from fie.state import Claim, EvidenceChunk, SubQuestion
 
 # Cap on evidence text per chunk when packed into the window. Generous for
 # the single-filing corpus; retrieval-as-context does the real work later.
 MAX_CHARS_PER_CHUNK = 6000
+
+# Fan-in chunk budget per sub-question: n branches x k chunks can exceed what
+# synthesis should see, so each sub-question's evidence is capped (best-scored
+# first). Measured properly in Phase 3.
+DEFAULT_CHUNKS_PER_SUB_QUESTION = 8
+
+DECOMPOSE_SYSTEM_PROMPT = """\
+You split an analyst question about a company's SEC filings into independent \
+research sub-questions.
+
+Produce structured output: "sub_questions", a list where each entry has:
+- "text": one self-contained sub-question, answerable on its own from \
+filings evidence.
+- "rationale": one sentence on why this is a separate line of research.
+
+Rules:
+- Split only a genuinely multi-part question (e.g. asking about margins AND \
+capital allocation AND risks). Each sub-question must be independently \
+researchable — never sequential steps of one lookup.
+- If the question is single-part, return an empty list (or a single entry): \
+it will be researched as-is, without ceremony.
+- Never invent parts the question does not ask about.
+"""
 
 SYNTHESIS_SYSTEM_PROMPT = """\
 You are a financial analyst answering questions about a company using only \
@@ -84,6 +107,11 @@ A "Retracted claims" section at the end of the answer is expected when \
 verification removed claims — do not fail for it. Set "passed" to false \
 only for a genuine failure, with specific, actionable "feedback" for the \
 reviser; otherwise set "passed" to true.
+
+When failing, also set "re_decompose": true only if the failure stems from \
+the question having been split into the wrong sub-questions (a part of the \
+question was never researched, or the split fragmented one coherent part) — \
+not from drafting or evidence problems. Default false.
 """
 
 
@@ -105,18 +133,75 @@ def pack_evidence(
     return "\n\n---\n\n".join(blocks)
 
 
+def pack_evidence_by_sub_question(
+    evidence: Sequence[EvidenceChunk],
+    sub_questions: Sequence[SubQuestion],
+    *,
+    chunks_per_sub_question: int = DEFAULT_CHUNKS_PER_SUB_QUESTION,
+    max_chars_per_chunk: int = MAX_CHARS_PER_CHUNK,
+) -> str:
+    """Fan-in packing: evidence grouped per sub-question with a per-group
+    chunk budget, best-scored first, deduping identical chunks retrieved by
+    multiple branches (a chunk appears once, under its first sub-question).
+    Exhausted sub-questions get an explicit gap note instead of evidence."""
+    seen: set[str] = set()
+    by_sub: dict[str | None, list[EvidenceChunk]] = {}
+    for chunk in sorted(
+        evidence, key=lambda c: c.score if c.score is not None else -1.0, reverse=True
+    ):
+        if chunk.chunk_id in seen:
+            continue
+        seen.add(chunk.chunk_id)
+        by_sub.setdefault(chunk.sub_question_id, []).append(chunk)
+
+    known_ids = {sq.id for sq in sub_questions}
+    blocks: list[str] = []
+    for sq in sub_questions:
+        header = f"## Sub-question {sq.id}: {sq.text}"
+        if sq.status == "exhausted":
+            blocks.append(
+                f"{header}\nResearch for this sub-question failed — no evidence is "
+                "available. Say so explicitly in the answer instead of guessing."
+            )
+            continue
+        group = by_sub.get(sq.id, [])[:chunks_per_sub_question]
+        body = pack_evidence(group, max_chars_per_chunk) if group else "(no evidence retrieved)"
+        blocks.append(f"{header}\n{body}")
+    # Chunks whose branch is no longer current (e.g. before a re-decomposition)
+    # stay visible so previously cited ids remain resolvable.
+    leftover = [c for sub_id, chunks in by_sub.items() if sub_id not in known_ids for c in chunks]
+    if leftover:
+        blocks.append(
+            "## Other retrieved evidence\n"
+            f"{pack_evidence(leftover[:chunks_per_sub_question], max_chars_per_chunk)}"
+        )
+    return "\n\n".join(blocks)
+
+
 def build_synthesis_messages(
     question: str,
     evidence: Sequence[EvidenceChunk],
     *,
+    sub_questions: Sequence[SubQuestion] = (),
+    chunks_per_sub_question: int = DEFAULT_CHUNKS_PER_SUB_QUESTION,
     prior_draft: str | None = None,
     rejection_feedback: Sequence[str] = (),
     critic_feedback: str | None = None,
 ) -> list[BaseMessage]:
-    """The full message list for the synthesis call (initial or revision)."""
+    """The full message list for the synthesis call (initial or revision).
+
+    With multiple sub-questions the evidence is packed per sub-question
+    (fan-in); a single (passthrough) sub-question keeps the flat packing —
+    no ceremony for trivial questions."""
+    if len(sub_questions) > 1:
+        packed = pack_evidence_by_sub_question(
+            evidence, sub_questions, chunks_per_sub_question=chunks_per_sub_question
+        )
+    else:
+        packed = pack_evidence(evidence)
     parts = [
         f"Question: {question}",
-        f"Evidence from SEC filings:\n\n{pack_evidence(evidence)}",
+        f"Evidence from SEC filings:\n\n{packed}",
     ]
     if prior_draft is not None:
         parts.append(f"Your previous draft:\n\n{prior_draft}")
@@ -132,6 +217,29 @@ def build_synthesis_messages(
         parts.append(f"Reviewer feedback on the previous draft:\n{critic_feedback}")
     return [
         SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
+        HumanMessage(content="\n\n".join(parts)),
+    ]
+
+
+def build_decompose_messages(
+    question: str,
+    *,
+    max_sub_questions: int,
+    critic_feedback: str | None = None,
+) -> list[BaseMessage]:
+    """Messages for the decomposer (initial split or critic-driven re-split)."""
+    parts = [
+        f"Analyst question: {question}",
+        f"Split into at most {max_sub_questions} sub-questions (fewer is better).",
+    ]
+    if critic_feedback:
+        parts.append(
+            "A previous split of this question produced an answer that failed "
+            f"review for being mis-decomposed. Reviewer feedback:\n{critic_feedback}\n"
+            "Produce a corrected split."
+        )
+    return [
+        SystemMessage(content=DECOMPOSE_SYSTEM_PROMPT),
         HumanMessage(content="\n\n".join(parts)),
     ]
 

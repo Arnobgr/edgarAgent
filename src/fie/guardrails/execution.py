@@ -10,15 +10,23 @@ from typing import Any, Protocol
 from langchain_core.runnables import Runnable, RunnableConfig
 
 from fie.guardrails.budget import BudgetExceededError, BudgetTracker
-from fie.state import EngineState
 
 logger = logging.getLogger(__name__)
 
 
-class NodeFn(Protocol):
+class SupportsError(Protocol):
+    """Any node state carrying the run-error channel. Both the main
+    `EngineState` and the fan-out `ResearchBranch` payload satisfy this, so
+    `guarded` can wrap every node uniformly."""
+
+    @property
+    def error(self) -> str | None: ...
+
+
+class NodeFn[StateT: SupportsError](Protocol):
     """An async graph node: state + config in, partial state update out."""
 
-    def __call__(self, state: EngineState, config: RunnableConfig) -> Awaitable[dict[str, Any]]: ...
+    def __call__(self, state: StateT, config: RunnableConfig) -> Awaitable[dict[str, Any]]: ...
 
 
 async def ainvoke_with_retry[T](
@@ -55,12 +63,18 @@ async def ainvoke_with_retry[T](
     raise AssertionError("unreachable")
 
 
-def guarded(name: str, fn: NodeFn, *, tracker: BudgetTracker, timeout_seconds: float) -> NodeFn:
+def guarded[S: SupportsError](
+    name: str,
+    fn: NodeFn[S],
+    *,
+    tracker: BudgetTracker,
+    timeout_seconds: float,
+) -> NodeFn[S]:
     """Wrap a node with the guardrails every node gets: short-circuit when the
     run is already in an error state, refuse to start over budget, bound wall
     time, and stamp the current budget usage into the state."""
 
-    async def wrapped(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
+    async def wrapped(state: S, config: RunnableConfig) -> dict[str, Any]:
         if state.error is not None:
             return {}
         if tracker.exceeded:

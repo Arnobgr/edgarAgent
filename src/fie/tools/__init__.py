@@ -8,7 +8,7 @@ retrieval behind the same interfaces.
 """
 
 from fie.tools.chunking import chunk_document
-from fie.tools.edgar import FilingDocument, fetch_filing
+from fie.tools.edgar import FilingDocument, fetch_filing, fetch_recent_filings
 from fie.tools.reconcile import InterimNumericReconciler, NumericReconciler, ReconcileOutcome
 from fie.tools.retrieval import BM25Retriever, Retriever
 
@@ -21,4 +21,5 @@ __all__ = [
     "Retriever",
     "chunk_document",
     "fetch_filing",
+    "fetch_recent_filings",
 ]
