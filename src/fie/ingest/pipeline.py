@@ -216,6 +216,7 @@ def _stage_embed(
 
     from fie.ingest.embed import get_embedder
     from fie.tools.retrieval import Bm25SparseEncoder, ensure_collection, upsert_chunks
+    from fie.tools.retrieval.qdrant import chunk_point_id
 
     client = QdrantClient(url=settings.qdrant_url)
     embedder = get_embedder(settings, provider)
@@ -223,10 +224,20 @@ def _stage_embed(
     collection = settings.qdrant_collection(provider)
     ensure_collection(client, collection, embedder.dim)
 
-    for row in store.list_manifest(STATUS_CHUNKED):
+    # `embedded` is a global manifest status but collections are
+    # per-provider, so a benchmark run for the *other* provider still has
+    # work to do — presence in the target collection is what decides a
+    # skip (probed via the filing's first chunk; upserts are idempotent).
+    for row in store.list_manifest():
+        if row.status not in (STATUS_CHUNKED, STATUS_EMBEDDED):
+            continue
         chunk_path = settings.data_dir / "chunks" / f"{row.accession_no}.json"
         try:
             chunks = _ChunkFile.model_validate_json(chunk_path.read_text()).chunks
+            if not chunks:
+                continue
+            if client.retrieve(collection, ids=[chunk_point_id(chunks[0].chunk_id)]):
+                continue  # this filing is already in this collection
             texts = [c.text for c in chunks]
             upsert_chunks(
                 client,
