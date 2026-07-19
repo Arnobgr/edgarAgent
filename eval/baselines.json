@@ -1,0 +1,14 @@
+{
+  "accepted": null,
+  "note": "No accepted baseline yet. The first full `uv run eval-agent` run (needs VOYAGE_API_KEY + ingested corpus) writes one with --write-baseline; null metrics do not gate. Targets before Phase 4: hallucination_rate <= 0.02, numeric_fidelity >= 0.95, grounding_rate >= 0.90.",
+  "metrics": {
+    "grounding_rate": null,
+    "hallucination_rate": null,
+    "citation_accuracy": null,
+    "numeric_fidelity": null,
+    "verifier_precision_numeric": null,
+    "verifier_recall_numeric": null,
+    "verifier_precision_qualitative": null,
+    "verifier_recall_qualitative": null
+  }
+}

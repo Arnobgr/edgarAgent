@@ -10,7 +10,7 @@ from pathlib import Path
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PHASE = "phase-2"
+PHASE = "phase-3"
 
 
 class Settings(BaseSettings):
@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     # --- API keys (from .env / environment) ---
     anthropic_api_key: SecretStr = SecretStr("")
     openrouter_api_key: SecretStr = SecretStr("")
+    voyage_api_key: SecretStr = SecretStr("")
+    openai_api_key: SecretStr = SecretStr("")  # embeddings benchmark baseline only
 
     # --- Langfuse (self-hosted; keys generated in its UI after first boot) ---
     langfuse_public_key: str = ""
@@ -31,6 +33,8 @@ class Settings(BaseSettings):
         default={
             "synthesis": "claude-opus-4-8",
             "critic": "claude-opus-4-8",
+            # Citation-accuracy LLM judge (eval only, blueprint §6).
+            "eval_judge": "claude-opus-4-8",
         }
     )
     # Mechanical roles served by a cheap model via OpenRouter.
@@ -40,6 +44,10 @@ class Settings(BaseSettings):
             "claim_extract": "google/gemini-2.5-flash",
             "verify_qualitative": "google/gemini-2.5-flash",
             "verify_forward": "google/gemini-2.5-flash",
+            # Claim text → candidate XBRL (concept, period, unit) triples.
+            "fact_mapping": "google/gemini-2.5-flash",
+            # Retrieval-eval query seeding (candidates for hand-verification).
+            "eval_seed": "google/gemini-2.5-flash",
         }
     )
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
@@ -51,11 +59,36 @@ class Settings(BaseSettings):
     edgar_identity: str = ""
     data_dir: Path = Path("data")
 
-    # --- Corpus (Phase 2: latest 10-K + recent 10-Qs so parallelism is real) ---
+    # --- Corpus (decision 3.1: TSLA/AAPL/NVDA, EDGAR-only, last 3 FYs) ---
+    corpus_tickers: list[str] = Field(default=["TSLA", "AAPL", "NVDA"])
+    ingest_years: int = 3
+    # Phase 2 naive-corpus knob, still used by `fetch_recent_filings`.
     quarterly_filings: int = 4
 
-    # --- Retrieval ---
-    retrieval_k: int = 6
+    # --- Ingestion (Phase 3, workstream A) ---
+    # Manifest + XBRL facts store; raw/parsed/chunk caches live under data_dir.
+    ingest_db_name: str = "ingest.db"
+    chunk_target_tokens: int = 768  # blueprint §5: 512-1024 with ~15% overlap
+    chunk_overlap_ratio: float = 0.15
+    table_max_tokens: int = 2000  # tables atomic; row-group split beyond this
+
+    # --- Retrieval (Phase 3, workstream B: Qdrant hybrid + rerank) ---
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_collection_prefix: str = "fie_chunks"
+    # Embedding candidates for the benchmark (decision 3.4); the provider in
+    # use is picked by measurement on the retrieval eval set.
+    embedding_provider: str = "voyage"  # "voyage" | "openai"
+    embedding_models: dict[str, tuple[str, int]] = Field(
+        default={
+            "voyage": ("voyage-finance-2", 1024),
+            "openai": ("text-embedding-3-small", 1536),
+        }
+    )
+    reranker_provider: str = "voyage"  # "voyage" | "none"
+    reranker_model: str = "rerank-2.5"
+    retrieval_k: int = 8
+    retrieval_prefetch: int = 50  # per-vector prefetch depth before RRF
+    retrieval_candidates: int = 50  # fused candidates handed to the reranker
 
     # --- Fan-out (Phase 2) ---
     max_sub_questions: int = 5
@@ -82,6 +115,16 @@ class Settings(BaseSettings):
             "gemini-2.5-flash": (0.30, 2.50),
         }
     )
+
+    @property
+    def ingest_db_path(self) -> Path:
+        return self.data_dir / self.ingest_db_name
+
+    def qdrant_collection(self, provider: str | None = None) -> str:
+        """Collection name for an embedding provider's model — one collection
+        per embedding model so the benchmark can hold both side by side."""
+        model, _dim = self.embedding_models[provider or self.embedding_provider]
+        return f"{self.qdrant_collection_prefix}__{model.replace('/', '-')}"
 
 
 @lru_cache

@@ -261,7 +261,9 @@ def build_graph(
                 feedback="claim cites no retrievable evidence chunk — cite a real chunk or retract",
             )
         if claim.claim_type == "numeric":
-            outcome = reconciler.reconcile(claim.text, cited)
+            # Phase 3 reconciler does SQLite + mapping-model I/O — keep it
+            # off the event loop (the protocol stays sync, per ADR 0005).
+            outcome = await asyncio.to_thread(reconciler.reconcile, claim.text, cited)
             return Verdict(
                 claim_id=claim.id,
                 verdict=outcome.verdict,

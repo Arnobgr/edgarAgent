@@ -1,21 +1,14 @@
-"""CLI entrypoints: `fie ask "..."` and `fie resume <run-id>`."""
+"""CLI entrypoints: `fie ask "..."`, `fie resume <run-id>`, `fie ingest`."""
 
 import asyncio
 import logging
 
 import typer
-from langchain_core.callbacks import BaseCallbackHandler
-from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from langgraph.graph.state import CompiledStateGraph
 
-from fie.config import Settings, get_settings
-from fie.graph import GraphLimits, build_graph
-from fie.guardrails import BudgetTracker
-from fie.llm import get_model
-from fie.observability import get_langfuse_handler, new_run_id, trace_metadata
-from fie.state import EngineState, EvidenceChunk, RunBudget, RunResult, build_run_result
-from fie.tools import BM25Retriever, InterimNumericReconciler, chunk_document, fetch_recent_filings
+from fie.config import get_settings
+from fie.observability import new_run_id
+from fie.runner import answer_question
+from fie.state import RunResult
 
 app = typer.Typer(no_args_is_help=True, help="Financial Intelligence Engine")
 
@@ -30,136 +23,72 @@ def main() -> None:
 @app.command()
 def ask(
     question: str = typer.Argument(..., help="The analyst question to answer."),
-    ticker: str = typer.Option("AAPL", help="Company ticker (Phase 2 corpus: AAPL)."),
-    form_type: str = typer.Option("10-K", "--form", help="Annual filing form type."),
-    quarters: int = typer.Option(
-        4, "--quarters", help="Recent 10-Qs to add to the corpus (0 = annual filing only)."
-    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show info-level logs."),
     json_output: bool = typer.Option(False, "--json", help="Print the RunResult JSON contract."),
 ) -> None:
-    """Answer a question over the company's recent filings, with a grounding table."""
-    result = asyncio.run(
-        _run(
-            question=question,
-            ticker=ticker,
-            form_type=form_type,
-            quarters=quarters,
-            run_id=new_run_id(),
-            verbose=verbose,
-        )
-    )
+    """Answer a question over the ingested corpus (TSLA/AAPL/NVDA filings),
+    with a grounding table. Requires `fie ingest` to have run."""
+    result = asyncio.run(_run(question=question, run_id=new_run_id(), verbose=verbose))
     _print_result(result, json_output)
 
 
 @app.command()
 def resume(
     run_id: str = typer.Argument(..., help="Run id of the interrupted run."),
-    ticker: str = typer.Option("AAPL", help="Same ticker as the original run."),
-    form_type: str = typer.Option("10-K", "--form", help="Same form type as the original run."),
-    quarters: int = typer.Option(4, "--quarters", help="Same 10-Q count as the original run."),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show info-level logs."),
     json_output: bool = typer.Option(False, "--json", help="Print the RunResult JSON contract."),
 ) -> None:
     """Resume a killed run from its checkpoint (completed nodes are not re-run)."""
-    result = asyncio.run(
-        _run(
-            question=None,
-            ticker=ticker,
-            form_type=form_type,
-            quarters=quarters,
-            run_id=run_id,
-            verbose=verbose,
-        )
-    )
+    result = asyncio.run(_run(question=None, run_id=run_id, verbose=verbose))
     _print_result(result, json_output)
 
 
-async def _run(
-    *, question: str | None, ticker: str, form_type: str, quarters: int, run_id: str, verbose: bool
-) -> RunResult:
-    """Build the corpus and graph, then run (question given) or resume (None)."""
+@app.command()
+def ingest(
+    tickers: str = typer.Option(
+        "", "--tickers", help="Comma-separated tickers (default: configured corpus)."
+    ),
+    years: int = typer.Option(0, "--years", help="Fiscal years of filings (default: config)."),
+    embedding: str = typer.Option(
+        "", "--embedding", help="Embedding provider for this run: voyage | openai."
+    ),
+    skip_embed: bool = typer.Option(
+        False, "--skip-embed", help="Stop after parse/chunk/facts (no API keys needed)."
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show info-level logs."),
+) -> None:
+    """Fetch → parse → chunk → embed → upsert the corpus (resumable).
+
+    Populates Qdrant (chunk vectors) and SQLite (manifest + XBRL facts).
+    Re-running skips everything already ingested.
+    """
+    logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
+    from fie.ingest import run_ingest
+
+    settings = get_settings()
+    report = run_ingest(
+        settings,
+        tickers=[t.strip().upper() for t in tickers.split(",") if t.strip()] or None,
+        years=years or None,
+        embedding_provider=embedding or None,
+        skip_embed=skip_embed,
+    )
+    typer.echo("\n=== Ingest report ===")
+    for line in report.lines():
+        typer.echo(line)
+    if report.failures:
+        raise typer.Exit(code=1)
+
+
+async def _run(*, question: str | None, run_id: str, verbose: bool) -> RunResult:
     logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
     settings = get_settings()
-
-    docs = fetch_recent_filings(ticker, form_type, quarters, settings)
-    chunks: list[EvidenceChunk] = []
-    for i, doc in enumerate(docs):
-        # Namespace citation ids per document so they never collide across
-        # filings; a single-document corpus keeps the bare c1..cN ids.
-        prefix = "" if len(docs) == 1 else f"d{i + 1}-"
-        chunks.extend(chunk_document(doc, id_prefix=prefix))
-    corpus = ", ".join(d.doc_id for d in docs)
-    typer.echo(f"Corpus: {len(docs)} filing(s), {len(chunks)} chunks — {corpus}")
     typer.echo(f"Run: {run_id} (resume an interrupted run with `fie resume {run_id}`)")
-
-    tracker = BudgetTracker(
-        settings.budget_max_tokens, settings.budget_max_cost_usd, settings.model_prices
-    )
-    trace = get_langfuse_handler(run_id, settings)
-    callbacks: list[BaseCallbackHandler] = [tracker]
-    if trace is not None:
-        callbacks.append(trace.handler)
-
-    checkpoint_path = settings.data_dir / "checkpoints.db"
-    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-    async with AsyncSqliteSaver.from_conn_string(str(checkpoint_path)) as saver:
-        graph = _build_graph(settings, chunks, tracker, saver)
-        config: RunnableConfig = {
-            "run_name": "fie-ask",
-            "configurable": {"thread_id": run_id},
-            "metadata": trace_metadata(run_id),
-            "callbacks": callbacks,
-        }
-        initial = (
-            None
-            if question is None
-            else EngineState(
-                question=question,
-                run_budget=RunBudget(
-                    max_tokens=settings.budget_max_tokens,
-                    max_cost_usd=settings.budget_max_cost_usd,
-                ),
-            )
-        )
-        raw = await graph.ainvoke(initial, config)
-
-    if trace is not None:
-        trace.flush()
-        typer.echo(f"Langfuse trace: {trace.trace_url}")
-    else:
-        typer.echo("(no Langfuse trace: keys not configured)")
-    return build_run_result(run_id, EngineState.model_validate(raw))
-
-
-def _build_graph(
-    settings: Settings,
-    chunks: list[EvidenceChunk],
-    tracker: BudgetTracker,
-    saver: AsyncSqliteSaver,
-) -> CompiledStateGraph[EngineState]:
-    return build_graph(
-        retriever=BM25Retriever(chunks),
-        decompose_model=get_model("decompose", settings),
-        synthesis_model=get_model("synthesis", settings),
-        qualitative_model=get_model("verify_qualitative", settings),
-        forward_model=get_model("verify_forward", settings),
-        critic_model=get_model("critic", settings),
-        reconciler=InterimNumericReconciler(),
-        tracker=tracker,
-        limits=GraphLimits(
-            max_verify_iterations=settings.max_verify_iterations,
-            max_critic_iterations=settings.max_critic_iterations,
-            max_sub_questions=settings.max_sub_questions,
-            max_concurrent_research=settings.max_concurrent_research,
-            node_timeout_seconds=settings.node_timeout_seconds,
-            retry_attempts=settings.llm_retry_attempts,
-            retry_base_delay_seconds=settings.llm_retry_base_delay_seconds,
-        ),
-        k=settings.retrieval_k,
-        chunks_per_sub_question=settings.chunks_per_sub_question,
-        checkpointer=saver,
-    )
+    try:
+        return await answer_question(question=question, run_id=run_id, settings=settings)
+    except RuntimeError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
 
 
 def _print_result(result: RunResult, json_output: bool) -> None:

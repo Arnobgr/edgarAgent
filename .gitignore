@@ -19,3 +19,7 @@ dist/
 
 # Local reference doc, not part of the repo
 financial-intelligence-engine-blueprint.md
+
+# Eval outputs (regenerated; decision reports are copied into docs/)
+eval/reports/
+eval/retrieval_queries.candidates.jsonl

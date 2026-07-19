@@ -1,4 +1,4 @@
-.PHONY: lint typecheck test check run langfuse-up langfuse-down
+.PHONY: lint typecheck test check run langfuse-up langfuse-down qdrant-up ingest
 
 lint:
 	uv run ruff check src tests
@@ -20,3 +20,9 @@ langfuse-up:
 
 langfuse-down:
 	docker compose -f docker-compose.dev.yml down
+
+qdrant-up:
+	docker compose -f docker-compose.dev.yml up -d qdrant
+
+ingest:
+	uv run fie ingest

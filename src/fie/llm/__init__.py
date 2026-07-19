@@ -23,6 +23,9 @@ Role = Literal[
     "claim_extract",
     "verify_qualitative",
     "verify_forward",
+    "fact_mapping",
+    "eval_judge",
+    "eval_seed",
 ]
 
 _ANTHROPIC_MARKERS = ("claude", "anthropic")

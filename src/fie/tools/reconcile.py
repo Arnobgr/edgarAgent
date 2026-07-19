@@ -1,20 +1,30 @@
-"""Interim numeric reconciliation (Phase 1).
+"""Numeric reconciliation.
 
-Parses numbers (with $, %, and scale words like million/billion) from a
-numeric claim and from its cited chunk text, and rules `grounded` only when
-every figure in the claim matches a figure in the cited text at the claim's
-stated precision ("$391.0 billion" matches "391,035" under an "in millions"
-context marker because 391,035 million rounds to 391.0 billion).
+Phase 3 default: `XbrlNumericReconciler` — a cheap model maps the claim
+text to candidate XBRL `(concept, period, unit)` triples, a deterministic
+SQLite lookup follows, and the claim is `grounded` only on an exact match
+(at the claim's stated precision) against a stored fact; the supporting
+span is the fact row itself, cited by accession number. When no fact
+matches, table-chunk cell matching is the fallback; otherwise
+`unsupported`, with feedback naming what was searched (ADR 0012).
 
-Written against the `NumericReconciler` protocol so Phase 3 swaps in the
-exact XBRL facts lookup without touching the verify node (ADR 0005).
+The Phase 1 `InterimNumericReconciler` (parse-and-match at stated
+precision, ADR 0005) remains as the in-chunk matching engine behind that
+table fallback. Both implement the `NumericReconciler` protocol the verify
+node sees.
 """
 
+import logging
 import re
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
+from pydantic import BaseModel, Field
+
+from fie.ingest.store import Fact, IngestStore
 from fie.state import EvidenceChunk, VerdictLabel
+
+logger = logging.getLogger(__name__)
 
 _SCALES = {
     "thousand": 1e3,
@@ -189,3 +199,174 @@ class InterimNumericReconciler:
                 ):
                     return _span_around(chunk.text, source_number)
         return None
+
+
+# --- Phase 3: exact XBRL reconciliation (workstream B.4, ADR 0012) ---
+
+
+class FactCandidate(BaseModel):
+    """One figure's candidate XBRL mapping, as proposed by the cheap model."""
+
+    value: float = Field(description="The claim figure as an absolute number (e.g. 96773000000)")
+    concept_terms: list[str] = Field(
+        description="Candidate concept/label search terms, e.g. "
+        "['RevenueFromContractWithCustomer', 'Revenues', 'net revenue']"
+    )
+    fiscal_year: int | None = Field(
+        default=None, description="Fiscal year, if the claim states one"
+    )
+    fiscal_period: str | None = Field(
+        default=None, description="'FY' or 'Q1'..'Q4', if the claim implies one"
+    )
+    unit: str | None = Field(default=None, description="'usd', 'shares', 'pure', 'usdPerShare'...")
+
+
+class FactMappingOutput(BaseModel):
+    """Structured output of the claim → fact-query mapping."""
+
+    candidates: list[FactCandidate] = Field(default_factory=list)
+
+
+_MAPPING_SYSTEM = (
+    "You map figures in a financial claim to XBRL fact queries. For every "
+    "numeric figure in the claim (ignore years used as dates), emit one "
+    "candidate: the figure as an absolute number (apply scale words — "
+    "'$96.8 billion' → 96800000000; percentages as the printed number), "
+    "likely US-GAAP concept names and label words, the fiscal year/period "
+    "the claim refers to (null if unstated), and the unit."
+)
+
+
+class XbrlNumericReconciler:
+    """Exact numeric reconciliation against the local XBRL facts store.
+
+    Flow per claim: parse figures → cheap-model mapping to candidate
+    (concept, period, unit) triples → deterministic SQLite lookup → a
+    figure is grounded only if a stored fact matches it exactly at the
+    claim's stated precision. Figures with no fact match fall back to
+    cell-matching against cited *table* chunks (display provenance); still
+    unmatched → unsupported, with feedback naming what was searched.
+    """
+
+    def __init__(
+        self,
+        store: IngestStore,
+        mapper: Any,
+        *,
+        fallback: InterimNumericReconciler | None = None,
+    ) -> None:
+        """`mapper` is a runnable producing `FactMappingOutput` from messages
+        (a chat model already bound with `.with_structured_output`)."""
+        self._store = store
+        self._mapper = mapper
+        self._fallback = fallback or InterimNumericReconciler()
+
+    def reconcile(self, claim_text: str, chunks: list[EvidenceChunk]) -> ReconcileOutcome:
+        claim_numbers = parse_numbers(claim_text)
+        if not claim_numbers:
+            return ReconcileOutcome(
+                verdict="unsupported",
+                supporting_span=None,
+                feedback="no numeric value could be parsed from the claim text",
+            )
+        candidates = self._map_claim(claim_text)
+        tickers = sorted({c.ticker for c in chunks}) or None
+
+        matched_spans: list[str] = []
+        missing: list[str] = []
+        searched: list[str] = []
+        table_chunks = [c for c in chunks if c.metadata.get("chunk_type") == "table"]
+        for number in claim_numbers:
+            span = self._match_fact(number, candidates, tickers, searched)
+            if span is None and table_chunks:
+                span = self._fallback._find_match(number, table_chunks)
+            if span is None:
+                missing.append(number.raw)
+            else:
+                matched_spans.append(span)
+
+        if not missing:
+            return ReconcileOutcome(
+                verdict="grounded", supporting_span=matched_spans[0], feedback=None
+            )
+        searched_note = (
+            f"searched XBRL concepts: {', '.join(sorted(set(searched))) or '(no mapping produced)'}"
+        )
+        fallback_note = (
+            f" and {len(table_chunks)} cited table chunk(s)"
+            if table_chunks
+            else "; no table chunks cited"
+        )
+        return ReconcileOutcome(
+            verdict="partial" if matched_spans else "unsupported",
+            supporting_span=matched_spans[0] if matched_spans else None,
+            feedback=(
+                f"figure(s) {', '.join(missing)} not found in the XBRL facts store — "
+                f"{searched_note}{fallback_note}. Re-check the figure against the "
+                "filing or retract the claim."
+            ),
+        )
+
+    def _map_claim(self, claim_text: str) -> list[FactCandidate]:
+        messages = [("system", _MAPPING_SYSTEM), ("human", f"Claim: {claim_text}")]
+        try:
+            output = self._mapper.invoke(messages)
+        except Exception as exc:
+            logger.warning("fact-mapping model failed (%s); falling back to table match", exc)
+            return []
+        if isinstance(output, FactMappingOutput):
+            return output.candidates
+        return FactMappingOutput.model_validate(output).candidates
+
+    def _match_fact(
+        self,
+        number: ParsedNumber,
+        candidates: list[FactCandidate],
+        tickers: list[str] | None,
+        searched: list[str],
+    ) -> str | None:
+        """The candidate mappings whose value matches this figure drive the
+        lookup; a percent figure additionally tries its /100 'pure' form."""
+        for candidate in candidates:
+            claim_forms = [(number.value, number.tolerance)]
+            if number.is_percent:
+                claim_forms.append((number.value / 100.0, number.tolerance / 100.0))
+            if not any(abs(candidate.value - v) <= tol for v, tol in claim_forms):
+                continue
+            searched.extend(candidate.concept_terms)
+            facts = self._store.query_facts(
+                tickers=tickers,
+                concept_terms=candidate.concept_terms or None,
+                fiscal_year=candidate.fiscal_year,
+                fiscal_period=candidate.fiscal_period,
+                unit=candidate.unit,
+            )
+            for fact in facts:
+                if self._value_matches(number, fact):
+                    return _fact_span(fact)
+        return None
+
+    @staticmethod
+    def _value_matches(number: ParsedNumber, fact: Fact) -> bool:
+        """Exact after scale normalization: the stored fact equals the claim
+        figure at the claim's stated precision (half a unit of the last
+        significant digit — '$96.8B' matches 96,773,000,000). Percent claims
+        also try the /100 ratio form XBRL stores, with the tolerance scaled
+        down accordingly."""
+        pairs = [(number.value, number.tolerance)]
+        if number.is_percent:
+            pairs.append((number.value / 100.0, number.tolerance / 100.0))
+        return any(abs(fact.value - v) <= tol for v, tol in pairs)
+
+
+def _fact_span(fact: Fact) -> str:
+    period = fact.fiscal_period or ""
+    year = str(fact.fiscal_year or "")
+    when = " ".join(x for x in (period, year) if x) or (fact.period_end or "?")
+    dims = ""
+    if fact.dimensions:
+        dims = f" [{', '.join(f'{k}={v}' for k, v in sorted(fact.dimensions.items()))}]"
+    return (
+        f"XBRL {fact.concept} ({fact.label or 'no label'}){dims} = {fact.value:g} "
+        f"{fact.unit or ''} for {when}, {fact.form_type or '?'} acc {fact.accession_no}"
+    )

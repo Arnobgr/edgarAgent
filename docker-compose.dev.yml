@@ -18,6 +18,15 @@
 #   docker compose -f docker-compose.dev.yml up -d
 #   open http://localhost:3000  → create org/project → copy API keys into .env
 services:
+  # Vector store for Phase 3 hybrid retrieval (dense + sparse named vectors).
+  qdrant:
+    image: docker.io/qdrant/qdrant:v1.15.1
+    restart: always
+    ports:
+      - 127.0.0.1:6333:6333
+    volumes:
+      - fie_qdrant_data:/qdrant/storage
+
   langfuse-worker:
     image: docker.io/langfuse/langfuse-worker:3.221.1
     restart: always
@@ -173,6 +182,8 @@ services:
       - langfuse_postgres_data:/var/lib/postgresql/data
 
 volumes:
+  fie_qdrant_data:
+    driver: local
   langfuse_postgres_data:
     driver: local
   langfuse_clickhouse_data:
