@@ -23,6 +23,20 @@ come from verified labels; running it earlier for a preview is fine.
   (`synthesis`, `critic`, `eval_judge`) are set to `claude-sonnet-5` in
   `config.py` (production default is Opus). Flip back before recording the
   canonical Opus baseline — it's a one-line change.
+- **Provider-agnostic router: DONE (ADR 0014).** Roles now resolve to a
+  per-role `ModelSpec` (provider + model + optional max_tokens/temperature/
+  thinking), so any role can move between Anthropic and OpenRouter with a
+  config edit. Branch `feat/router-provider-agnostic` flips `synthesis`/
+  `critic` to `z-ai/glm-5.2-20260616` as the cost challenger (judge stays
+  Sonnet). A GLM smoke run (`--limit 3 --skip-judge`) passed 3/3 after fixing
+  a structured-output fence bug (`bind_structured` forces tool-calling on the
+  OpenRouter path).
+- **TODO — three-way smoke comparison (before any `--write-baseline`).** The
+  GLM smoke on its own is not a verdict (n=3, judge skipped, noisy). Run the
+  **same** `eval-agent` smoke under each of **Sonnet** (baseline), **GLM 5.2**,
+  and **Grok 4.5** (`x-ai/grok-4.5-20260708`) so synthesis/critic quality is
+  compared like-for-like on identical questions. Only after that pick the
+  synthesis/critic model, freeze it, then proceed to the full 30-Q step 4.
 - **Step 3 — label verification: NOT STARTED (needs the operator).** All 80 labels
   (50 retrieval + 30 gold) are still `label_status: seed`. This gates the
   *canonical* ADR/baseline numbers; re-run step 2 after verifying.

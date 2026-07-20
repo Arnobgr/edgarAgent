@@ -13,7 +13,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from fie.config import Settings
 from fie.graph import GraphLimits, build_graph
 from fie.guardrails import BudgetTracker
-from fie.llm import get_model
+from fie.llm import bind_structured, get_model
 from fie.observability import get_langfuse_handler, trace_metadata
 from fie.state import EngineState, RunBudget, RunResult, build_run_result
 from fie.tools.reconcile import FactMappingOutput, XbrlNumericReconciler
@@ -76,7 +76,7 @@ def build_production_reconciler(settings: Settings) -> XbrlNumericReconciler:
         raise RuntimeError(
             f"facts store {settings.ingest_db_path} does not exist — run `fie ingest` first"
         )
-    mapper = get_model("fact_mapping", settings).with_structured_output(FactMappingOutput)
+    mapper = bind_structured(get_model("fact_mapping", settings), FactMappingOutput)
     return XbrlNumericReconciler(IngestStore(settings.ingest_db_path), mapper)
 
 

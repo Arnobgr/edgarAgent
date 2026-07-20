@@ -1,20 +1,23 @@
 """Reasoning substrate: the role-based model router.
 
 `get_model(role)` is the only way the rest of the codebase obtains a chat
-model. Model IDs come from `fie.config`, never from call sites. Anthropic
-models are always called through `langchain-anthropic` (native SDK path);
-mechanical roles go through OpenRouter's OpenAI-compatible endpoint. An
-Anthropic model is never routed through the OpenRouter path.
+model. Each role resolves to a `ModelSpec` in `fie.config` — never a model id
+at the call site — and the spec's `provider` selects the client path:
+Anthropic goes through `langchain-anthropic` (native SDK, adaptive thinking),
+OpenRouter through its OpenAI-compatible endpoint. Any role can move between
+the two by editing its spec; an Anthropic model is never routed through the
+OpenRouter path (ADR 0014).
 """
 
 from typing import Literal
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseChatModel
+from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
+from pydantic import BaseModel, SecretStr
 
-from fie.config import Settings, get_settings
+from fie.config import ModelSpec, Settings, get_settings
 
 Role = Literal[
     "synthesis",
@@ -31,6 +34,22 @@ Role = Literal[
 _ANTHROPIC_MARKERS = ("claude", "anthropic")
 
 
+def bind_structured(model: BaseChatModel, schema: type[BaseModel]) -> Runnable:
+    """Attach a Pydantic output schema, picking the extraction method by
+    provider so structured output is robust across both paths.
+
+    OpenRouter models (the ChatOpenAI path) use **tool-calling**: some open
+    models (observed on GLM 5.2) intermittently wrap `json_schema` output in a
+    ```json markdown fence that the OpenAI SDK's strict parser rejects, which
+    surfaces as flaky mid-run failures. Tool-calling returns structured
+    arguments with no free-text JSON to fence. Anthropic keeps its default
+    method, so the native-path baseline is unchanged.
+    """
+    if isinstance(model, ChatOpenAI):
+        return model.with_structured_output(schema, method="function_calling")
+    return model.with_structured_output(schema)
+
+
 def get_model(role: Role, settings: Settings | None = None) -> BaseChatModel:
     """Return the configured chat model for a role.
 
@@ -38,36 +57,76 @@ def get_model(role: Role, settings: Settings | None = None) -> BaseChatModel:
     role made each LLM call.
     """
     s = settings or get_settings()
+    try:
+        spec = s.models[role]
+    except KeyError:
+        raise KeyError(
+            f"Unknown model role: {role!r}. Add it to Settings.models."
+        ) from None
+
     tags = [f"fie-role:{role}"]
     metadata = {"fie_role": role}
+    max_tokens = spec.max_tokens or s.default_max_tokens
 
-    if role in s.anthropic_models:
-        return ChatAnthropic(
-            model_name=s.anthropic_models[role],
-            max_tokens_to_sample=s.synthesis_max_tokens,
-            thinking={"type": "adaptive"},
-            api_key=s.anthropic_api_key,
-            timeout=None,
-            stop=None,
-            tags=tags,
-            metadata=metadata,
+    if spec.provider == "anthropic":
+        return _anthropic_model(spec, max_tokens, s, tags, metadata)
+    if spec.provider == "openrouter":
+        return _openrouter_model(role, spec, max_tokens, s, tags, metadata)
+    raise ValueError(f"Unknown provider {spec.provider!r} for role {role!r}.")
+
+
+def _anthropic_model(
+    spec: ModelSpec,
+    max_tokens: int,
+    s: Settings,
+    tags: list[str],
+    metadata: dict[str, str],
+) -> ChatAnthropic:
+    # Adaptive thinking is the default and precludes sampling params (the API
+    # 400s on temperature while thinking is on). Disabling thinking is the only
+    # way to honor a role's temperature on the native path.
+    kwargs: dict[str, object] = {}
+    if spec.thinking:
+        kwargs["thinking"] = {"type": "adaptive"}
+    else:
+        kwargs["thinking"] = {"type": "disabled"}
+        if spec.temperature is not None:
+            kwargs["temperature"] = spec.temperature
+    return ChatAnthropic(
+        model=spec.model,
+        max_tokens=max_tokens,
+        api_key=s.anthropic_api_key,
+        timeout=None,
+        stop=None,
+        tags=tags,
+        metadata=metadata,
+        **kwargs,
+    )
+
+
+def _openrouter_model(
+    role: Role,
+    spec: ModelSpec,
+    max_tokens: int,
+    s: Settings,
+    tags: list[str],
+    metadata: dict[str, str],
+) -> ChatOpenAI:
+    if any(marker in spec.model.lower() for marker in _ANTHROPIC_MARKERS):
+        raise ValueError(
+            f"Role {role!r} maps to Anthropic model {spec.model!r} but is configured "
+            "for the OpenRouter path. Anthropic models must go through the native "
+            "SDK path: set provider='anthropic' on its ModelSpec."
         )
-
-    if role in s.openrouter_models:
-        model_id = s.openrouter_models[role]
-        if any(marker in model_id.lower() for marker in _ANTHROPIC_MARKERS):
-            raise ValueError(
-                f"Role {role!r} maps to Anthropic model {model_id!r} but is configured "
-                "for the OpenRouter path. Anthropic models must go through the native "
-                "SDK path: move the role to Settings.anthropic_models."
-            )
-        return ChatOpenAI(
-            model=model_id,
-            base_url=s.openrouter_base_url,
-            api_key=s.openrouter_api_key or SecretStr(""),
-            temperature=0.0,
-            tags=tags,
-            metadata=metadata,
-        )
-
-    raise KeyError(f"Unknown model role: {role!r}. Add it to Settings model routing.")
+    # temperature None → deterministic 0.0 (the mechanical-role default);
+    # max_tokens is always set so a role like synthesis never truncates on an
+    # OpenRouter model's small default cap.
+    return ChatOpenAI(
+        model=spec.model,
+        base_url=s.openrouter_base_url,
+        api_key=s.openrouter_api_key or SecretStr(""),
+        temperature=spec.temperature if spec.temperature is not None else 0.0,
+        max_tokens=max_tokens,
+        tags=tags,
+        metadata=metadata,
+    )

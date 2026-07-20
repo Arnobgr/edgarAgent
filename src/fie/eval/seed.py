@@ -24,7 +24,7 @@ from fie.eval.datasets import EVAL_DIR, RetrievalQuery, SectionRef, save_jsonl
 from fie.eval.perturb import build_labeled_claims
 from fie.ingest.parse import ParsedFiling
 from fie.ingest.store import IngestStore
-from fie.llm import get_model
+from fie.llm import bind_structured, get_model
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def run(
 
 
 def _seed_queries(parsed_dir: Path, max_sections: int) -> list[RetrievalQuery]:
-    model = get_model("eval_seed").with_structured_output(_QueryIdeas)
+    model = bind_structured(get_model("eval_seed"), _QueryIdeas)
     rng = random.Random(20260719)
     sections: list[tuple[ParsedFiling, str, str]] = []
     for path in sorted(parsed_dir.glob("*.json")):

@@ -6,11 +6,35 @@ router in `fie.llm` resolves a role to a model through this module only.
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PHASE = "phase-3"
+
+
+class ModelSpec(BaseModel):
+    """How one role is served — the single knob for provider independence.
+
+    `provider` selects the client path in `fie.llm.get_model`; the optional
+    generation fields let a role tune output length and sampling without any
+    code change, so swapping a role between Anthropic and an OpenRouter model
+    is a config edit, not a rewrite.
+
+    - `max_tokens`: output cap for this role. `None` falls back to
+      `Settings.default_max_tokens`.
+    - `temperature`: OpenRouter path only (defaults to 0.0 there). On the
+      Anthropic path the API rejects sampling params while adaptive thinking
+      is on, so it is honored only when `thinking=False`.
+    - `thinking`: Anthropic adaptive thinking on/off; ignored on OpenRouter.
+    """
+
+    provider: Literal["anthropic", "openrouter"]
+    model: str
+    max_tokens: int | None = None
+    temperature: float | None = None
+    thinking: bool = True
 
 
 class Settings(BaseSettings):
@@ -28,33 +52,40 @@ class Settings(BaseSettings):
     langfuse_host: str = "http://localhost:3000"
 
     # --- Model routing (plans/00-overview.md §4) ---
-    # Roles served by Anthropic models (native SDK path, adaptive thinking).
-    # Phase-3 exit-gate pass runs on Sonnet to conserve credits (the operator's call,
-    # 2026-07). Production default is Opus (5x/25x); flip back before recording
-    # the canonical Opus baseline — the numbers below reflect the model in use.
-    anthropic_models: dict[str, str] = Field(
+    # One role → one ModelSpec. The router (`fie.llm.get_model`) reads only
+    # this map, so any role can move between Anthropic and OpenRouter by
+    # editing its spec — provider independence is a config property, not a
+    # code change (ADR 0014).
+    #
+    # Reasoning roles (synthesis/critic) and the eval judge run on Anthropic;
+    # for this cheaper Phase-3 pass they are Sonnet (the operator's call, 2026-07;
+    # production default is Opus). Mechanical roles run on a cheap OpenRouter
+    # model. To A/B an open model on synthesis/critic, flip their spec to
+    # `provider="openrouter"` with the OpenRouter id — nothing else changes.
+    models: dict[str, ModelSpec] = Field(
         default={
-            "synthesis": "claude-sonnet-5",
-            "critic": "claude-sonnet-5",
-            # Citation-accuracy LLM judge (eval only, blueprint §6).
-            "eval_judge": "claude-sonnet-5",
-        }
-    )
-    # Mechanical roles served by a cheap model via OpenRouter.
-    openrouter_models: dict[str, str] = Field(
-        default={
-            "decompose": "google/gemini-2.5-flash",
-            "claim_extract": "google/gemini-2.5-flash",
-            "verify_qualitative": "google/gemini-2.5-flash",
-            "verify_forward": "google/gemini-2.5-flash",
+            # CHALLENGER ARM (branch feat/router-provider-agnostic): synthesis
+            # and critic run on GLM 5.2 via OpenRouter for the cost A/B. Revert
+            # both to ModelSpec(provider="anthropic", model="claude-sonnet-5")
+            # to restore the Sonnet baseline.
+            "synthesis": ModelSpec(provider="openrouter", model="z-ai/glm-5.2-20260616"),
+            "critic": ModelSpec(provider="openrouter", model="z-ai/glm-5.2-20260616"),
+            # Citation-accuracy LLM judge (eval only, blueprint §6). Kept on a
+            # strong, stable model — it is the measuring stick for the exit gate.
+            "eval_judge": ModelSpec(provider="anthropic", model="claude-sonnet-5"),
+            "decompose": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "claim_extract": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "verify_qualitative": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "verify_forward": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
             # Claim text → candidate XBRL (concept, period, unit) triples.
-            "fact_mapping": "google/gemini-2.5-flash",
+            "fact_mapping": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
             # Retrieval-eval query seeding (candidates for hand-verification).
-            "eval_seed": "google/gemini-2.5-flash",
+            "eval_seed": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
         }
     )
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    synthesis_max_tokens: int = 16000
+    # Fallback output cap for any role whose ModelSpec leaves max_tokens unset.
+    default_max_tokens: int = 16000
 
     # --- EDGAR (SEC requires a declared identity in the user agent) ---
     # Personal data stays out of the repo: set EDGAR_IDENTITY in .env
@@ -119,6 +150,13 @@ class Settings(BaseSettings):
             "claude-opus-4-8": (5.0, 25.0),
             "claude-sonnet-5": (3.0, 15.0),
             "gemini-2.5-flash": (0.30, 2.50),
+            # OpenRouter challengers for the synthesis/critic A/B (ADR 0014).
+            # Substring-matched against the id in callbacks, e.g.
+            # "z-ai/glm-5.2-20260616" → "glm-5.2".
+            "glm-5.2": (0.95, 2.98),
+            "grok-4.5": (2.0, 6.0),
+            "qwen3.7-max": (1.48, 4.43),
+            "kimi-k3": (3.0, 15.0),
         }
     )
 

@@ -31,7 +31,7 @@ from fie.eval.metrics import (
     numeric_fidelity,
 )
 from fie.eval.verifier_eval import run_verifier_eval
-from fie.llm import get_model
+from fie.llm import bind_structured, get_model
 from fie.observability import new_run_id
 from fie.runner import answer_question, build_production_reconciler
 from fie.state import JudgeOutput, RunResult
@@ -52,7 +52,7 @@ def judge_citations(results: list[RunResult], settings: Settings) -> list[Citati
     """LLM-judge every grounded claim's supporting span (eval_judge role;
     model per config). The report marks a deterministic 20% sample for the
     hand spot-check."""
-    judge = get_model("eval_judge", settings).with_structured_output(JudgeOutput)
+    judge = bind_structured(get_model("eval_judge", settings), JudgeOutput)
     judgments: list[CitationJudgment] = []
     for result in results:
         for row in result.grounding:
@@ -174,7 +174,7 @@ def _verifier_metrics(settings: Settings, metrics: dict[str, Any]) -> None:
         return
     labeled = load_jsonl(labeled_path, LabeledClaim)
     reconciler = build_production_reconciler(settings)
-    judge = get_model("verify_qualitative", settings).with_structured_output(JudgeOutput)
+    judge = bind_structured(get_model("verify_qualitative", settings), JudgeOutput)
     _, scores = run_verifier_eval(labeled, reconciler=reconciler, qualitative_judge=judge)
     for score in scores:
         metrics[f"verifier_precision_{score.claim_type}"] = score.precision

@@ -45,6 +45,7 @@ from fie.context import (
 )
 from fie.graph.retract import excise_claim
 from fie.guardrails import BudgetExceededError, BudgetTracker, ainvoke_with_retry, guarded
+from fie.llm import bind_structured
 from fie.state import (
     BranchResult,
     Claim,
@@ -110,11 +111,11 @@ def build_graph(
     """
     limits = limits or GraphLimits()
 
-    decompose_llm = decompose_model.with_structured_output(DecomposeOutput)
-    synthesis_llm = synthesis_model.with_structured_output(SynthesisOutput)
-    qualitative_llm = qualitative_model.with_structured_output(JudgeOutput)
-    forward_llm = forward_model.with_structured_output(JudgeOutput)
-    critic_llm = critic_model.with_structured_output(CriticOutput)
+    decompose_llm = bind_structured(decompose_model, DecomposeOutput)
+    synthesis_llm = bind_structured(synthesis_model, SynthesisOutput)
+    qualitative_llm = bind_structured(qualitative_model, JudgeOutput)
+    forward_llm = bind_structured(forward_model, JudgeOutput)
+    critic_llm = bind_structured(critic_model, CriticOutput)
 
     # Bounds concurrently-running research branches. One semaphore per
     # compiled graph: a graph instance is bound to one event loop per run
