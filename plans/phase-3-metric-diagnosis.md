@@ -2,6 +2,32 @@
 
 **Status:** not started · **Created:** 2026-07-26 · **Blocks:** Phase 4
 
+## ⚠ Prerequisite — do not start here
+
+**Run the 30-Q baseline first: `plans/phase-3-exit-gate.md` → START HERE.**
+
+This plan has no entry point of its own. Every task below consumes
+`eval/reports/agent-<ts>.json` from a completed 30-question run — that report
+*is* the raw material being classified. Without it there is nothing to work on.
+
+The baseline is still worth running even though this plan argues
+`numeric_fidelity` may be near-useless, for three reasons that do not depend on
+that metric:
+
+1. It produces the answers Task 1 classifies.
+2. It gives the **first trustworthy `hallucination_rate`** — every reading
+   before the 2026-07-26 retraction fix was an artifact.
+3. It writes `eval/baselines.json`, which Phase 4's CI regression gate needs
+   and which is currently all-`null`.
+
+`grounding_rate` and `citation_accuracy` are unaffected by the
+`numeric_fidelity` problem and are measured properly by that run.
+
+Expect to re-run `--write-baseline` once after any metric change here. That is
+one flag and one run, not wasted work — a baseline gating on grounding and
+hallucination is useful immediately, regardless of what happens to
+`numeric_fidelity`.
+
 Read this **before** attempting to fix retrieval, prompts, or models to close
 the exit gate. Two of the three gate metrics are far from target:
 
