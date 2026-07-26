@@ -48,19 +48,47 @@ check:
 Two consequences that matter enormously:
 
 - **The match ignores company, concept, and period.** It only asks "does *some*
-  fact anywhere in the store have this value?" This is a very permissive check.
+  fact anywhere in the store have this value?" It is a spellcheck against a
+  dictionary of numbers, not a fact check.
 - **Derived arithmetic can never match.** "Revenue increased by $917 million",
   a sum of two segments, an average, a per-vehicle figure — none of these are
   filed XBRL facts. They are scored as failures **by construction**, no matter
   how correct they are.
 
-A check this permissive still failing ~47% of the time is the tell: the misses
-are more likely derived figures than wrong lookups.
+### Measured chance floor (2026-07-26) — read this before interpreting 0.53
 
-### The work
+The store holds 25,937 facts but only **7,428 distinct values**. Feeding the
+matcher numbers invented at random:
 
-Take the answers from the completed 30-Q baseline run and classify a sample of
-**every failing number** (aim for 40–60) into:
+| probe | match rate |
+|---|---|
+| random `$X.Y billion` (one decimal, tolerance ±$50M) | **236/500 = 47%** |
+| random bare integers 1–100 (tolerance ±0.5) | **52/100 = 52%** |
+| random `$X.YZ billion` (two decimals, tolerance ±$5M) | 77/500 = 15% |
+
+**A number invented from thin air passes ~47% of the time** at the precision
+financial writing normally uses, because a ±$50M window usually contains one
+of 7,428 scattered values by luck.
+
+Our measured `numeric_fidelity` is **~0.53** against a chance floor of ~0.47.
+**The score is barely above what random numbers would earn**, so it has very
+little discriminating power and is close to uninformative in *both*
+directions. This is why it sits near 0.5 no matter which model writes the
+answer — that stability is a property of the metric, not of the models.
+
+> An earlier draft of this plan inferred from the permissiveness that "the
+> misses are more likely derived figures than wrong lookups." **That inference
+> was not justified** and has been removed. The leniency cuts both ways: it
+> inflates passes as much as the derived-figure problem depresses them. The
+> composition of both populations is unmeasured — that is what Task 1 is for.
+
+### The work — sample BOTH failures and passes
+
+Because of the chance floor, classifying only the misses answers half the
+question. Take the answers from the completed 30-Q baseline run and sample
+**40–60 failing numbers and 40–60 passing numbers**.
+
+Failing numbers:
 
 | bucket | meaning | correct response |
 |---|---|---|
@@ -69,22 +97,93 @@ Take the answers from the completed 30-Q baseline run and classify a sample of
 | **C. genuinely wrong** | no such figure exists | real bug — this is what the metric is *for* |
 | **D. stranded text** | number sits in text left behind by a failed excision | already fixed 2026-07-26; should be ~0 in the new run |
 
+Passing numbers — for each, check whether the fact it matched is actually the
+*right* one (same ticker, concept, and period as the claim):
+
+| bucket | meaning | correct response |
+|---|---|---|
+| **P1. true pass** | matched the fact the sentence is actually about | genuine signal |
+| **P2. coincidental pass** | matched an unrelated fact (wrong company, concept, or year) | the metric is crediting luck |
+
+The P1/P2 split is the number that tells you whether `numeric_fidelity` is
+worth keeping at all. If P2 is large, the metric is closer to noise than to
+measurement, and no amount of system work will make it mean something.
+
 Write the classifier as a script under `scratchpad/`; it needs
-`eval/reports/agent-<ts>.json` plus `data/ingest.db`. Report the bucket split.
+`eval/reports/agent-<ts>.json` plus `data/ingest.db`. Report both splits.
 
 ### Decision rule
 
-- **Mostly bucket A** → the metric is mis-specified. Fix the *metric*, not the
-  system: restrict it to figures the answer presents as filed values, or score
-  derived figures against a recomputation instead of the store. Then re-baseline.
-  Do not touch retrieval.
+- **P2 large (coincidental passes dominate)** → replace the metric rather than
+  tune it. See "The structural alternative" below. This outranks the A/B/C
+  split: a metric that credits luck cannot be repaired by reclassifying its
+  failures.
+- **Mostly bucket A** → the metric is mis-specified. Restrict it to figures the
+  answer presents as filed values, or score derived figures against a
+  recomputation. Then re-baseline. Do not touch retrieval.
 - **Mostly B** → fix scale handling; check `_context_scale` and the "(In
   millions)" table convention in the corpus.
 - **Mostly C** → this is the real thing. *Now* retrieval/synthesis work is
   justified, and only now.
 
-**Do not raise the tolerance to make the number go up.** That converts a real
+**Do not raise the tolerance to make the number go up.** That converts a weak
 metric into a meaningless one — the same failure mode as the retraction bug.
+Note the tolerance already runs the wrong way: *more* printed precision means a
+*tighter* window (two decimals drops chance matching 47% → 15%), so loosening
+tolerance directly buys more coincidental passes.
+
+---
+
+## The structural alternative — render numbers, don't generate them
+
+Worth evaluating **before** investing in repairing the metric, because it may
+be cheaper than tuning a generate-then-check pipeline to a 0.95 target.
+
+Today the model writes numbers into prose and a reconciler checks them
+afterwards: **detect-after-the-fact**. The standard production pattern for
+numeric agentic work (program-aided generation / tool-computed values /
+semantic layers) inverts this: **the model chooses which number, code produces
+the number — the model never types a digit.**
+
+Applied here:
+
+1. **Fact references instead of literals.** Synthesis emits
+   `{{fact:TSLA:Revenues:FY2025}}`; a deterministic renderer resolves it
+   against `ingest.db` and formats it. An unresolvable placeholder is a hard
+   error, not a silently wrong number.
+2. **Derived values computed in Python.** `{{delta:...}}` is `a - b` in code,
+   so "an increase of $917 million" is correct by construction and its
+   operands are inspectable.
+3. **Narrative figures stay quote-anchored.** Numbers that exist only in 10-K
+   prose get a verbatim span citation instead of a fact ref.
+
+**Most of the machinery already exists.** `IngestStore.query_facts()` takes
+`(tickers, concept_terms, fiscal_year, fiscal_period, unit)` and returns typed
+`Fact` rows; the `fact_mapping` role already produces exactly those query
+parameters. The change is largely moving that step from *after* generation
+(verification) to *before* rendering — a rewiring plus a renderer, not a new
+subsystem.
+
+**What it does to evaluation:** "is this number right?" stops being an
+unbounded question (any number could appear, so you need a checker — and this
+plan documents how badly that checker performs) and becomes a bounded
+selection question: *did it pick the right fact?* Rendering fidelity becomes
+1.0 by construction — an invariant to assert in tests, not a metric — and the
+real metric becomes fact-selection accuracy, which `gold_set.jsonl`'s
+`expected_facts` already encodes ground truth for.
+
+**Honest limits:** it does not fix retrieval (confidently picking the *wrong*
+fact is still possible — it converts hallucination into misselection, a
+smaller and more measurable error class); prose fluency suffers around
+placeholders and needs a lint that rejects literal digits outside them; and
+figures with no XBRL counterpart need the fallback in (3). It is an
+architecture change and warrants an ADR.
+
+**Sequencing:** do Task 1 first regardless. It costs about an hour and tells
+you whether you are buying a rewrite or a bug fix. Note that even a perfect
+fact-rendering system still scores below 0.95 under the *current* metric
+definition, because derived figures remain unmatched — so the metric needs
+scoping either way.
 
 ---
 
