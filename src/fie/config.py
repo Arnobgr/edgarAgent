@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     # --- Langfuse (self-hosted; keys generated in its UI after first boot) ---
     langfuse_public_key: str = ""
     langfuse_secret_key: SecretStr = SecretStr("")
-    langfuse_host: str = "http://localhost:3000"
+    langfuse_host: str = "http://localhost:3001"
 
     # --- Model routing (plans/00-overview.md §4) ---
     # One role → one ModelSpec. The router (`fie.llm.get_model`) reads only
@@ -147,7 +147,13 @@ class Settings(BaseSettings):
     # count against the token cap).
     model_prices: dict[str, tuple[float, float]] = Field(
         default={
+            # Opus 5 is the current Opus and is priced identically to 4.8, so
+            # the challenger probe pays nothing extra for the better model.
+            # Substring matching means 4-8 does NOT cover 5 — both are listed.
+            "claude-opus-5": (5.0, 25.0),
             "claude-opus-4-8": (5.0, 25.0),
+            # List price. Sonnet 5 is on introductory pricing (2.0/10.0)
+            # through 2026-08-31, so this over-reports cost until then.
             "claude-sonnet-5": (3.0, 15.0),
             "gemini-2.5-flash": (0.30, 2.50),
             # OpenRouter challengers for the synthesis/critic A/B (ADR 0014).
