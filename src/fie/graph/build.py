@@ -327,21 +327,51 @@ def build_graph(
             return {}
         draft = state.draft_answer or ""
         claims: list[Claim] = []
+        excised: list[Claim] = []
+        stranded: list[Claim] = []
         for claim in state.claims:
             if claim.status != "unsupported":
                 claims.append(claim)
                 continue
             draft, removed = excise_claim(draft, claim.text)
-            if not removed:
-                logger.warning("could not locate claim %s in draft for excision", claim.id)
-            claims.append(claim.model_copy(update={"status": "retracted"}))
-        listing = "\n".join(f"- {claim.text}" for claim in unsupported)
-        draft = (
-            f"{draft.rstrip()}\n\n{RETRACTED_HEADER}\n\n"
-            "The following claims could not be verified against their cited "
-            f"sources and were removed from the answer:\n{listing}"
+            if removed:
+                excised.append(claim)
+                claims.append(claim.model_copy(update={"status": "retracted"}))
+            else:
+                # The claim's sentence is still in the prose, so this is NOT a
+                # successful retraction — keep it `unsupported` so it stays in
+                # the grounding rows and counts against hallucination_rate.
+                # Marking it "retracted" here would route it to `retracted`
+                # (state.build_result) and hide surviving unsupported text from
+                # the exit-gate metric.
+                logger.warning(
+                    "could not locate claim %s in draft for excision; "
+                    "text remains in the answer and still counts as unsupported",
+                    claim.id,
+                )
+                stranded.append(claim)
+                claims.append(claim)
+
+        sections = []
+        if excised:
+            listing = "\n".join(f"- {claim.text}" for claim in excised)
+            sections.append(
+                "The following claims could not be verified against their cited "
+                f"sources and were removed from the answer:\n{listing}"
+            )
+        if stranded:
+            listing = "\n".join(f"- {claim.text}" for claim in stranded)
+            sections.append(
+                "The following claims could not be verified against their cited "
+                "sources. They could not be located for removal, so they may "
+                f"still appear above — treat them as unverified:\n{listing}"
+            )
+        draft = f"{draft.rstrip()}\n\n{RETRACTED_HEADER}\n\n" + "\n\n".join(sections)
+        logger.info(
+            "retraction after iteration exhaustion: %d excised, %d stranded in draft",
+            len(excised),
+            len(stranded),
         )
-        logger.info("retracted %d claim(s) after iteration exhaustion", len(unsupported))
         return {"draft_answer": draft, "claims": claims}
 
     async def critic(state: EngineState, config: RunnableConfig) -> dict[str, Any]:

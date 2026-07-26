@@ -17,6 +17,7 @@ from fie.state import (
     SynthesisOutput,
     build_run_result,
 )
+from fie.eval.metrics import hallucination_rate
 from fie.tools.reconcile import ReconcileOutcome
 from tests.fakes import (
     BudgetTracker,
@@ -327,3 +328,56 @@ async def test_node_timeout_sets_error_state() -> None:
     assert "timed out" in (state.error or "")
     assert state.evidence  # research completed before the timeout hit
     assert state.draft_answer is None
+
+
+STRANDED_CLAIM = "Apple's Vision Pro segment expanded substantially during the fiscal period"
+
+
+def _unexcisable_synthesis_output() -> SynthesisOutput:
+    """A claim restated so self-containedly that it shares almost no tokens
+    with its sentence in the prose — `excise_claim` cannot locate it."""
+    return SynthesisOutput(
+        answer=f"{TRUE_NUMERIC} [c1]. It grew a lot [c2].",
+        claims=[
+            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
+            DraftClaim(text=STRANDED_CLAIM, claim_type="qualitative", source_chunk_ids=["c2"]),
+        ],
+    )
+
+
+async def test_unexcisable_claim_stays_unsupported_and_counts_as_hallucination() -> None:
+    """A claim whose sentence cannot be located is NOT a successful retraction:
+    its text survives in the prose, so it must stay `unsupported` and keep
+    counting against hallucination_rate. Marking it `retracted` would route it
+    out of the grounding rows and hide surviving unsupported text from the
+    exit-gate metric."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(
+        outputs=[_unexcisable_synthesis_output(), _unexcisable_synthesis_output()]
+    )
+    qualitative = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="unsupported", feedback="not in source")
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, qualitative=qualitative, critic=critic
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    statuses = {c.text: c.status for c in state.claims}
+    assert statuses[STRANDED_CLAIM] == "unsupported", (
+        "a claim that could not be excised must not be reported as retracted"
+    )
+
+    # The unsupported text really is still in the answer body.
+    body, _, retracted_section = (state.draft_answer or "").partition(RETRACTED_HEADER)
+    assert "It grew a lot" in body
+    assert "may" in retracted_section and "still appear above" in retracted_section
+
+    # It stays in the grounding rows, so the gate metric can see it.
+    run_result = build_run_result("run-stranded", state)
+    assert not run_result.retracted
+    assert any(row.verdict == "unsupported" for row in run_result.grounding)
+    assert hallucination_rate([run_result]) > 0.0
