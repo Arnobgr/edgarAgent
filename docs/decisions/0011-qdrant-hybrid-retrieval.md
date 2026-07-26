@@ -1,6 +1,6 @@
 # ADR 0011 — Qdrant hybrid retrieval: named vectors, RRF, hosted reranker
 
-**Date:** 2026-07-19 · **Phase:** 3 · **Status:** accepted (architecture); embedding + reranker choices **provisional** — measured on seed labels, to be confirmed on verified labels
+**Date:** 2026-07-19 (numbers re-measured 2026-07-26) · **Phase:** 3 · **Status:** accepted — embedding + reranker choices confirmed on verified labels
 
 ## Decision
 
@@ -26,45 +26,50 @@ search the whole corpus).
 
 Both collections ingested (4,181 points each) and benchmarked over the
 50-query set with `uv run eval-retrieval --embedding both --rerank both`
-(report `eval/reports/retrieval-20260719-190054.md`):
+(report `eval/reports/retrieval-20260726-205055.md`):
 
 | variant | recall@5 | recall@10 | recall@20 | MRR | nDCG@10 |
 |---|---|---|---|---|---|
-| voyage+rerank | 0.660 | 0.750 | 0.840 | **0.608** | **0.537** |
-| voyage+rrf-only | 0.660 | 0.750 | 0.840 | 0.598 | **0.537** |
-| openai+rerank | 0.660 | **0.760** | **0.880** | 0.591 | 0.530 |
-| openai+rrf-only | 0.660 | **0.760** | **0.880** | 0.591 | 0.530 |
+| voyage+rerank | 0.620 | 0.730 | 0.820 | 0.574 | 0.509 |
+| voyage+rrf-only | 0.620 | 0.730 | 0.820 | 0.577 | 0.509 |
+| openai+rerank | 0.620 | **0.740** | **0.860** | 0.569 | 0.527 |
+| openai+rrf-only | 0.620 | **0.740** | **0.860** | **0.579** | **0.528** |
 
-**Status of the numbers:** measured on the full corpus but against
-**unverified seed labels** — provisional until the operator hand-verifies
-`eval/retrieval_queries.jsonl` (`label_status: seed → verified`) and the
-eval is re-run. nDCG@10 is normalized against the perfectly reordered
+**Status of the numbers:** measured on the full corpus against all 50
+**verified** labels (`label_status: verified`). They replace the earlier
+seed-label run (`retrieval-20260719-190054.md`), which read ~0.02–0.04
+higher on every recall metric — verification narrowed three 10-Q queries
+(rq-013/028/040) whose empty `section` matched *any* chunk in the filing and
+so inflated recall. Every ranking in the table survived the change; only the
+levels moved. nDCG@10 is normalized against the perfectly reordered
 retrieved list (section-level labels make several chunks relevant at once).
 
-### Embedding: `text-embedding-3-small` (OpenAI) — provisional
+### Embedding: `text-embedding-3-small` (OpenAI)
 
-A near-tie. recall@5 is identical (0.660); OpenAI leads on deeper recall
-(recall@10 0.760 vs 0.750, recall@20 0.880 vs 0.840) while Voyage leads on
-top-rank ordering (MRR 0.598–0.608 vs 0.591, nDCG@10 0.537 vs 0.530). For a
-RAG feeder, deeper recall matters more than fine top-rank ordering — the
-synthesizer reads the whole top-k, so getting the relevant chunk *into* the
-candidate set (recall) outweighs its exact rank. OpenAI's +0.040 recall@20
-edge is the larger effect; its MRR/nDCG deficit is ≤0.017. OpenAI is also
-the already-live, proven provider, so this keeps the default where the
-corpus is and avoids a switch for no measured gain. The finance-tuned Voyage
-embeddings did **not** beat the general baseline on this corpus — a genuine
-(if modest) finding, not a default assumption. Revisit on verified labels;
-if Voyage's top-rank edge holds and reranking is re-enabled, the call could
-flip.
+recall@5 is identical (0.620), but OpenAI leads everywhere else: deeper
+recall (recall@10 0.740 vs 0.730, recall@20 0.860 vs 0.820) *and* top-rank
+ordering (MRR 0.579 vs 0.577, nDCG@10 0.528 vs 0.509). On the earlier seed
+labels this was a genuine trade-off — Voyage led MRR/nDCG while OpenAI led
+recall, and the call rested on the argument that recall matters more for a
+RAG feeder. Verification dissolved the trade-off: Voyage's top-rank edge was
+an artifact of the three over-broad 10-Q labels, and OpenAI now wins on
+every metric. The decision no longer depends on that judgment call.
 
-### Reranker: **off** (RRF order) — provisional
+The finance-tuned Voyage embeddings did **not** beat the general baseline on
+this corpus — a genuine finding, not a default assumption. OpenAI is also
+the already-live provider, so this keeps the default where the corpus is.
 
-`rerank-2.5` earns essentially nothing here. On OpenAI the rerank and
-rrf-only rows are **identical** across every metric; on Voyage rerank adds a
-single +0.010 to MRR and moves nothing else. A cross-encoder that reorders
-the top-50 but changes no recall and ≤0.010 MRR is not worth its per-query
-API cost and added latency on every production question. Default the
-reranker to `none`. Because OpenAI (not Voyage) is the embedding pick, the
+### Reranker: **off** (RRF order)
+
+`rerank-2.5` earns nothing here — on verified labels it is marginally
+*negative*. Recall is untouched on both embeddings (a reorder of the top-50
+cannot change what is in the candidate set), and the ordering metrics move
+the wrong way: on OpenAI, MRR 0.569 with rerank vs 0.579 without and nDCG@10
+0.527 vs 0.528; on Voyage, MRR 0.574 vs 0.577. The seed-label run had
+already shown it adding ≤0.010; verification flipped that small positive to
+a small negative. Either way it is noise, and noise is not worth a
+per-query API call and added latency on every production question. Default
+the reranker to `none`. Because OpenAI (not Voyage) is the embedding pick, the
 retrieval stack is no longer single-vendor, so the reranker follow-up — if
 verified labels later show a real precision gap — is a **Cohere rerank**
 comparison, not a return to `rerank-2.5`. Local fallback still documented in
