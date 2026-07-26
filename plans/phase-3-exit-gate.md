@@ -1,5 +1,56 @@
 # Phase 3 — Exit-gate checklist (manual steps for the operator)
 
+---
+
+## ▶ START HERE (resume point, 2026-07-26)
+
+**Run this. Nothing needs deciding first.**
+
+```bash
+docker compose -f docker-compose.dev.yml up -d          # Qdrant must be up
+uv run eval-agent --write-baseline                       # 30 questions, ~75 min
+```
+
+Steps 1–3 are **done**; the blocking bugs are **fixed**. This one command is
+all that stands between here and the step-5 exit-gate judgment.
+
+**Preconditions (verify, don't assume):**
+
+- Qdrant reachable: `curl -s localhost:6333/collections/fie_chunks__text-embedding-3-small | jq .result.points_count` → `4181`.
+- Branch `feat/router-provider-agnostic`, working tree has the retraction fix
+  in `src/fie/graph/build.py` and the model-router fix in `src/fie/llm/__init__.py`.
+- `uv run pytest -q` → **118 passed**. If it's 117, the retraction regression
+  test is missing and the tree is stale — stop and check.
+- Config is on the **GLM arm** (`synthesis`/`critic` → `z-ai/glm-5.2-20260616`,
+  `eval_judge` → `claude-sonnet-5`). That is the intended baseline model.
+- Langfuse is on **port 3001** now, not 3000.
+
+**What to expect, so you don't misread it as a regression:**
+
+- Takes ~75 min (~2.5 min/question). It is not stuck; it sleeps on network I/O.
+  Check progress with `grep -c '^\[g-' <logfile>`, not by watching the process.
+- **`hallucination_rate` will come in ABOVE 0.000.** That is the retraction fix
+  working, not a regression — see the retraction entry below. Every earlier
+  `0.000` was an artifact.
+- Budget is per-question ($5 cap in `runner.py:95`), so a 30-question run
+  cannot trip it. GLM + Gemini + Sonnet judge ≈ a few dollars total.
+- `--write-baseline` writes `eval/baselines.json`. It is currently all-`null`
+  and gates nothing; after this run it becomes the Phase 4 CI gate.
+
+**Then do step 5** (exit-gate judgment, below). Based on every arm measured so
+far, **expect the gate to FAIL** — best grounding anywhere is 0.833 vs a 0.90
+target, and numeric_fidelity ~0.53 vs 0.95. That is the expected outcome, not
+a surprise: do **not** start Phase 4. The follow-up work is scoped in
+**`plans/phase-3-metric-diagnosis.md`** — read that before trying to "fix"
+anything, because at least one of those two metrics may be mis-specified
+rather than genuinely failing.
+
+**Do NOT re-do:** label verification (all 80 are `verified`), the retrieval
+benchmark (re-run 2026-07-26 on verified labels, ADR 0011 updated), or the
+Opus-vs-GLM model comparison (settled — stay on GLM, see below).
+
+---
+
 Everything in Phase 3 is implemented, tested, and running (commits
 `fb69820`, `ffaa27c`). What remains is exactly the work that needs *you*:
 a billing toggle, human label verification, and one paid eval run. Do the
@@ -7,7 +58,7 @@ steps in order — the benchmark (step 2) is meaningless before the labels
 are trustworthy (step 3) only in the sense that final ADR numbers should
 come from verified labels; running it earlier for a preview is fine.
 
-## Progress (updated 2026-07-19)
+## Progress (updated 2026-07-26)
 
 - **Step 1 — Voyage embed: DONE.** Voyage billing enabled; both
   collections resident in Qdrant at 4,181 points each
@@ -31,18 +82,93 @@ come from verified labels; running it earlier for a preview is fine.
   Sonnet). A GLM smoke run (`--limit 3 --skip-judge`) passed 3/3 after fixing
   a structured-output fence bug (`bind_structured` forces tool-calling on the
   OpenRouter path).
-- **TODO — three-way smoke comparison (before any `--write-baseline`).** The
-  GLM smoke on its own is not a verdict (n=3, judge skipped, noisy). Run the
-  **same** `eval-agent` smoke under each of **Sonnet** (baseline), **GLM 5.2**,
-  and **Grok 4.5** (`x-ai/grok-4.5-20260708`) so synthesis/critic quality is
-  compared like-for-like on identical questions. Only after that pick the
-  synthesis/critic model, freeze it, then proceed to the full 30-Q step 4.
-- **Step 3 — label verification: NOT STARTED (needs the operator).** All 80 labels
-  (50 retrieval + 30 gold) are still `label_status: seed`. This gates the
-  *canonical* ADR/baseline numbers; re-run step 2 after verifying.
-- **Step 4 — agent baseline: NOT RUN (needs approval, ≈ $8–10 on Sonnet).**
-  Ideally run after step 3; a seed-label preview is allowed. Writes a
-  *Sonnet* baseline, not the canonical Opus one.
+- **Three-way smoke comparison: RAN, BUT INCONCLUSIVE — blocked by a bug
+  (2026-07-23).** Ran the same `eval-agent --skip-judge` smoke under Sonnet,
+  GLM 5.2, and Grok 4.5 (`x-ai/grok-4.5-20260708`) at `--limit 3`, then a
+  GLM-vs-Sonnet head-to-head at `--limit 10`. Reports:
+  Sonnet-3 `agent-20260723-152749`, Grok-3 `153610`, GLM-3 `20260720-213532`,
+  GLM-10 `20260723-162646`, Sonnet-10 `20260723-170240`.
+  **The comparison is confounded and must NOT be used to pick a model.** At
+  `--limit 10` the Sonnet arm threw **10 `OutputParserException`s (one per
+  question)** — grounding collapsed to 0.29, hallucination 0.096, fact-coverage
+  0.167. The identical GLM run threw **0** and scored grounding 0.51,
+  hallucination 0.0. Root cause: on the Anthropic path `bind_structured`
+  (`src/fie/llm/__init__.py`) uses forced tool calling, which is unreliable
+  when a role has `thinking=True` (the ModelSpec default; synthesis/critic use
+  it). OpenRouter already routes around this via `method="function_calling"`.
+- **BLOCKER: FIXED 2026-07-26 — but the diagnosis above was wrong.**
+  `bind_structured` now uses `method="json_schema"` for Anthropic models with
+  adaptive thinking on, removing the combination `langchain-anthropic`
+  explicitly warns about while keeping thinking (the reason those roles are on
+  Anthropic at all). Verified: warning gone, 117 tests pass, a real
+  `eval-agent --limit 2` **with the Sonnet judge enabled** ran clean.
+
+  **However, the claim that this bug *caused* the Sonnet collapse is
+  unconfirmed and should not be repeated.** Two findings against it:
+  (a) zero `OutputParserException`s reproduced in **36 isolated calls** across
+  three strategies (rich evidence, deliberately insufficient evidence, long
+  packed context, ±thinking, ±json_schema); (b) `ainvoke_with_retry`
+  (`src/fie/guardrails/execution.py:44`) retries **3×** and logs each failure
+  with `exc_info`, and all 10 questions reported `n_completed: 10` — so the
+  "10 exceptions" were almost certainly logged-then-recovered retries, which
+  would not obviously wreck grounding. **Treat the Sonnet-vs-GLM gap as open,
+  not explained.** If an Anthropic arm still trails GLM after the fix, that is
+  a real quality signal, not plumbing.
+- **Step 3 — label verification: NOT STARTED (needs the operator), but a review aid
+  is ready.** All 80 labels (50 retrieval + 30 gold) are still
+  `label_status: seed`. This gates the *canonical* ADR/baseline numbers;
+  re-run step 2 after verifying. A generated cross-check lives at
+  **`eval/label_review.md`** (untracked): every label validated against the
+  corpus + XBRL store using the real `SectionRef.matches()` rules —
+  **0 hard errors, 4 rows worth a glance** (rq-013/028/040 have empty 10-Q
+  sections = "matches any chunk", loose but valid → optionally narrow to
+  Part I, Item 2 / Item 1; rq-047 Item 8 is correct — footnote topic). Builder
+  script: `scratchpad/build_checklist.py`.
+- **Retraction bug: FIXED 2026-07-26 — it was hiding hallucinations from the
+  exit gate.** `excise_claim` (`src/fie/graph/retract.py:58`) returns the draft
+  unchanged when it can't locate a claim's sentence (token overlap below
+  `MIN_OVERLAP = 0.5`), but `retract` marked the claim `retracted`
+  *unconditionally*. Retracted claims are routed to `RunResult.retracted`
+  rather than `.grounding` (`state/__init__.py:295`), and `hallucination_rate`
+  iterates only `.grounding` (`eval/metrics.py:93`) — so an unsupported claim
+  whose text **survived in the answer prose** became invisible to the metric,
+  and the appended section still claimed it "was removed from the answer".
+  Observed 4 times in 5 questions on the GLM arm, 1 in 5 on Opus — in runs
+  reporting `hallucination_rate: 0.000`. Root cause is structural: the
+  synthesis prompt asks for claims "restated as one self-contained sentence"
+  (`context/__init__.py:48`), and a self-contained restatement diverges from
+  the in-prose sentence by construction. Now a failed excision keeps the claim
+  `unsupported` (so it counts against the gate) and the retracted section says
+  the text may still appear. Regression test:
+  `test_unexcisable_claim_stays_unsupported_and_counts_as_hallucination`
+  (verified failing without the fix). **Every `hallucination_rate: 0.000` from
+  before this date is unreliable.**
+- **Opus 5 vs GLM 5.2 head-to-head (2026-07-26, matched 5 questions, Sonnet
+  judge held constant).** Reports: Opus-5 `agent-20260726-212038`, GLM-5
+  `agent-20260726-212641`.
+
+  | metric | GLM 5.2 | Opus 5 |
+  |---|---|---|
+  | grounding_rate | **0.833** | 0.636 |
+  | citation_accuracy | **0.667** | 0.381 |
+  | numeric_fidelity | 0.531 | **0.569** |
+  | expected_fact_coverage | 0.600 | 0.600 |
+  | hallucination_rate | 0.000 | 0.000 |
+  | claims judged | 15 | 21 |
+
+  The Opus arm threw **zero** `OutputParserException`s — the first clean
+  Anthropic synthesis/critic run at this size, confirming the `json_schema`
+  fix holds under real load. **Caveat: the comparison is confounded by claim
+  count.** Opus 5 emitted 40% more claims, and `grounding_rate` is per-claim,
+  so a model that decomposes more is mechanically penalised. Opus 5 is
+  documented as producing longer output by default and needing an explicit
+  conciseness instruction, which our synthesis prompt does not have. **Verdict:
+  stay on GLM on cost** (~8x cheaper on output: $0.95/$2.98 vs $5/$25), not on
+  a demonstrated quality win. n=5 — do not over-read either column.
+- **Step 4 — agent baseline: RE-RUNNING on the fixed retraction path.** The
+  first 30-Q attempt was killed at 11/30 once the retraction bug was found, so
+  the committed baseline is measured with an honest hallucination_rate.
+  `eval/baselines.json` was never written by that run.
 - **Step 5 — exit-gate judgment: PENDING** the step-4 run.
 
 Current state, for orientation:
@@ -101,7 +227,18 @@ Then record the decisions:
   won, instead change the defaults in `src/fie/config.py`
   (`embedding_provider`, `reranker_provider`) so config matches the ADR.
 
-## 3. Hand-verify the eval labels (the "the operator reviews" step)
+## 3. Hand-verify the eval labels (the "the operator reviews" step) — ✅ DONE (2026-07-26)
+
+All 80 labels are `verified`. Three 10-Q queries were narrowed first
+(rq-013/rq-040 → `Item 2`, rq-028 → `Item 1`) because an empty `section`
+matched *any* chunk in the filing. The bare `Item N` form is deliberate: the
+parser emits both `Item 2` and `Part I, Item 2` **within every filing**, so
+`Part I, Item 2` would have missed ~44% of the MD&A chunks. Residual
+contamination (`Part II, Item 2`) is ~1% of 10-Q chunks. Benchmark re-run on
+the verified labels: `eval/reports/retrieval-20260726-205055.md`, ADR 0011
+updated and no longer provisional.
+
+Original instructions, for reference:
 
 - `eval/retrieval_queries.jsonl` — 50 queries. For each: is the query
   something an analyst would ask, and are the labeled
