@@ -42,12 +42,30 @@ def bind_structured(model: BaseChatModel, schema: type[BaseModel]) -> Runnable:
     models (observed on GLM 5.2) intermittently wrap `json_schema` output in a
     ```json markdown fence that the OpenAI SDK's strict parser rejects, which
     surfaces as flaky mid-run failures. Tool-calling returns structured
-    arguments with no free-text JSON to fence. Anthropic keeps its default
-    method, so the native-path baseline is unchanged.
+    arguments with no free-text JSON to fence.
+
+    Anthropic models with adaptive thinking on use **json_schema**: the
+    default path is forced tool calling, and `langchain-anthropic` itself
+    warns that this "is not guaranteed when `thinking` is enabled" and will
+    raise `OutputParserException` when the model answers in text instead of
+    calling the tool. Every reasoning role here (synthesis, critic, the
+    judges) is both structured *and* thinking-enabled, so that warned-against
+    combination was on by default for the whole Anthropic path. json_schema
+    keeps thinking — the reason those roles are on Anthropic at all — while
+    removing the tool-call requirement. Anthropic roles with thinking
+    disabled keep the default, which is reliable without it.
     """
     if isinstance(model, ChatOpenAI):
         return model.with_structured_output(schema, method="function_calling")
+    if isinstance(model, ChatAnthropic) and _thinking_enabled(model):
+        return model.with_structured_output(schema, method="json_schema")
     return model.with_structured_output(schema)
+
+
+def _thinking_enabled(model: ChatAnthropic) -> bool:
+    """True when the model was built with adaptive thinking (see `_anthropic_model`)."""
+    thinking = getattr(model, "thinking", None)
+    return isinstance(thinking, dict) and thinking.get("type") not in (None, "disabled")
 
 
 def get_model(role: Role, settings: Settings | None = None) -> BaseChatModel:
