@@ -23,6 +23,12 @@ VerdictLabel = Literal["grounded", "unsupported", "partial"]
 VerifyMethod = Literal["numeric_reconciliation", "semantic", "attribution"]
 SubQuestionStatus = Literal["open", "researched", "exhausted"]
 
+# Part of the answer contract: the retract node appends this section listing
+# excised claims, so consumers (metrics, renderers) can split the answer
+# proper from the retraction disclosure. Defined here, not in graph.build,
+# because eval metrics must find it without importing the graph (ADR 0015).
+RETRACTED_HEADER = "### Retracted claims"
+
 
 class EvidenceChunk(BaseModel):
     """One retrievable slice of a filing, carrying its full citation trail.

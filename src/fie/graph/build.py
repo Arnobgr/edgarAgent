@@ -47,6 +47,7 @@ from fie.graph.retract import excise_claim
 from fie.guardrails import BudgetExceededError, BudgetTracker, ainvoke_with_retry, guarded
 from fie.llm import bind_structured
 from fie.state import (
+    RETRACTED_HEADER,
     BranchResult,
     Claim,
     CriticOutput,
@@ -64,8 +65,6 @@ from fie.tools.reconcile import NumericReconciler
 from fie.tools.retrieval import Retriever
 
 logger = logging.getLogger(__name__)
-
-RETRACTED_HEADER = "### Retracted claims"
 
 
 @dataclass(frozen=True)

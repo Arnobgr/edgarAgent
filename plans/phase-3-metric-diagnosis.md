@@ -1,9 +1,64 @@
 # Phase 3 — Diagnosing the three failing gate metrics
 
-**Status:** ready to start · **Created:** 2026-07-26 ·
-**Updated:** 2026-07-27 with n=29 baseline numbers · **Blocks:** Phase 4
+**Status:** diagnosis complete, fixes landed (ADR 0015) · **Created:** 2026-07-26 ·
+**Updated:** 2026-07-27 after executing Tasks 1–4 · **Blocks:** Phase 4
 
-## ▶ START HERE
+## ✔ OUTCOME (2026-07-27) — read this first
+
+All four tasks ran against the baseline artifacts (answers recovered from
+`data/checkpoints.db` — no paid re-run). Full decision record: ADR 0015.
+
+- **Task 1 (numeric_fidelity 0.566): the metric was 94% noise.** Of 1,352
+  numbers scored, 1,085 (80%) were digit runs inside bracketed citation ids,
+  48 were in the retracted-claims section, 136 were dates/ordinals/form
+  names/product names ("10-K" → 10, "H200" → 200). Only 83 were financial
+  figures; those matched at 0.88, ~90% against the *right* fact. All 10
+  genuine misses were derived arithmetic (bucket A) or correct figures with
+  no XBRL counterpart; **zero bucket B or C**. The metric is now scoped to
+  currency/scale figures with citations and the retracted section stripped
+  (`metrics.py`); it reads **0.878** on the same answers. Retrieval and
+  synthesis were never the problem — do not tune them for this metric.
+  **Open gate decision:** the honest ceiling of the scoped metric on real
+  answers is ~0.9 (derived + non-filed figures score as misses by design),
+  so the §13 target of 0.95 needs re-setting — or the fact-reference
+  rendering alternative below, which remains unimplemented and optional.
+- **Task 2 (citation_accuracy 0.728):** a 30-pair hand-check found nearly all
+  spans genuinely support their claims. The rejectable ones are structural:
+  absence claims ("evidence does not contain X" — unsupportable by any
+  span), XBRL fact spans that never name the company, mangled table-fallback
+  fragments, and truncated spans. Per-pair judgments were not persisted and
+  claim ids were ambiguous across questions, so *which* 40 pairs failed is
+  unrecoverable — both fixed for future runs (judgments persisted under
+  run-qualified ids; judge API failures no longer scored as bad citations).
+- **Task 3 (expected_fact_coverage 0.400): root cause found.** Instant
+  (balance-sheet) facts are stored with `fiscal_period = NULL`; the five
+  dropped labels said `"FY"`, which `query_facts` matches exactly —
+  unsatisfiable by construction. Labels fixed (fiscal_period removed), the
+  metric now counts unresolvable facts and missing results as misses, and
+  matching accepts any resolved candidate balance. All gold labels resolve
+  again (0 unresolved).
+- **Task 4:** the per-question `IngestStore` leak is fixed
+  (`reconciler.close()` in `runner.py` and the verifier eval); `eval-agent`
+  now exits non-zero on `n_completed < n_questions`; `--write-baseline`
+  refuses target-missing or incomplete runs without `--force` and records
+  coverage. **New evidence on g-010:** its checkpoint contains a complete,
+  fully verified answer (8 claims, all grounded), so the SQLITE_MISUSE hit
+  the post-graph tail of `answer_question`, not startup — the "died at
+  startup" account above is wrong. Cause still unreproduced; the guard makes
+  any recurrence loud instead of silent.
+- **Also observed:** 3 of 30 runs (g-011, g-018, g-021) ended with `error`
+  set and empty answers — they sit in every denominator as zero-claim
+  results, and an errored empty answer currently counts as a successful
+  decline in `unanswerable_declined`. Not yet addressed.
+
+**Next steps (require a decision / spend):** re-set the numeric_fidelity
+target or adopt fact-reference rendering (ADR-worthy); promote
+`grounding_rate` 0.735 → 0.90 to a real task (see end of this file); then
+one clean 30-Q re-baseline with the fixed harness.
+
+---
+
+## ▶ START HERE (original plan, superseded by the outcome above)
 
 The prerequisite is **satisfied**: the 30-Q baseline ran 2026-07-27 and the
 exit gate FAILED on all three targets. Everything below consumes that report.

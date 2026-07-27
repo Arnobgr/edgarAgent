@@ -102,47 +102,50 @@ async def answer_question(
 
     checkpoint_path = settings.data_dir / "checkpoints.db"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-    async with AsyncSqliteSaver.from_conn_string(str(checkpoint_path)) as saver:
-        graph = build_graph(
-            retriever=retriever,
-            decompose_model=get_model("decompose", settings),
-            synthesis_model=get_model("synthesis", settings),
-            qualitative_model=get_model("verify_qualitative", settings),
-            forward_model=get_model("verify_forward", settings),
-            critic_model=get_model("critic", settings),
-            reconciler=reconciler,
-            tracker=tracker,
-            limits=GraphLimits(
-                max_verify_iterations=settings.max_verify_iterations,
-                max_critic_iterations=settings.max_critic_iterations,
-                max_sub_questions=settings.max_sub_questions,
-                max_concurrent_research=settings.max_concurrent_research,
-                node_timeout_seconds=settings.node_timeout_seconds,
-                retry_attempts=settings.llm_retry_attempts,
-                retry_base_delay_seconds=settings.llm_retry_base_delay_seconds,
-            ),
-            k=settings.retrieval_k,
-            chunks_per_sub_question=settings.chunks_per_sub_question,
-            checkpointer=saver,
-        )
-        config: RunnableConfig = {
-            "run_name": run_name,
-            "configurable": {"thread_id": run_id},
-            "metadata": trace_metadata(run_id),
-            "callbacks": callbacks,
-        }
-        initial = (
-            None
-            if question is None
-            else EngineState(
-                question=question,
-                run_budget=RunBudget(
-                    max_tokens=settings.budget_max_tokens,
-                    max_cost_usd=settings.budget_max_cost_usd,
+    try:
+        async with AsyncSqliteSaver.from_conn_string(str(checkpoint_path)) as saver:
+            graph = build_graph(
+                retriever=retriever,
+                decompose_model=get_model("decompose", settings),
+                synthesis_model=get_model("synthesis", settings),
+                qualitative_model=get_model("verify_qualitative", settings),
+                forward_model=get_model("verify_forward", settings),
+                critic_model=get_model("critic", settings),
+                reconciler=reconciler,
+                tracker=tracker,
+                limits=GraphLimits(
+                    max_verify_iterations=settings.max_verify_iterations,
+                    max_critic_iterations=settings.max_critic_iterations,
+                    max_sub_questions=settings.max_sub_questions,
+                    max_concurrent_research=settings.max_concurrent_research,
+                    node_timeout_seconds=settings.node_timeout_seconds,
+                    retry_attempts=settings.llm_retry_attempts,
+                    retry_base_delay_seconds=settings.llm_retry_base_delay_seconds,
                 ),
+                k=settings.retrieval_k,
+                chunks_per_sub_question=settings.chunks_per_sub_question,
+                checkpointer=saver,
             )
-        )
-        raw = await graph.ainvoke(initial, config)
+            config: RunnableConfig = {
+                "run_name": run_name,
+                "configurable": {"thread_id": run_id},
+                "metadata": trace_metadata(run_id),
+                "callbacks": callbacks,
+            }
+            initial = (
+                None
+                if question is None
+                else EngineState(
+                    question=question,
+                    run_budget=RunBudget(
+                        max_tokens=settings.budget_max_tokens,
+                        max_cost_usd=settings.budget_max_cost_usd,
+                    ),
+                )
+            )
+            raw = await graph.ainvoke(initial, config)
+    finally:
+        reconciler.close()
 
     if trace is not None:
         trace.flush()

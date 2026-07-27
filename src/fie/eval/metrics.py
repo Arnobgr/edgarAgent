@@ -8,10 +8,11 @@ the judge itself lives in the agent runner.
 
 import bisect
 import math
+import re
 from dataclasses import dataclass
 
 from fie.eval.datasets import LabeledClaim, SectionRef
-from fie.state import EvidenceChunk, RunResult, VerdictLabel
+from fie.state import RETRACTED_HEADER, EvidenceChunk, RunResult, VerdictLabel
 
 # --- Retrieval metrics (workstream C.1) ---
 
@@ -120,10 +121,22 @@ def citation_accuracy(judgments: list[CitationJudgment]) -> float:
     return sum(1 for j in judgments if j.supported) / len(judgments)
 
 
+# Inline citations in answers: bracketed chunk ids like
+# [0001628280-25-045968:table-0011]. Their digit runs are not figures.
+_CITATION_RE = re.compile(r"\[[^\[\]]*\]")
+
+
 def numeric_fidelity(results: list[RunResult], fact_values: list[float]) -> float:
-    """% of currency/share figures in final answers exactly reconciling to
-    an XBRL fact (at the figure's stated precision). Percent figures are
-    excluded — they are usually derived, not filed facts.
+    """% of financial figures in final answers reconciling to an XBRL fact
+    (at the figure's stated precision).
+
+    Scoped to figures the answer presents as amounts — a currency symbol or
+    an explicit scale word — after stripping bracketed citation markup and
+    the retracted-claims section. The 2026-07-27 baseline showed the
+    unscoped metric scored 94% non-figures (accession-number fragments,
+    dates, list ordinals), which drowned the signal at the store's ~47%
+    chance-match floor (ADR 0015). Percent figures stay excluded — they are
+    usually derived, not filed facts.
 
     `fact_values` is the full store's value column; matching is pure so the
     metric stays reproducible from the report inputs."""
@@ -133,8 +146,9 @@ def numeric_fidelity(results: list[RunResult], fact_values: list[float]) -> floa
     total = 0
     matched = 0
     for result in results:
-        for number in parse_numbers(result.answer):
-            if number.is_percent:
+        answer = _CITATION_RE.sub(" ", result.answer.split(RETRACTED_HEADER)[0])
+        for number in parse_numbers(answer):
+            if number.is_percent or not (number.raw.startswith("$") or number.explicit_scale):
                 continue
             total += 1
             if _binary_match(sorted_values, number.value, number.tolerance):

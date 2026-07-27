@@ -118,6 +118,24 @@ def test_numeric_fidelity_matches_store_values_excluding_percents() -> None:
     assert numeric_fidelity(results, [96_773_000_000.0]) == 0.5
 
 
+def test_numeric_fidelity_scores_only_financial_figures() -> None:
+    # Citation markup, dates, ordinals and product names must not be scored:
+    # only the $96.8 billion figure counts (ADR 0015).
+    answer = (
+        "1. On September 30, 2025, revenue was $96.8 billion for the H200 line "
+        "[0001045810-25-045968:table-0011] per the 10-K."
+    )
+    assert numeric_fidelity([result([], answer=answer)], [96_773_000_000.0]) == 1.0
+    assert numeric_fidelity([result([], answer=answer)], [123.0]) == 0.0
+
+
+def test_numeric_fidelity_ignores_retracted_claims_section() -> None:
+    from fie.state import RETRACTED_HEADER
+
+    answer = f"Revenue was $96.8 billion.\n\n{RETRACTED_HEADER}\n\n- Profit was $55.5 billion."
+    assert numeric_fidelity([result([], answer=answer)], [96_773_000_000.0]) == 1.0
+
+
 def test_verifier_scores_per_type() -> None:
     labeled = [
         LabeledClaim(id="1", text="t", claim_type="numeric", true_verdict="grounded"),

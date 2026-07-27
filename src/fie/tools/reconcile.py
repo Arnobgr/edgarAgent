@@ -261,6 +261,12 @@ class XbrlNumericReconciler:
         self._mapper = mapper
         self._fallback = fallback or InterimNumericReconciler()
 
+    def close(self) -> None:
+        """Release the facts-store connection. The production wiring opens
+        one store per run; leaving them open leaks a SQLite connection per
+        question across an eval run (ADR 0015)."""
+        self._store.close()
+
     def reconcile(self, claim_text: str, chunks: list[EvidenceChunk]) -> ReconcileOutcome:
         claim_numbers = parse_numbers(claim_text)
         if not claim_numbers:

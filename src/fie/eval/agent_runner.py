@@ -11,6 +11,7 @@ import asyncio
 import datetime as dt
 import json
 import logging
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -48,12 +49,21 @@ _LOWER_IS_BETTER = {"hallucination_rate"}
 TARGETS = {"hallucination_rate": 0.02, "numeric_fidelity": 0.95, "grounding_rate": 0.90}
 
 
-def judge_citations(results: list[RunResult], settings: Settings) -> list[CitationJudgment]:
+def judge_citations(
+    results: list[RunResult], settings: Settings, judge: Any = None
+) -> tuple[list[CitationJudgment], int]:
     """LLM-judge every grounded claim's supporting span (eval_judge role;
     model per config). The report marks a deterministic 20% sample for the
-    hand spot-check."""
-    judge = bind_structured(get_model("eval_judge", settings), JudgeOutput)
+    hand spot-check.
+
+    Claim ids are qualified by run id — bare `claim-1-1` repeats across
+    questions, which made the 2026-07-27 spot-check sample ambiguous.
+    Judge *failures* are excluded and counted separately instead of scored
+    as bad citations: an API hiccup is not a citation error (ADR 0015)."""
+    if judge is None:
+        judge = bind_structured(get_model("eval_judge", settings), JudgeOutput)
     judgments: list[CitationJudgment] = []
+    failures = 0
     for result in results:
         for row in result.grounding:
             if row.verdict != "grounded" or not row.supporting_span:
@@ -67,6 +77,7 @@ def judge_citations(results: list[RunResult], settings: Settings) -> list[Citati
                 ),
                 ("human", f"CLAIM: {row.text}\n\nSPAN: {row.supporting_span}"),
             ]
+            claim_id = f"{result.run_id}:{row.claim_id}"
             try:
                 ruling = judge.invoke(messages)
                 output = (
@@ -74,19 +85,29 @@ def judge_citations(results: list[RunResult], settings: Settings) -> list[Citati
                     if isinstance(ruling, JudgeOutput)
                     else JudgeOutput.model_validate(ruling)
                 )
-                supported = output.verdict == "grounded"
             except Exception as exc:
-                logger.warning("citation judge failed on %s: %s", row.claim_id, exc)
-                supported = False
-            judgments.append(CitationJudgment(claim_id=row.claim_id, supported=supported))
-    return judgments
+                logger.warning("citation judge failed on %s: %s", claim_id, exc)
+                failures += 1
+                continue
+            judgments.append(
+                CitationJudgment(claim_id=claim_id, supported=output.verdict == "grounded")
+            )
+    return judgments, failures
 
 
 def expected_fact_coverage(
     results: dict[str, RunResult], questions: list[GoldQuestion], settings: Settings
 ) -> float:
     """Informational: fraction of expected XBRL facts (values pulled from
-    the facts store) whose figure appears in the answer to their question."""
+    the facts store) whose figure appears in the answer to their question.
+
+    Every expected fact of an answerable question stays in the denominator:
+    a fact that fails to resolve in the store, or whose question produced no
+    result, scores as a miss instead of silently shrinking the metric — the
+    2026-07-27 run dropped 5 of its 15 labels that way (ADR 0015). Matching
+    accepts any resolved candidate value because instant (balance-sheet)
+    facts store several balance dates per fiscal year with no period to
+    disambiguate them."""
     from fie.ingest.store import IngestStore
     from fie.tools.reconcile import parse_numbers
 
@@ -95,13 +116,14 @@ def expected_fact_coverage(
         total = 0
         covered = 0
         for question in questions:
-            result = results.get(question.id)
-            if result is None or not question.answerable:
+            if not question.answerable:
                 continue
-            answer_values = [n.value for n in parse_numbers(result.answer)]
+            result = results.get(question.id)
+            answer_values = [n.value for n in parse_numbers(result.answer)] if result else []
             for expected in question.expected_facts:
                 if expected.kind != "xbrl":
                     continue
+                total += 1
                 facts = store.query_facts(
                     tickers=[expected.ticker] if expected.ticker else None,
                     concept_terms=expected.concept_terms or None,
@@ -112,11 +134,17 @@ def expected_fact_coverage(
                     limit=5,
                 )
                 if not facts:
-                    logger.warning("gold %s: no fact in store for %s", question.id, expected)
+                    logger.warning(
+                        "gold %s: no fact in store for %s — scored as a miss",
+                        question.id,
+                        expected,
+                    )
                     continue
-                total += 1
-                target = facts[0].value
-                if any(abs(v - target) <= abs(target) * 0.005 + 0.5 for v in answer_values):
+                if any(
+                    abs(v - fact.value) <= abs(fact.value) * 0.005 + 0.5
+                    for fact in facts
+                    for v in answer_values
+                ):
                     covered += 1
         return covered / total if total else 0.0
     finally:
@@ -175,13 +203,16 @@ def _verifier_metrics(settings: Settings, metrics: dict[str, Any]) -> None:
     labeled = load_jsonl(labeled_path, LabeledClaim)
     reconciler = build_production_reconciler(settings)
     judge = bind_structured(get_model("verify_qualitative", settings), JudgeOutput)
-    _, scores = run_verifier_eval(labeled, reconciler=reconciler, qualitative_judge=judge)
+    try:
+        _, scores = run_verifier_eval(labeled, reconciler=reconciler, qualitative_judge=judge)
+    finally:
+        reconciler.close()
     for score in scores:
         metrics[f"verifier_precision_{score.claim_type}"] = score.precision
         metrics[f"verifier_recall_{score.claim_type}"] = score.recall
 
 
-def _gate(metrics: dict[str, Any], baselines: dict[str, float | None]) -> list[str]:
+def _gate(metrics: dict[str, Any], baselines: Mapping[str, float | None]) -> list[str]:
     failures = []
     for name, baseline in baselines.items():
         if baseline is None or name not in metrics or not isinstance(metrics[name], int | float):
@@ -201,6 +232,11 @@ def run(
     baselines: str = typer.Option("", "--baselines", help="Baselines JSON path override."),
     write_baseline: bool = typer.Option(
         False, "--write-baseline", help="Accept this run's numbers as the new baseline."
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Write the baseline even when the run misses the §13 targets or dropped questions.",
     ),
     limit: int = typer.Option(0, "--limit", help="Run only the first N questions (smoke)."),
     skip_judge: bool = typer.Option(
@@ -241,9 +277,12 @@ def run(
     if skip_judge:
         metrics["citation_accuracy"] = None
     else:
-        judgments = judge_citations(result_list, settings)
+        judgments, judge_failures = judge_citations(result_list, settings)
         metrics["citation_accuracy"] = citation_accuracy(judgments)
         metrics["citation_judged"] = len(judgments)
+        metrics["citation_judge_failures"] = judge_failures
+        # Per-pair verdicts, so diagnosis never needs a paid re-judge.
+        metrics["citation_judgments"] = {j.claim_id: j.supported for j in judgments}
         # Deterministic 20% hand spot-check sample.
         ordered = sorted(judgments, key=lambda x: x.claim_id)
         metrics["citation_spot_check_sample"] = [
@@ -261,10 +300,31 @@ def run(
 
     typer.echo("\n=== eval-agent metrics ===")
     for key, value in metrics.items():
+        if isinstance(value, dict):
+            continue
         typer.echo(f"{key}: {value:.3f}" if isinstance(value, float) else f"{key}: {value}")
     typer.echo(f"Report: {report_path}")
 
+    # A dropped question silently shrinks every metric's denominator — the
+    # 2026-07-27 run lost g-010 this way. Fail loudly instead.
+    dropped = metrics["n_completed"] < metrics["n_questions"]
+    if dropped:
+        typer.secho(
+            f"INCOMPLETE RUN: {metrics['n_completed']}/{metrics['n_questions']} questions "
+            "completed — metrics are computed over a shrunken denominator",
+            fg=typer.colors.RED,
+        )
+
     if write_baseline:
+        target_misses = _gate(metrics, TARGETS)
+        if (dropped or target_misses) and not force:
+            for miss in target_misses:
+                typer.secho(f"TARGET MISSED: {miss}", fg=typer.colors.RED)
+            typer.secho(
+                "Refusing to accept this run as the baseline (--force to override).",
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=1)
         gated = {
             k: v
             for k, v in metrics.items()
@@ -275,10 +335,22 @@ def run(
             )
         }
         baselines_path.write_text(
-            json.dumps({"accepted": stamp, "metrics": gated}, indent=2) + "\n"
+            json.dumps(
+                {
+                    "accepted": stamp,
+                    "n_questions": metrics["n_questions"],
+                    "n_completed": metrics["n_completed"],
+                    "metrics": gated,
+                },
+                indent=2,
+            )
+            + "\n"
         )
         typer.echo(f"Baseline written: {baselines_path}")
         return
+
+    if dropped:
+        raise typer.Exit(code=1)
 
     if baselines_path.exists():
         baseline_metrics = json.loads(baselines_path.read_text()).get("metrics", {})

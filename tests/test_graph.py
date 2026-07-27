@@ -7,6 +7,7 @@ retracted (never silently dropped) once iterations are exhausted.
 
 from typing import Any
 
+from fie.eval.metrics import hallucination_rate
 from fie.graph import GraphLimits
 from fie.graph.build import RETRACTED_HEADER
 from fie.state import (
@@ -17,7 +18,6 @@ from fie.state import (
     SynthesisOutput,
     build_run_result,
 )
-from fie.eval.metrics import hallucination_rate
 from fie.tools.reconcile import ReconcileOutcome
 from tests.fakes import (
     BudgetTracker,

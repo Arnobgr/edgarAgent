@@ -78,9 +78,7 @@ def get_model(role: Role, settings: Settings | None = None) -> BaseChatModel:
     try:
         spec = s.models[role]
     except KeyError:
-        raise KeyError(
-            f"Unknown model role: {role!r}. Add it to Settings.models."
-        ) from None
+        raise KeyError(f"Unknown model role: {role!r}. Add it to Settings.models.") from None
 
     tags = [f"fie-role:{role}"]
     metadata = {"fie_role": role}
