@@ -56,6 +56,53 @@ target or adopt fact-reference rendering (ADR-worthy); promote
 `grounding_rate` 0.735 → 0.90 to a real task (see end of this file); then
 one clean 30-Q re-baseline with the fixed harness.
 
+## ✔ grounding_rate diagnosis (2026-07-27, same recovered states)
+
+Of 200 grounding rows, 53 fail; 47 of those are `partial` verdicts from
+numeric reconciliation. Decomposition, with the store cross-checked per miss:
+
+- **18 — parser noise in claim text.** The reconciler runs `parse_numbers`
+  over the claim and demands every token reconcile: "September 27, 2025"
+  → `27`, "Q1" → `1`, "more than 12 months" → `12`, "10-K" → `10`. All
+  dollar figures in these claims matched; the date/ordinal fragments
+  cannot, so the claim lands `partial`. Same defect family as the
+  numeric_fidelity noise (ADR 0015), now in the *runtime verifier*.
+- **14 — percent figures.** Margins and growth rates ("18.7%", "65%") are
+  derived ratios, never filed facts. Both operands (GrossProfit, Revenues)
+  are in the store — a deterministic recomputation path would ground them.
+- **~7 — YTD period vocabulary gap.** Nine/six-month figures exist in the
+  store as `YTD9`/`YTD6`, but `FactCandidate.fiscal_period` tells the
+  mapper "'FY' or 'Q1'..'Q4'" — the store's YTD labels are unreachable by
+  schema. E.g. "$69,926M nine months ended 2025-09-30" is exactly
+  `TSLA us-gaap:Revenues FY2025YTD9`.
+- **3 — instant NULL-period mismatch** (Task 3's root cause at runtime):
+  g-019's total-assets claims; facts exist with `fiscal_period = NULL`,
+  the mapper emits "FY".
+- **~3 — genuinely non-XBRL or absent facts** (press-release SBC
+  breakdown, AAPL services revenue — the store lacks it).
+- **~3 — legitimately derived** ("implied $18.6B", "decreased 2.8%") —
+  correct `partial`/`unsupported` rulings.
+- **5 — qualitative**, mostly the verifier catching real claim/source
+  discrepancies (e.g. "decreases in regulatory credits revenue" vs the
+  source's "increases"). The system working.
+
+Ceiling math: fixing noise + YTD + instants ⇒ ~0.875; adding percent
+recomputation ⇒ ~0.945. **The 0.90 target is reachable with reconciler-only
+changes** — no retrieval, synthesis or model work. Side effect worth having:
+each bogus `partial` currently fires a verify→research loop-back, so the
+noise also burns budget every run (three runs ended in budget/error aborts
+with empty answers).
+
+Proposed fixes, in order: (1) reconcile only financial figures from claim
+text (currency/scale-worded, plus percents once (2) exists); (2) ground
+percent claims by recomputing ratio candidates from store facts named by the
+mapping; (3) add YTD6/YTD9 to the mapper's period vocabulary and retry the
+lookup without `fiscal_period` before falling back to tables; (4) treat
+"as of <date>" claims as instants: query with `fiscal_period=None`. Each
+changes verifier behavior, so re-run `eval-retrieval`-style verifier P/R on
+the labeled claims before trusting them (numeric arm needs the mapper model —
+paid, small).
+
 ---
 
 ## ▶ START HERE (original plan, superseded by the outcome above)
