@@ -77,10 +77,20 @@ Harness fixes, batched before the next paid run:
 - `numeric_fidelity` becomes a measurement of the thing it names. Its honest
   residual: derived figures and correct-but-not-filed narrative figures still
   score as misses, so **a perfect system does not reach 1.0 under this
-  definition** — the observed ceiling on real answers is roughly 0.9. The
-  ≥ 0.95 §13 target predates this understanding and needs re-setting (or the
-  fact-reference rendering alternative in the diagnosis plan) — that is a
-  gate decision, recorded there, not here.
+  definition** — the observed ceiling on real answers is roughly 0.9.
+- **Target re-set to ≥ 0.85** (2026-07-27, `TARGETS` in
+  `fie.eval.agent_runner`). The §13 draft's 0.95 predates the re-scope and sits
+  *above* the ~0.9 ceiling, so it was unreachable by construction — and since
+  `--write-baseline` now gates on `TARGETS`, leaving it would have refused
+  every baseline no matter how the run went. What the scoped metric detects is
+  fabrication: a system inventing figures scores ~0.5, the measured chance
+  floor of matching any value in a 7,428-value store. 0.85 sits well clear of
+  that floor and below the ceiling, which is the whole range the metric can
+  discriminate over. It is a tripwire, not a quality ladder — quality lives in
+  `grounding_rate`, whose 0.90 target is unchanged. The fact-reference
+  rendering alternative (which would make rendering fidelity 1.0 by
+  construction and move the real question to fact *selection*) was evaluated
+  and deferred to Phase 5 as a product feature.
 - `expected_fact_coverage` numbers drop discontinuously versus older reports
   (the denominator grew); pre-2026-07-27 values are not comparable.
 - The store still cannot name which balance date an instant fact carries

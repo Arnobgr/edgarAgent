@@ -1,6 +1,6 @@
 {
   "accepted": null,
-  "note": "No accepted baseline yet. The first full `uv run eval-agent` run (needs VOYAGE_API_KEY + ingested corpus) writes one with --write-baseline; null metrics do not gate. Targets before Phase 4: hallucination_rate <= 0.02, numeric_fidelity >= 0.95, grounding_rate >= 0.90.",
+  "note": "No accepted baseline yet. The first full `uv run eval-agent` run (needs VOYAGE_API_KEY + ingested corpus) writes one with --write-baseline; null metrics do not gate. Targets before Phase 4 (TARGETS in fie.eval.agent_runner): hallucination_rate <= 0.02, numeric_fidelity >= 0.85 (re-set from 0.95, ADR 0015), grounding_rate >= 0.90.",
   "metrics": {
     "grounding_rate": null,
     "hallucination_rate": null,

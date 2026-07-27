@@ -53,6 +53,11 @@ src = ["src", "tests"]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.mypy]
+# Without the plugin, mypy builds pydantic `__init__`s from dataclass_transform,
+# which keys parameters by field *alias* and ignores populate_by_name — so every
+# LangChain chat-model construction (`ChatAnthropic(model=...)`, whose field is
+# `model` aliased `model_name`) read as an unexpected keyword. 25 false errors.
+plugins = ["pydantic.mypy"]
 strict = true
 python_version = "3.12"
 mypy_path = "src"

@@ -1,6 +1,6 @@
 """Agent-runner harness contracts (ADR 0015): the coverage denominator
-never shrinks silently, and citation judging separates judge failures
-from citation failures."""
+never shrinks silently, citation judging separates judge failures from
+citation failures, and a crash is never scored as a decline."""
 
 from pathlib import Path
 
@@ -8,7 +8,11 @@ import pytest
 from pydantic import SecretStr
 
 from fie.config import Settings
-from fie.eval.agent_runner import expected_fact_coverage, judge_citations
+from fie.eval.agent_runner import (
+    declined_unanswerables,
+    expected_fact_coverage,
+    judge_citations,
+)
 from fie.eval.datasets import ExpectedFact, GoldQuestion
 from fie.ingest.store import Fact, IngestStore
 from fie.state import GroundingRow, JudgeOutput, RunResult, SourceRef
@@ -111,6 +115,24 @@ def test_instant_fact_matches_any_candidate_balance(eval_settings: Settings) -> 
     )
     results = {"g-x": run_result("Total assets were $106,618 million at year end.")}
     assert expected_fact_coverage(results, [question], eval_settings) == 1.0
+
+
+def unanswerable(qid: str) -> GoldQuestion:
+    return GoldQuestion(id=qid, question="q", category="unanswerable", answerable=False)
+
+
+def test_errored_empty_answer_is_not_a_decline() -> None:
+    question = unanswerable("g-u")
+    aborted = RunResult(run_id="run-1", question="q", answer="", error="budget exceeded")
+    assert declined_unanswerables({"g-u": aborted}, [question]) == 0.0
+
+
+def test_declining_answer_with_no_surviving_numeric_counts() -> None:
+    question = unanswerable("g-u")
+    declined = RunResult(
+        run_id="run-1", question="q", answer="The filings do not disclose this figure."
+    )
+    assert declined_unanswerables({"g-u": declined}, [question]) == 1.0
 
 
 class StubJudge:

@@ -9,10 +9,10 @@ the two by editing its spec; an Anthropic model is never routed through the
 OpenRouter path (ADR 0014).
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from langchain_anthropic import ChatAnthropic
-from langchain_core.language_models import BaseChatModel
+from langchain_core.language_models import BaseChatModel, LanguageModelInput
 from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, SecretStr
@@ -34,7 +34,9 @@ Role = Literal[
 _ANTHROPIC_MARKERS = ("claude", "anthropic")
 
 
-def bind_structured(model: BaseChatModel, schema: type[BaseModel]) -> Runnable:
+def bind_structured(
+    model: BaseChatModel, schema: type[BaseModel]
+) -> Runnable[LanguageModelInput, dict[str, Any] | BaseModel]:
     """Attach a Pydantic output schema, picking the extraction method by
     provider so structured output is robust across both paths.
 
@@ -81,7 +83,7 @@ def get_model(role: Role, settings: Settings | None = None) -> BaseChatModel:
         raise KeyError(f"Unknown model role: {role!r}. Add it to Settings.models.") from None
 
     tags = [f"fie-role:{role}"]
-    metadata = {"fie_role": role}
+    metadata: dict[str, str] = {"fie_role": role}
     max_tokens = spec.max_tokens or s.default_max_tokens
 
     if spec.provider == "anthropic":

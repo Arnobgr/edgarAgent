@@ -14,11 +14,11 @@ conventions; each phase has a self-contained plan in `plans/`. **Current phase:
 3** (production RAG + evaluation). The 2026-07-27 exit-gate failure was
 diagnosed to metric mis-specification and reconciler defects, both fixed the
 same day (ADR 0015 + 0016; verifier P/R re-measured 1.000). Phase 4 stays
-blocked on one clean 30-Q re-baseline; the live entry point is
-`plans/phase-3-metric-diagnosis.md` § "NEXT SESSION STARTS HERE", which
-includes the one decision to make before running it (the numeric_fidelity
-target). Retrieval, prompts and models are all cleared — do not tune them
-for the gate metrics.
+blocked on one clean 30-Q re-baseline, which is now the *only* thing left —
+pre-run chores are done and the numeric_fidelity target is settled at 0.85
+(ADR 0015). The live entry point is `plans/phase-3-metric-diagnosis.md`
+§ "NEXT SESSION STARTS HERE". Retrieval, prompts and models are all cleared
+— do not tune them for the gate metrics.
 
 ## Working guidelines
 

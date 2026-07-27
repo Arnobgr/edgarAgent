@@ -46,7 +46,14 @@ _LOWER_IS_BETTER = {"hallucination_rate"}
 
 # Exit-gate targets to beat before Phase 4 (plan §exit gate) — informational
 # in the report; the hard gate is the accepted baseline.
-TARGETS = {"hallucination_rate": 0.02, "numeric_fidelity": 0.95, "grounding_rate": 0.90}
+#
+# numeric_fidelity is 0.85, not the §13 draft's 0.95: once the metric was
+# scoped to actual financial figures (ADR 0015) its honest ceiling on real
+# answers is ~0.9, because derived arithmetic and correct-but-unfiled
+# narrative figures score as misses by construction. Its role is a
+# fabrication tripwire — a system inventing numbers scores ~0.5 (the measured
+# chance floor) — so the target sits above that floor and below the ceiling.
+TARGETS = {"hallucination_rate": 0.02, "numeric_fidelity": 0.85, "grounding_rate": 0.90}
 
 
 def judge_citations(
@@ -152,15 +159,22 @@ def expected_fact_coverage(
 
 
 def declined_unanswerables(results: dict[str, RunResult], questions: list[GoldQuestion]) -> float:
-    """Fraction of unanswerable questions where no fabricated numeric claim
-    survives (retraction/decline is the system working)."""
+    """Fraction of unanswerable questions that produced an answer in which no
+    fabricated numeric claim survives (retraction/decline is the system
+    working).
+
+    An errored or empty result scores as a miss rather than a decline: it
+    carries no claims, so it would otherwise sail through the
+    no-surviving-numeric check and credit an abort as a refusal — the same
+    pattern as the retraction bug (ADR 0015). Three of the 30 runs on
+    2026-07-27 ended that way."""
     unanswerable = [q for q in questions if not q.answerable]
     if not unanswerable:
         return 1.0
     ok = 0
     for question in unanswerable:
         result = results.get(question.id)
-        if result is None:
+        if result is None or result.error or not result.answer.strip():
             continue
         surviving_numeric = [
             row

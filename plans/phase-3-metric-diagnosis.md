@@ -1,8 +1,8 @@
 # Phase 3 — Diagnosing the three failing gate metrics
 
-**Status:** all fixes landed (ADR 0015 + 0016), verifier P/R 1.000 —
-**awaiting the 30-Q re-baseline** · **Created:** 2026-07-26 ·
-**Updated:** 2026-07-27 · **Blocks:** Phase 4
+**Status:** all fixes and pre-run chores landed (ADR 0015 + 0016), verifier
+P/R 1.000, `make check` green — **awaiting the 30-Q re-baseline** ·
+**Created:** 2026-07-26 · **Updated:** 2026-07-27 · **Blocks:** Phase 4
 
 ## ▶ NEXT SESSION STARTS HERE — the re-baseline run
 
@@ -10,20 +10,18 @@ Everything below this section is history; nothing else needs re-deriving.
 All diagnosis and fixes are committed through `9541b8d` (metric re-scope
 ADR 0015; reconciler fixes + harness hardening ADR 0016; verifier P/R
 re-measured at **1.000/1.000** on the 112 labeled claims, up from 0.982).
+**The pre-run work is done** — the numeric_fidelity target is set,
+`make check` is green, and nothing but the run remains.
 
-### Decision required BEFORE the run: the numeric_fidelity target
+### ✔ Decision made: numeric_fidelity target is 0.85
 
-The §13 target of **0.95 is above the re-scoped metric's honest ceiling
-(~0.9)** — derived figures and correct-but-not-XBRL figures score as misses
-by design (ADR 0015). The harness now *gates `--write-baseline` on the
-targets*, so with 0.95 in place the run will refuse to write a baseline no
-matter how well it goes.
-
-**Recommendation: set it to 0.85** — comfortably above the ~0.5 a
-fabricating system would score (the metric's role is now a fabrication
-tripwire, not a quality ladder), below the honest ceiling. To apply: edit
-`TARGETS` in `src/fie/eval/agent_runner.py:49` and note the decision in
-ADR 0015 (its "Consequences" already flags the re-set as pending).
+Applied to `TARGETS` in `src/fie/eval/agent_runner.py`; rationale recorded in
+ADR 0015 § Consequences. The §13 draft's 0.95 sat above the re-scoped
+metric's honest ceiling (~0.9) — derived and correct-but-unfiled figures miss
+by design — and since `--write-baseline` now gates on `TARGETS`, it would
+have refused every baseline regardless of the run. The metric is a
+fabrication tripwire (chance floor ~0.5), not a quality ladder; quality is
+`grounding_rate`, still 0.90.
 
 ### The run
 
@@ -44,7 +42,7 @@ baseline or fails loudly with everything needed to diagnose.
 | metric | target | last measured | expected now |
 |---|---|---|---|
 | grounding_rate | ≥ 0.90 | 0.735 | **0.87–0.94** (reconciler fixes; upper half needs the mapper to use its new YTD/ratio vocabulary) |
-| numeric_fidelity (re-scoped) | 0.85 (proposed) | 0.878 equiv. | **~0.88** |
+| numeric_fidelity (re-scoped) | 0.85 (set) | 0.878 equiv. | **~0.88** |
 | hallucination_rate | ≤ 0.02 | 0.030 | ~0.02 — was 6 claims; several were mechanical `unsupported`s the fixes may ground |
 | expected_fact_coverage | (info) | 0.400 | up — denominator fixed, labels resolvable |
 | n_completed | = 30 | 29 | **must be 30** (guard enforces) |
@@ -60,14 +58,19 @@ unless genuinely-wrong figures dominate, which no evidence so far supports.
 
 ### Before Phase 4 (`plans/phase-4-backend-and-deploy.md`), also finalize
 
-1. **`make typecheck` is red on clean dev** — 25 pre-existing mypy errors
-   in `src/fie/llm/__init__.py` (langchain stub drift, predates this work).
-   Phase 4 CI presumably runs `make check`; clear this first or CI is born
-   red.
-2. **`unanswerable_declined` counts an errored empty answer as a successful
-   decline** (a zero-claim result passes the no-surviving-numeric check).
-   Not a gate metric; small integrity fix in `agent_runner.py`, same
-   pattern as the ADR 0015 fixes.
+1. ~~**`make typecheck` is red on clean dev**~~ — **fixed 2026-07-27.** The 25
+   errors were not stub drift: without `plugins = ["pydantic.mypy"]`, mypy
+   synthesises pydantic `__init__`s via `dataclass_transform`, which keys
+   parameters by field *alias* and ignores `populate_by_name` — so
+   `ChatAnthropic(model=...)` (field `model`, alias `model_name`) read as an
+   unexpected keyword. Enabling the plugin cleared 22 of 25; the rest were a
+   bare `Runnable` return and a `dict[str, Literal[...]]`/`dict[str, str]`
+   invariance clash on the role metadata. **`make check` is green**, so
+   Phase 4 CI can run it from day one.
+2. ~~**`unanswerable_declined` counts an errored empty answer as a successful
+   decline**~~ — **fixed 2026-07-27.** An errored or empty result now scores
+   as a miss, not a decline (`agent_runner.py`, tests in
+   `tests/test_agent_runner.py`). Affects the 3 of 30 runs that aborted.
 3. Accepted deferrals, recorded so they aren't re-litigated: fact-reference
    rendering (revisit at Phase 5 as a product feature), store ingest gaps
    (`period_end` NULL for instants, dimensions collapsed to a flag),
