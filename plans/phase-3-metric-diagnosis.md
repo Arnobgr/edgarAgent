@@ -37,6 +37,16 @@ refuses the baseline, and `--write-baseline` refuses a run that misses the
 targets unless `--force`. So a single run either writes the Phase 4
 baseline or fails loudly with everything needed to diagnose.
 
+**Smoke first — it paid for itself on 2026-07-27.** A `--limit 2
+--skip-judge` check before the paid run dropped g-001 with `'NoneType'
+object has no attribute 'passed'`: `with_structured_output(
+method="function_calling")` returns `None` rather than raising when the model
+answers in prose instead of calling the tool, so `ainvoke_with_retry` never
+retried and the `None` reached the caller's `cast`. Both GLM roles
+(`synthesis`, `critic`) are on that path, so the full run would have lost
+questions and refused the baseline 75 minutes in. Fixed — an empty
+structured output is now a retryable failure (`EmptyStructuredOutputError`).
+
 ### What to expect (projections from the recovered baseline answers)
 
 | metric | target | last measured | expected now |

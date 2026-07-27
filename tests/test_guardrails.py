@@ -9,7 +9,13 @@ from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 
-from fie.guardrails import BudgetExceededError, BudgetTracker, ainvoke_with_retry, guarded
+from fie.guardrails import (
+    BudgetExceededError,
+    BudgetTracker,
+    EmptyStructuredOutputError,
+    ainvoke_with_retry,
+    guarded,
+)
 from fie.state import EngineState
 
 PRICES = {"claude-opus-4-8": (5.0, 25.0)}
@@ -85,6 +91,33 @@ async def test_retry_raises_after_exhaustion() -> None:
 
     with pytest.raises(RuntimeError, match="permanent"):
         await ainvoke_with_retry(RunnableLambda(broken), None, attempts=2, base_delay_seconds=0.001)
+
+
+async def test_retry_recovers_from_empty_structured_output() -> None:
+    """A structured-output runnable yields None — not an exception — when the
+    model answers in prose instead of calling the tool. Retry it."""
+    attempts = 0
+
+    async def prose_then_tool_call(_: Any) -> str | None:
+        nonlocal attempts
+        attempts += 1
+        return None if attempts < 2 else "ok"
+
+    result = await ainvoke_with_retry(
+        RunnableLambda(prose_then_tool_call), None, attempts=3, base_delay_seconds=0.001
+    )
+    assert result == "ok"
+    assert attempts == 2
+
+
+async def test_persistent_empty_structured_output_raises() -> None:
+    async def never_calls_tool(_: Any) -> None:
+        return None
+
+    with pytest.raises(EmptyStructuredOutputError):
+        await ainvoke_with_retry(
+            RunnableLambda(never_calls_tool), None, attempts=2, base_delay_seconds=0.001
+        )
 
 
 async def test_retry_refuses_to_call_over_budget() -> None:

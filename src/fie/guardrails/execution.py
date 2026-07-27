@@ -14,6 +14,19 @@ from fie.guardrails.budget import BudgetExceededError, BudgetTracker
 logger = logging.getLogger(__name__)
 
 
+class EmptyStructuredOutputError(RuntimeError):
+    """A structured-output runnable produced no object.
+
+    `with_structured_output(method="function_calling")` parses tool calls with
+    `first_tool_only=True`, and `PydanticToolsParser` **returns `None` instead
+    of raising** when the model answered in prose without calling the tool.
+    Nothing else in the stack treats that as a failure, so the `None` flows
+    into the caller's `cast` and surfaces several lines later as an
+    `AttributeError` that kills the whole run (observed 2026-07-27: the GLM
+    critic dropped a gold question this way). Raising here turns it into the
+    transient failure it is."""
+
+
 class SupportsError(Protocol):
     """Any node state carrying the run-error channel. Both the main
     `EngineState` and the fan-out `ResearchBranch` payload satisfy this, so
@@ -40,12 +53,21 @@ async def ainvoke_with_retry[T](
 ) -> T:
     """Invoke `runnable` with bounded exponential backoff (with jitter) on
     transient failures. Checks the budget before every attempt so a run over
-    cap stops issuing LLM calls immediately."""
+    cap stops issuing LLM calls immediately.
+
+    A `None` result counts as a failure and is retried — see
+    `EmptyStructuredOutputError` for why the structured-output path can
+    produce one without raising."""
     for attempt in range(1, attempts + 1):
         if tracker is not None and tracker.exceeded:
             raise BudgetExceededError(tracker.describe())
         try:
-            return await runnable.ainvoke(value, config=config)
+            result = await runnable.ainvoke(value, config=config)
+            if result is None:
+                raise EmptyStructuredOutputError(
+                    "structured output missing: the model returned no tool call"
+                )
+            return result
         except (BudgetExceededError, asyncio.CancelledError):
             raise
         except Exception:

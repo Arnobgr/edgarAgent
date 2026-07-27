@@ -8,11 +8,18 @@ sanitization arrives in Phase 6.
 """
 
 from fie.guardrails.budget import BudgetExceededError, BudgetTracker
-from fie.guardrails.execution import NodeFn, SupportsError, ainvoke_with_retry, guarded
+from fie.guardrails.execution import (
+    EmptyStructuredOutputError,
+    NodeFn,
+    SupportsError,
+    ainvoke_with_retry,
+    guarded,
+)
 
 __all__ = [
     "BudgetExceededError",
     "BudgetTracker",
+    "EmptyStructuredOutputError",
     "NodeFn",
     "SupportsError",
     "ainvoke_with_retry",
