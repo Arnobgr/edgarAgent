@@ -1,17 +1,50 @@
 # Phase 3 — Diagnosing the three failing gate metrics
 
-**Status:** all fixes and pre-run chores landed (ADR 0015 + 0016), verifier
-P/R 1.000, `make check` green — **awaiting the 30-Q re-baseline** ·
+**Status:** re-baseline ran 30/30 and missed 2 of 3 targets; both misses
+root-caused and one fixed (ADR 0017) — **awaiting a second re-baseline** ·
 **Created:** 2026-07-26 · **Updated:** 2026-07-27 · **Blocks:** Phase 4
 
-## ▶ NEXT SESSION STARTS HERE — the re-baseline run
+## ▶ NEXT SESSION STARTS HERE — the second re-baseline run
+
+The 2026-07-27 re-baseline (`eval/reports/agent-20260727-224458.json`) is
+**the first structurally clean run**: 30/30 questions, no drops, no budget
+aborts, `hallucination_rate` **0.017 ✓** (first time under the 0.02 target),
+verifier P/R **1.000**, `citation_accuracy` 0.731 (216 pairs, 0 judge
+failures). It missed two targets:
+
+| metric | target | measured | after the ADR 0017 fix (re-scored) |
+|---|---|---|---|
+| numeric_fidelity | ≥ 0.85 | **0.654** (53/81) | **0.877** ✓ |
+| grounding_rate | ≥ 0.90 | **0.893** (108/121) | untested — one claim short |
+
+`numeric_fidelity` was a **parser defect, not a quality regression**:
+`parse_numbers` read "$391 billion" but not "$298,085M", so 18 of the 28
+misses were figures compared 10^6 too small. Fixed and re-scored to 0.877 on
+the same answers; the 10 residual misses are the legitimate ceiling (correct
+figures absent from the ingested XBRL, plus per-share repurchase prices) with
+**zero fabrications**. Full decomposition in ADR 0017.
+
+`grounding_rate` 0.893 needs **one more grounded claim** out of 121. The 13
+non-grounded ones are 8 numeric/`partial`, 3 qualitative/`partial` and 2
+numeric/`unsupported`; only 2 use suffix notation, and both are ratio claims
+whose *percent* is the primary failure — so the parser fix is not guaranteed
+to close the gap. The `partial`-heavy shape says ADR 0016's ratio-grounding
+path is still not firing on these; classify all 13 by their `feedback` field
+from `data/checkpoints.db` before changing anything else (run ids are in the
+report).
+
+**Before spending on the run:** the parser change alters verifier behavior, so
+re-measure verifier P/R on the labeled claims first (ADR 0016's standing
+rule). `expected_fact_coverage` fell to 0.250 (7/28) and is *not* explained by
+the parser defect — informational, undiagnosed, not a gate.
+
+## The original re-baseline instructions (still current)
 
 Everything below this section is history; nothing else needs re-deriving.
 All diagnosis and fixes are committed through `9541b8d` (metric re-scope
 ADR 0015; reconciler fixes + harness hardening ADR 0016; verifier P/R
 re-measured at **1.000/1.000** on the 112 labeled claims, up from 0.982).
-**The pre-run work is done** — the numeric_fidelity target is set,
-`make check` is green, and nothing but the run remains.
+The command and harness behavior below are unchanged for the second run.
 
 ### ✔ Decision made: numeric_fidelity target is 0.85
 

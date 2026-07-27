@@ -31,6 +31,14 @@ _SCALES = {
     "million": 1e6,
     "billion": 1e9,
     "trillion": 1e12,
+    # Suffix-letter notation ("$298,085M", "$71.6B") is how models and filings
+    # write compact figures. Without these a figure parses 10^6 to 10^9 too small
+    # and can never reconcile against a store held in units — measured on the
+    # 2026-07-27 re-baseline as numeric_fidelity 0.654 vs 0.877 (ADR 0017).
+    "m": 1e6,
+    "mm": 1e6,
+    "b": 1e9,
+    "bn": 1e9,
 }
 
 # Filings print accounting negatives in parentheses: "(8)%", "$(1,234)".
@@ -41,7 +49,9 @@ _NUM_RE = re.compile(
     r"(?P<lparen>\(\s*)?"
     r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
     r"(?P<rparen>\s*\))?"
-    r"(?:\s*(?P<scale>thousand|million|billion|trillion))?"
+    # Letter suffixes need a trailing word boundary or "$5 Model 3" reads as
+    # "$5 million"; the spelled-out words keep their original loose match.
+    r"(?:\s*(?P<scale>thousand|million|billion|trillion|(?:mm|bn|m|b)\b))?"
     r"(?P<pct>\s*(?:%|percent\b))?",
     re.IGNORECASE,
 )

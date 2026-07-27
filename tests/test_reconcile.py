@@ -108,6 +108,32 @@ def test_parse_numbers_parenthesized_negatives() -> None:
     assert (66952.0, False) in values
 
 
+def test_parse_numbers_suffix_scales() -> None:
+    """ "$298,085M" must scale like "$298,085 million". Without this a figure
+    parses 10^6 too small and can never reconcile against the facts store —
+    it cost the 2026-07-27 re-baseline 18 of its 28 numeric_fidelity misses
+    (ADR 0017)."""
+    numbers = parse_numbers("Products $298,085M vs $71.6B, plus $1.5bn and $25.0mm")
+    values = [n.value for n in numbers]
+    assert values == [298_085e6, 71.6e9, 1.5e9, 25.0e6]
+    assert all(n.explicit_scale for n in numbers)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        # A letter suffix needs a word boundary, or any capitalised word
+        # starting with M or B would scale the figure before it.
+        ("the Model 3 and $5 Model Y", [3.0, 5.0]),
+        ("$5 basis points", [5.0]),
+        ("capacity of 100 MWh", [100.0]),
+        ("filed a 10-K", [10.0]),
+    ],
+)
+def test_parse_numbers_suffix_false_positives(text: str, expected: list[float]) -> None:
+    assert [n.value for n in parse_numbers(text)] == expected
+
+
 def test_parse_numbers_normalization() -> None:
     numbers = parse_numbers("Sales hit $391.0 billion (up 2%) versus 365,817 in 2023.")
     values = [(n.value, n.is_percent) for n in numbers]
