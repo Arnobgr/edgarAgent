@@ -1,46 +1,58 @@
-# Phase 3 — Diagnosing the two failing gate metrics
+# Phase 3 — Diagnosing the three failing gate metrics
 
-**Status:** not started · **Created:** 2026-07-26 · **Blocks:** Phase 4
+**Status:** ready to start · **Created:** 2026-07-26 ·
+**Updated:** 2026-07-27 with n=29 baseline numbers · **Blocks:** Phase 4
 
-## ⚠ Prerequisite — do not start here
+## ▶ START HERE
 
-**Run the 30-Q baseline first: `plans/phase-3-exit-gate.md` → START HERE.**
+The prerequisite is **satisfied**: the 30-Q baseline ran 2026-07-27 and the
+exit gate FAILED on all three targets. Everything below consumes that report.
 
-This plan has no entry point of its own. Every task below consumes
-`eval/reports/agent-<ts>.json` from a completed 30-question run — that report
-*is* the raw material being classified. Without it there is nothing to work on.
+```bash
+ls eval/reports/agent-20260727-093137.json   # the raw material; plus data/ingest.db
+```
 
-The baseline is still worth running even though this plan argues
-`numeric_fidelity` may be near-useless, for three reasons that do not depend on
-that metric:
+**Do Task 1 first. Tasks 1 and 2 cost nothing in API spend** — both are scripts
+and hand-checks over an artifact you already paid for. Exhaust them before
+spending another ~75 min and real money on a re-run.
 
-1. It produces the answers Task 1 classifies.
-2. It gives the **first trustworthy `hallucination_rate`** — every reading
-   before the 2026-07-26 retraction fix was an artifact.
-3. It writes `eval/baselines.json`, which Phase 4's CI regression gate needs
-   and which is currently all-`null`.
+**State you can rely on, so nothing needs re-deriving:**
 
-`grounding_rate` and `citation_accuracy` are unaffected by the
-`numeric_fidelity` problem and are measured properly by that run.
+- Corpus ingested, both Qdrant collections at 4,181 points. Config is the GLM
+  arm (`synthesis`/`critic` → `z-ai/glm-5.2-20260616`, `eval_judge` →
+  `claude-sonnet-5`). `uv run pytest -q` → 118 passed. Langfuse on port 3001.
+- All 80 eval labels are `verified`. ADR 0011 (retrieval) is settled on them.
+- `eval/baselines.json` is all-`null` **on purpose** — the failing run's
+  baseline was reverted by hand. Do not re-run `--write-baseline` until the
+  metric definitions here are settled; see the `--write-baseline` footgun in
+  Task 4.
+- Model selection is **settled** (GLM, on cost). Re-opening it is not how these
+  metrics get fixed.
 
-Expect to re-run `--write-baseline` once after any metric change here. That is
-one flag and one run, not wasted work — a baseline gating on grounding and
-hallucination is useful immediately, regardless of what happens to
-`numeric_fidelity`.
+### The gate, as measured (n=29 questions, 147 claims judged)
 
-Read this **before** attempting to fix retrieval, prompts, or models to close
-the exit gate. Two of the three gate metrics are far from target:
-
-| metric | measured (best arm) | target | gap |
+| metric | target | measured | gap |
 |---|---|---|---|
-| grounding_rate | 0.833 | ≥ 0.90 | close |
-| **numeric_fidelity** | **~0.53** | **≥ 0.95** | **enormous** |
-| hallucination_rate | unreliable until re-measured | ≤ 2% | unknown |
+| grounding_rate | ≥ 0.90 | **0.735** | large — no known spec problem |
+| **numeric_fidelity** | **≥ 0.95** | **0.566** | **enormous — spec suspect** |
+| hallucination_rate | ≤ 0.02 | **0.030** | closest to target |
+| citation_accuracy | (not a gate) | 0.728 | Task 2 |
+| expected_fact_coverage | (not a gate) | 0.400 | denominator bug, Task 4 |
 
-`numeric_fidelity` is the one that cannot be closed by tuning. A gap that
-large, that stable across every model tried (Sonnet, GLM 5.2, Grok 4.5,
-Opus 5 — all 0.50–0.71), is a signal about **how it is measured**, not about
-which model writes the answer.
+**Every n=5 figure in the git history of this plan is superseded.** Grounding
+read 0.833 on 15 claims and 0.735 on 147; citation accuracy read 0.381–0.667 on
+15–21 claims and 0.728 on 147. Treat the small-sample numbers as noise
+wherever they still appear below.
+
+`numeric_fidelity` remains the one that cannot be closed by tuning — but note
+the load-bearing evidence for that is the **measured chance floor** below, not
+the cross-model stability argument. Stability across models (0.50–0.71) was
+measured at n=5, where grounding moved 0.10 on the same model, so it is weaker
+than it looks. The chance floor stands on its own.
+
+**Verification is not the problem.** Verifier precision/recall is ~0.98
+(numeric 0.979, qualitative 1.000), so failing grounding and numeric_fidelity
+come from synthesis or from the metric definitions — not from the verifier.
 
 ## The governing lesson
 
@@ -81,7 +93,7 @@ Two consequences that matter enormously:
   filed XBRL facts. They are scored as failures **by construction**, no matter
   how correct they are.
 
-### Measured chance floor (2026-07-26) — read this before interpreting 0.53
+### Measured chance floor (2026-07-26) — read this before interpreting 0.566
 
 The store holds 25,937 facts but only **7,428 distinct values**. Feeding the
 matcher numbers invented at random:
@@ -96,7 +108,8 @@ matcher numbers invented at random:
 financial writing normally uses, because a ±$50M window usually contains one
 of 7,428 scattered values by luck.
 
-Our measured `numeric_fidelity` is **~0.53** against a chance floor of ~0.47.
+Our measured `numeric_fidelity` is **0.566** (n=29, 2026-07-27) against a
+chance floor of ~0.47.
 **The score is barely above what random numbers would earn**, so it has very
 little discriminating power and is close to uninformative in *both*
 directions. This is why it sits near 0.5 no matter which model writes the
@@ -216,20 +229,20 @@ scoping either way.
 ## Task 2 — `citation_accuracy`: why do cited spans not support their claims?
 
 `citation_accuracy` (`metrics.py:114-120`) is the fraction of judged
-`(claim, span)` pairs the `eval_judge` rules as supported. Measured on the
-matched 5-question pair (2026-07-26):
+`(claim, span)` pairs the `eval_judge` rules as supported.
 
-| arm | citation_accuracy | claims judged |
-|---|---|---|
-| GLM 5.2 | 0.667 | 15 |
-| Opus 5 | 0.381 | 21 |
+**Measured 2026-07-27: 0.728 over 147 judged claims.** This supersedes the n=5
+readings this task was originally written around (GLM 0.667 / 15 claims, Opus
+0.381 / 21 claims) — **the problem is real but far milder than the 0.381
+suggested**, and citation_accuracy is not a gate metric. Size the effort
+accordingly and do Task 1 first.
 
 This is a **different failure** from `numeric_fidelity` and should not be
-lumped together with it. Note the tension worth explaining: verifier
+lumped together with it. The tension still worth explaining: verifier
 precision/recall is ~0.98, so the verifier judges claims against their sources
-accurately — yet the judge says a third to two-thirds of cited spans don't
-support their claim. Both cannot be a simple accuracy story; one of them is
-measuring something other than what its name suggests.
+accurately — yet the judge rules ~27% of cited spans unsupported. Both cannot
+be a simple accuracy story; one of them is measuring something other than what
+its name suggests.
 
 Candidate causes, cheapest to check first:
 
@@ -260,6 +273,80 @@ counts differ.
 
 ---
 
+## Task 3 — `expected_fact_coverage` drops labels instead of counting misses
+
+**Small, self-contained, and independent of Tasks 1–2.** Measured 0.400.
+
+Expected facts that fail to resolve in the store hit `continue` **before**
+`total += 1` (`agent_runner.py:114-117`), so the fact leaves the denominator
+entirely rather than scoring as a miss. The metric is silently computed over a
+subset of the labels you verified — the same class of defect as the retraction
+bug in "The governing lesson": a metric routing *around* the failure it exists
+to catch.
+
+Five facts were dropped in the 2026-07-27 run (all logged as
+`no fact in store`):
+
+| question | fact |
+|---|---|
+| g-006 | NVDA FY2026 `us-gaap:Assets` / "total assets" |
+| g-008 | AAPL FY2025 `CashAndCashEquivalents` |
+| g-019 | TSLA FY2025 `us-gaap:Assets` |
+| g-019 | AAPL FY2025 `us-gaap:Assets` |
+| g-019 | NVDA FY2026 `us-gaap:Assets` |
+
+**These labels are `verified`, so failing to resolve is itself the finding.**
+Diagnose before changing the metric: `us-gaap:Assets` failing for all three
+tickers points at `query_facts` concept-term matching, not at missing data —
+25,937 facts are in the store and total assets is about as standard as a
+concept gets. Check whether `concept_terms` needs the `us-gaap:` prefix
+stripped, and whether `fiscal_year` for NVDA FY2026 matches how the store
+records it.
+
+Then decide the metric's contract: an unresolvable *expected* fact is either a
+label bug (fix the label) or a store/query bug (fix the query) — but it should
+never silently shrink the denominator. Make it count as a miss or raise.
+
+## Task 4 — Reproducibility and safety fixes before the next paid run
+
+**Batch these before any re-baseline**, so the one expensive re-run the plan
+anticipates is clean. None of them changes a metric value.
+
+1. **SQLite `SQLITE_MISUSE` loses questions.** The 2026-07-27 run completed
+   **29 of 30** — g-010 died at startup with `bad parameter or other API
+   misuse` and was logged-and-dropped (`agent_runner.py:163-164`), silently
+   shrinking every metric's denominator. Two candidate defects, cause
+   **unconfirmed** (one occurrence, timing-dependent, not reproduced):
+   - `runner.py:94` builds an `IngestStore` per question via
+     `build_production_reconciler` and **never closes it**. Connections leak
+     across the run, each `check_same_thread=False` and used from worker
+     threads via `asyncio.to_thread`.
+   - All questions share one `checkpoints.db` through `AsyncSqliteSaver`
+     (`runner.py:105`); a node timeout or cancellation mid-checkpoint-write can
+     leave that connection broken. **Sequencing favours this one** — g-009 hit
+     a DNS failure (`[Errno 8] nodename nor servname provided`), then g-010
+     failed instantly.
+
+   Reproduce before fixing. A regression test wants to assert `n_completed ==
+   n_questions`, since the drop is what makes the metrics quietly wrong.
+
+2. **`--write-baseline` is a footgun.** It overwrites `eval/baselines.json`
+   unconditionally (`agent_runner.py:267-281`) — no gate check — and does not
+   carry `n_questions`/`n_completed` across, so a 29-question failing run
+   writes a file that reads like a clean 30-question accepted baseline. It did
+   exactly that on 2026-07-27 and was reverted by hand. Gate it on the
+   absolute §13 targets or require an explicit `--force`, and record coverage
+   in the file.
+
+3. **Do not re-litigate the GLM-vs-Sonnet exception counts.** The "10
+   `OutputParserException`s on Sonnet vs 0 on GLM" confounder is **resolved and
+   dead as evidence**: the 2026-07-27 GLM run threw the same failure (Pydantic
+   `ValidationError` — `SynthesisOutput.claims[25]` returned `{}`, missing
+   `text` and `claim_type`) and recovered via `ainvoke_with_retry`
+   (`guardrails/execution.py:48`), which retries 3× and logs each attempt with
+   `exc_info`. These are logged-then-recovered retries and **both arms throw
+   them**. The counts measure logging, not quality.
+
 ## What is explicitly out of scope here
 
 - **Model selection.** Settled: stay on GLM 5.2 on cost. See the head-to-head
@@ -267,5 +354,14 @@ counts differ.
 - **Retrieval parameters.** ADR 0011 is settled on verified labels
   (`openai` + no rerank). Do not re-tune retrieval until Task 1 shows bucket C
   dominates — otherwise you are tuning against a mis-specified metric.
-- **`grounding_rate` 0.833 → 0.90.** The smallest of the three gaps and the
-  most likely to move once the other two are understood. Leave it last.
+- ~~**`grounding_rate` 0.833 → 0.90.** The smallest of the three gaps and the
+  most likely to move once the other two are understood. Leave it last.~~
+  **Revised 2026-07-27 — this no longer holds.** It was justified by 0.833
+  being the smallest gap; the real n=29 figure is **0.735**, a 0.165 gap. Since
+  `grounding_rate` has no known specification problem (unlike numeric_fidelity)
+  and the verifier behind it runs at ~0.98 P/R, it is arguably the most
+  *actionable* of the three. It is still sequenced after Task 1 — but promote
+  it to a real task once Task 1 reports, rather than leaving it last by
+  default. Note the per-claim denominator caveat under "Confound to control":
+  a model that decomposes harder is mechanically penalised, so check
+  claims-per-question alongside any grounding change.

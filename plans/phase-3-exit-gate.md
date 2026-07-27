@@ -2,52 +2,54 @@
 
 ---
 
-## ▶ START HERE (resume point, 2026-07-26)
+## ▶ PHASE 3 IS COMPLETE — the gate FAILED. Go to the diagnosis plan.
 
-**Run this. Nothing needs deciding first.**
+**This plan has no remaining work. Do not run anything here.**
+**Next session starts at `plans/phase-3-metric-diagnosis.md`.**
 
-```bash
-docker compose -f docker-compose.dev.yml up -d          # Qdrant must be up
-uv run eval-agent --write-baseline                       # 30 questions, ~75 min
-```
+The 30-Q baseline ran 2026-07-27 (report `eval/reports/agent-20260727-093137.json`).
+All five steps are done. Step 5's judgment, against the blueprint §13 targets:
 
-Steps 1–3 are **done**; the blocking bugs are **fixed**. This one command is
-all that stands between here and the step-5 exit-gate judgment.
+| metric | target | measured (n=29) | verdict |
+|---|---|---|---|
+| grounding_rate | ≥ 0.90 | **0.735** | ❌ FAIL |
+| hallucination_rate | ≤ 0.02 | **0.030** | ❌ FAIL |
+| numeric_fidelity | ≥ 0.95 | **0.566** | ❌ FAIL |
 
-**Preconditions (verify, don't assume):**
+Supporting: citation_accuracy 0.728 (147 claims judged), expected_fact_coverage
+0.400, unanswerable_declined 0.750.
 
-- Qdrant reachable: `curl -s localhost:6333/collections/fie_chunks__text-embedding-3-small | jq .result.points_count` → `4181`.
-- Branch `feat/router-provider-agnostic`, working tree has the retraction fix
-  in `src/fie/graph/build.py` and the model-router fix in `src/fie/llm/__init__.py`.
-- `uv run pytest -q` → **118 passed**. If it's 117, the retraction regression
-  test is missing and the tree is stale — stop and check.
-- Config is on the **GLM arm** (`synthesis`/`critic` → `z-ai/glm-5.2-20260616`,
-  `eval_judge` → `claude-sonnet-5`). That is the intended baseline model.
-- Langfuse is on **port 3001** now, not 3000.
+**Do NOT start Phase 4** (blueprint §13). The follow-up is scoped in
+`plans/phase-3-metric-diagnosis.md` — at least one of these metrics is
+suspected mis-specified rather than genuinely failing, so read that before
+trying to "fix" retrieval, prompts, or models.
 
-**What to expect, so you don't misread it as a regression:**
+**`eval/baselines.json` is deliberately still all-`null`.** The run wrote a
+baseline; it was **reverted by hand** because `--write-baseline` overwrites
+unconditionally even when the gate fails (`agent_runner.py:267-281`), and
+committing a failing run would lock the failure in as the Phase 4 CI bar. Do
+not re-run `--write-baseline` until the metric work below is settled.
 
-- Takes ~75 min (~2.5 min/question). It is not stuck; it sleeps on network I/O.
-  Check progress with `grep -c '^\[g-' <logfile>`, not by watching the process.
-- **`hallucination_rate` will come in ABOVE 0.000.** That is the retraction fix
-  working, not a regression — see the retraction entry below. Every earlier
-  `0.000` was an artifact.
-- Budget is per-question ($5 cap in `runner.py:95`), so a 30-question run
-  cannot trip it. GLM + Gemini + Sonnet judge ≈ a few dollars total.
-- `--write-baseline` writes `eval/baselines.json`. It is currently all-`null`
-  and gates nothing; after this run it becomes the Phase 4 CI gate.
+**`hallucination_rate: 0.030` is the first trustworthy reading of that metric.**
+Every `0.000` before the 2026-07-26 retraction fix was an artifact. It is now
+the *closest* of the three to target — do not read it as a regression.
 
-**Then do step 5** (exit-gate judgment, below). Based on every arm measured so
-far, **expect the gate to FAIL** — best grounding anywhere is 0.833 vs a 0.90
-target, and numeric_fidelity ~0.53 vs 0.95. That is the expected outcome, not
-a surprise: do **not** start Phase 4. The follow-up work is scoped in
-**`plans/phase-3-metric-diagnosis.md`** — read that before trying to "fix"
-anything, because at least one of those two metrics may be mis-specified
-rather than genuinely failing.
+### Decision 3.5 (verifier escalation): NO escalation needed — settled
 
-**Do NOT re-do:** label verification (all 80 are `verified`), the retrieval
-benchmark (re-run 2026-07-26 on verified labels, ADR 0011 updated), or the
-Opus-vs-GLM model comparison (settled — stay on GLM, see below).
+| claim type | precision | recall |
+|---|---|---|
+| numeric | 0.979 | 0.979 |
+| qualitative | 1.000 | 1.000 |
+
+No claim type is materially below the others, so no role moves to a stronger
+model and **ADR 0013 records "no escalation" with these numbers**. The
+important consequence: with verifier precision ~0.98, the failing grounding and
+numeric_fidelity are **not** a verification problem. They come from synthesis
+or from the metric definitions themselves.
+
+**Do NOT re-do:** label verification (all 80 `verified`), the retrieval
+benchmark (re-run 2026-07-26 on verified labels, ADR 0011 updated), the
+Opus-vs-GLM comparison (settled — stay on GLM), or this baseline run.
 
 ---
 
@@ -165,11 +167,45 @@ come from verified labels; running it earlier for a preview is fine.
   conciseness instruction, which our synthesis prompt does not have. **Verdict:
   stay on GLM on cost** (~8x cheaper on output: $0.95/$2.98 vs $5/$25), not on
   a demonstrated quality win. n=5 — do not over-read either column.
-- **Step 4 — agent baseline: RE-RUNNING on the fixed retraction path.** The
-  first 30-Q attempt was killed at 11/30 once the retraction bug was found, so
-  the committed baseline is measured with an honest hallucination_rate.
-  `eval/baselines.json` was never written by that run.
-- **Step 5 — exit-gate judgment: PENDING** the step-4 run.
+- **Step 4 — agent baseline: DONE (2026-07-27).** Report
+  `eval/reports/agent-20260727-093137.json`, GLM arm, Sonnet judge, ~75 min.
+  **`n_questions: 30`, `n_completed: 29`** — see the SQLite fault below.
+  Numbers in the table at the top. `eval/baselines.json` was written and then
+  reverted (see above); the tree is clean.
+- **Step 5 — exit-gate judgment: DONE — FAILED on all three targets.** Do not
+  start Phase 4. Continue at `plans/phase-3-metric-diagnosis.md`.
+
+### Three findings from the baseline run (carried into the diagnosis plan)
+
+- **BUG — SQLite `SQLITE_MISUSE` cost one question (g-010).** Error text:
+  `bad parameter or other API misuse`; the question was logged and **dropped
+  from `results`** (`agent_runner.py:163-164`), shrinking the metric
+  denominator to 29. Two lifecycle defects are candidates, and the precise
+  cause is **unconfirmed** (one occurrence, timing-dependent, not reproduced):
+  (a) `runner.py:94` builds an `IngestStore` per question via
+  `build_production_reconciler` and **never closes it** — connections leak
+  across the run, each `check_same_thread=False` and used from worker threads
+  via `asyncio.to_thread`; (b) all questions share one `checkpoints.db` through
+  `AsyncSqliteSaver` (`runner.py:105`), where a node timeout or cancellation
+  mid-checkpoint-write can leave the connection broken. Sequencing favours (b):
+  g-009 hit a DNS failure, then g-010 died instantly at startup.
+- **BUG — `expected_fact_coverage` (0.400) silently shrinks its own
+  denominator.** Expected facts that fail to resolve hit `continue` **before**
+  `total += 1` (`agent_runner.py:114-117`), so a verified label is dropped
+  rather than counted as a miss. Five did so in this run: NVDA FY2026
+  `us-gaap:Assets`, AAPL FY2025 `CashAndCashEquivalents`, and TSLA/AAPL/NVDA
+  `us-gaap:Assets` for g-019. These labels are `verified`, so failing to
+  resolve points at concept-term mapping rather than missing data.
+- **CORRECTION — the GLM-vs-Sonnet exception asymmetry is dead as evidence.**
+  The "10 `OutputParserException`s on Sonnet vs 0 on GLM" confounder recorded
+  above is not a model difference. This GLM run threw the same failure (a
+  Pydantic `ValidationError` — `SynthesisOutput.claims[25]` came back as an
+  empty dict, missing `text` and `claim_type`) and **recovered**:
+  `ainvoke_with_retry` (`guardrails/execution.py:48`) retries 3× and logs each
+  attempt with `exc_info`. Both halves of the 2026-07-26 suspicion are now
+  confirmed — these are logged-then-recovered retries, and **both arms throw
+  them**. Do not carry the exception counts forward as evidence for either
+  model.
 
 Current state, for orientation:
 
