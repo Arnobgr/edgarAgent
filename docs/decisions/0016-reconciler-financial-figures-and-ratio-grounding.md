@@ -53,15 +53,38 @@ or model selection:
    claim's printed precision. The supporting span names both facts, so the
    evidence trail stays inspectable.
 
+## Verifier P/R re-run (2026-07-27, same day)
+
+The re-run against the 112 labeled claims surfaced two defects the aggregate
+had hidden (both pre-existing in kind — the before/after aggregates were
+identical at 0.982/0.982):
+
+- **vc-period-019 (false accept):** the mapper omits `fiscal_period` for
+  "FY 2023"-style claims, so the lookup ran with *no* period filter and a
+  nine-month `YTD9` value grounded a full-year claim. Fixed by
+  `_period_admissible`: period omission now defaults safe — a year-scoped
+  mapping admits only `FY` and instant (unlabeled) facts, and the relaxed
+  pass after a stated period admits instants only.
+- **vc-real-032 (false reject):** matching is sign-blind by design, but only
+  on the claim side — `'$-23.0 million'` parses as a magnitude while the
+  fact stores `-23e6` and the mapper echoes the printed sign. Both the
+  fact comparison and the candidate-to-figure pairing now compare
+  magnitudes.
+
+**Final: precision 1.000 / recall 1.000 on all 112 claims (numeric 94,
+qualitative 18), zero disagreements** — vs 0.982/0.982 before ADR 0016.
+Caveats: n=112 is a point estimate on a nondeterministic cheap mapper, and
+the last two fixes were driven by these very labels, so the perfect score
+carries mild fit-to-labelset risk; the fixes themselves are principled
+(sign-blindness consistency, safe-by-default period omission), not
+label-specific patches.
+
 ## Consequences
 
 - Expected grounding on the baseline answers: the 18 noise-only claims
   ground deterministically; YTD/instant/ratio classes additionally need the
   mapper to emit the right fields, which the schema and prompt now permit —
   ceiling ~0.94 vs the 0.90 target if it does.
-- **Verifier behavior changed, so the measured ~0.98 P/R no longer applies.**
-  Re-run the verifier eval on the labeled claims before trusting new
-  grounding numbers (the numeric arm needs the mapper model — paid, small).
 - Coincidental-pair risk in ratio recomputation is bounded the same way
   direct matches are: printed-precision tolerance, plus same-accession/
   period pairing and mapper-named operand concepts. Loosening any of these

@@ -246,8 +246,10 @@ _MAPPING_SYSTEM = (
     "number (apply scale words — '$96.8 billion' → 96800000000; percentages "
     "as the printed number), likely US-GAAP concept names and label words, "
     "the fiscal year/period the claim refers to (null if unstated; use the "
-    "company's fiscal calendar, 'YTD6'/'YTD9' for six/nine-month figures, "
-    "and null period for balance-sheet 'as of' figures), and the unit. For "
+    "company's fiscal calendar; always set fiscal_period when the claim "
+    "names one — 'for FY 2023' → 'FY', 'in Q2 2025' → 'Q2', 'YTD6'/'YTD9' "
+    "for six/nine-month figures — and null period for balance-sheet 'as "
+    "of' figures), and the unit. For "
     "a percentage that is a ratio of filed amounts (a margin, a % of "
     "revenue), also give numerator_terms and denominator_terms."
 )
@@ -367,7 +369,9 @@ class XbrlNumericReconciler:
             claim_forms = [(number.value, number.tolerance)]
             if number.is_percent:
                 claim_forms.append((number.value / 100.0, number.tolerance / 100.0))
-            if not any(abs(candidate.value - v) <= tol for v, tol in claim_forms):
+            # Magnitude pairing: the parser is sign-blind ('$-23.0 million'
+            # → 23.0 million) but the mapper echoes the printed sign.
+            if not any(abs(abs(candidate.value) - v) <= tol for v, tol in claim_forms):
                 continue
             searched.extend(candidate.concept_terms)
             for fiscal_period in _period_attempts(candidate.fiscal_period):
@@ -378,6 +382,7 @@ class XbrlNumericReconciler:
                     fiscal_period=fiscal_period,
                     unit=candidate.unit,
                 )
+                facts = [f for f in facts if _period_admissible(f, fiscal_period, candidate)]
                 for fact in facts:
                     if self._value_matches(number, fact):
                         return _fact_span(fact)
@@ -420,6 +425,10 @@ class XbrlNumericReconciler:
                 fiscal_period=fiscal_period,
                 limit=40,
             )
+            numerators = [f for f in numerators if _period_admissible(f, fiscal_period, candidate)]
+            denominators = [
+                f for f in denominators if _period_admissible(f, fiscal_period, candidate)
+            ]
             for num in numerators:
                 for den in denominators:
                     if den.value == 0 or (
@@ -429,7 +438,7 @@ class XbrlNumericReconciler:
                         num.fiscal_period,
                     ) != (den.ticker, den.accession_no, den.fiscal_year, den.fiscal_period):
                         continue
-                    if abs(num.value / den.value - target) <= tolerance:
+                    if abs(abs(num.value / den.value) - target) <= tolerance:
                         return _ratio_span(num, den)
         return None
 
@@ -439,21 +448,45 @@ class XbrlNumericReconciler:
         figure at the claim's stated precision (half a unit of the last
         significant digit — '$96.8B' matches 96,773,000,000). Percent claims
         also try the /100 ratio form XBRL stores, with the tolerance scaled
-        down accordingly."""
+        down accordingly. The fact's magnitude is compared — matching is
+        sign-blind on both sides ('$-23.0 million' parses as 23.0 million;
+        claims state direction in words, not signs)."""
         pairs = [(number.value, number.tolerance)]
         if number.is_percent:
             pairs.append((number.value / 100.0, number.tolerance / 100.0))
-        return any(abs(fact.value - v) <= tol for v, tol in pairs)
+        return any(abs(abs(fact.value) - v) <= tol for v, tol in pairs)
 
 
 def _period_attempts(fiscal_period: str | None) -> list[str | None]:
-    """The stated period first, then no period filter. The store labels
-    periods differently than claims do — instants (balance-sheet facts)
-    carry no period at all, nine-month figures are 'YTD9' — and fiscal_year
-    plus value-at-stated-precision still gate the relaxed match. The fiscal
-    *year* is never dropped: the right value under the wrong year must stay
-    unsupported (ADR 0016)."""
+    """The stated period first, then a relaxed pass for instants only
+    (see `_period_admissible`). The fiscal *year* is never dropped: the
+    right value under the wrong year must stay unsupported (ADR 0016)."""
     return [fiscal_period, None] if fiscal_period is not None else [None]
+
+
+def _period_admissible(fact: Fact, attempt: str | None, candidate: FactCandidate) -> bool:
+    """Whether a queried fact's period may satisfy this mapping.
+
+    Period omission must default safe, not maximally permissive
+    (ADR 0016): a nine-month value grounding a full-year claim was the one
+    false accept in the verifier P/R run (vc-period-019).
+
+    - An exact-period query already filtered — everything is admissible.
+    - The relaxed pass after a stated period reaches *instants only*:
+      balance-sheet facts carry no period label at all (ADR 0015), while
+      duration facts are always labeled, so a labeled fact under a
+      different period is a genuine mismatch.
+    - A mapping with a fiscal year but no period is a year-scoped claim —
+      the mapper omits the period ('FY 2023' → None in practice), so only
+      full-year and instant facts qualify; quarterly/YTD values must not.
+    - No year, no period: value, concept and ticker are the only gates."""
+    if attempt is not None:
+        return True
+    if candidate.fiscal_period is not None:
+        return fact.fiscal_period is None
+    if candidate.fiscal_year is not None:
+        return fact.fiscal_period is None or fact.fiscal_period == "FY"
+    return True
 
 
 def _fact_span(fact: Fact) -> str:

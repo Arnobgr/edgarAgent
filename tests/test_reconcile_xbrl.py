@@ -234,15 +234,15 @@ def test_instant_fact_with_null_period_grounds_despite_fy_mapping(tmp_path: Path
     assert outcome.supporting_span is not None and "us-gaap:Assets" in outcome.supporting_span
 
 
-def test_ytd_fact_grounds_when_mapper_says_quarter(tmp_path: Path) -> None:
-    """Nine-month figures live under 'YTD9'; a 'Q3' mapping must not make
-    them unreachable (7/53 baseline failures)."""
+def test_ytd_fact_grounds_via_mapper_vocabulary(tmp_path: Path) -> None:
+    """Nine-month figures live under 'YTD9' — reachable now that the
+    mapping schema names YTD periods (7/53 baseline failures)."""
     s = IngestStore(tmp_path / "ingest.db")
     s.replace_facts("acc-1", [make_fact(value=69_926_000_000.0, fiscal_period="YTD9")])
     mapping = FactMappingOutput(
         candidates=[
             FactCandidate(
-                value=69.926e9, concept_terms=["Revenues"], fiscal_year=2025, fiscal_period="Q3"
+                value=69.926e9, concept_terms=["Revenues"], fiscal_year=2025, fiscal_period="YTD9"
             )
         ]
     )
@@ -250,6 +250,120 @@ def test_ytd_fact_grounds_when_mapper_says_quarter(tmp_path: Path) -> None:
     outcome = reconciler.reconcile(
         "TSLA total revenue for the nine months ended September 30, 2025 was $69,926 million.",
         [make_chunk()],
+    )
+    assert outcome.verdict == "grounded"
+
+
+def test_relaxed_pass_never_grounds_labeled_duration_facts(tmp_path: Path) -> None:
+    """A full-year claim must not ground on a nine-month value in the same
+    year: the relaxed pass admits only unlabeled instants. This is the
+    vc-period-019 false accept caught in the verifier P/R run (ADR 0016)."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                concept="us-gaap:NetIncomeLoss",
+                label="Net income",
+                value=7_069_000_000.0,
+                fiscal_period="YTD9",
+                fiscal_year=2023,
+            )
+        ],
+    )
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=7.1e9, concept_terms=["NetIncomeLoss"], fiscal_year=2023, fiscal_period="FY"
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA's net income for FY 2023 was $7.1 billion.", [make_chunk()]
+    )
+    assert outcome.verdict == "unsupported"
+
+
+def test_year_scoped_mapping_without_period_excludes_partial_year_facts(tmp_path: Path) -> None:
+    """The mapper omits the period for 'FY 2023' claims in practice; a
+    year-only mapping must still not ground on a YTD value — only FY and
+    instant facts qualify (vc-period-019, ADR 0016)."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                concept="us-gaap:NetIncomeLoss",
+                label="Net income",
+                value=7_069_000_000.0,
+                fiscal_period="YTD9",
+                fiscal_year=2023,
+            ),
+        ],
+    )
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=7.1e9, concept_terms=["NetIncomeLoss"], fiscal_year=2023, fiscal_period=None
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA's net income for FY 2023 was $7.1 billion.", [make_chunk()]
+    )
+    assert outcome.verdict == "unsupported"
+
+    # The same year-only mapping still finds the true full-year fact.
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                concept="us-gaap:NetIncomeLoss",
+                label="Net income",
+                value=7_091_000_000.0,
+                fiscal_period="FY",
+                fiscal_year=2023,
+            ),
+        ],
+    )
+    outcome = reconciler.reconcile(
+        "TSLA's net income for FY 2023 was $7.1 billion.", [make_chunk()]
+    )
+    assert outcome.verdict == "grounded"
+
+
+def test_matching_is_sign_blind_on_the_fact_side(tmp_path: Path) -> None:
+    """'$-23.0 million' parses as a magnitude; a fact stored as -23e6 must
+    still match (vc-real-032, ADR 0016) — direction is verified in words."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                concept="us-gaap:NetIncomeLossAttributableToNoncontrollingInterest",
+                label="Net income (loss) attributable to noncontrolling interests",
+                value=-23_000_000.0,
+                fiscal_year=2023,
+            ),
+        ],
+    )
+    # The mapper echoes the printed sign; the parser is sign-blind. Both
+    # sides must pair on magnitude.
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=-23.0e6,
+                concept_terms=["NetIncomeLoss"],
+                fiscal_year=2023,
+                fiscal_period="FY",
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA's net income for FY 2023 was $-23.0 million.", [make_chunk()]
     )
     assert outcome.verdict == "grounded"
 

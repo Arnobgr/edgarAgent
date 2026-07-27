@@ -107,9 +107,14 @@ paid, small).
 `tools/reconcile.py` (fixes 3+4 share one mechanism: a period-free retry
 that never drops the fiscal year, preserving `test_period_shift_is_caught`).
 Claims with no financial figures now verify against cited text via the
-interim reconciler. Offline tests cover each failure class. **Before
-trusting new grounding numbers: re-run the verifier P/R eval** (the ~0.98
-was measured against the old reconciler), then the 30-Q re-baseline.
+interim reconciler. Offline tests cover each failure class.
+
+**Verifier P/R re-run same day: 1.000/1.000 on all 112 labeled claims**
+(was 0.982/0.982). The run surfaced and fixed two further defects the
+aggregate had hidden: period-omitted mappings matching partial-year values
+(now `_period_admissible`, safe-by-default) and sign-sensitivity against
+the sign-blind parser (now magnitude comparison throughout). Details and
+caveats in ADR 0016. Remaining spend decision: the 30-Q re-baseline.
 
 ---
 
