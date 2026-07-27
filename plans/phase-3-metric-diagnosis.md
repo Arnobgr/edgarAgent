@@ -103,6 +103,14 @@ changes verifier behavior, so re-run `eval-retrieval`-style verifier P/R on
 the labeled claims before trusting them (numeric arm needs the mapper model —
 paid, small).
 
+**Implemented 2026-07-27 — ADR 0016.** All four fixes landed in
+`tools/reconcile.py` (fixes 3+4 share one mechanism: a period-free retry
+that never drops the fiscal year, preserving `test_period_shift_is_caught`).
+Claims with no financial figures now verify against cited text via the
+interim reconciler. Offline tests cover each failure class. **Before
+trusting new grounding numbers: re-run the verifier P/R eval** (the ~0.98
+was measured against the old reconciler), then the 30-Q re-baseline.
+
 ---
 
 ## ▶ START HERE (original plan, superseded by the outcome above)

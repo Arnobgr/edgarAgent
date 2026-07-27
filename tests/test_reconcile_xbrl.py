@@ -177,3 +177,124 @@ def test_no_numbers_in_claim_is_unsupported(store: IngestStore) -> None:
     reconciler = XbrlNumericReconciler(store, FakeMapper(FactMappingOutput()))
     outcome = reconciler.reconcile("Revenue grew strongly.", [make_chunk()])
     assert outcome.verdict == "unsupported"
+
+
+# --- ADR 0016: only financial figures are reconciliation obligations ---
+
+
+def test_date_and_ordinal_fragments_are_not_obligations(store: IngestStore) -> None:
+    """ "December 31", "Q4" and "10-K" must not block grounding — 18/53
+    non-grounded claims in the 2026-07-27 baseline failed only on such
+    fragments."""
+    reconciler = XbrlNumericReconciler(store, FakeMapper(revenue_mapping()))
+    outcome = reconciler.reconcile(
+        "Per the 10-K, TSLA total revenue for FY 2025 (Q4, year ended "
+        "December 31, 2025) was $96.8 billion.",
+        [make_chunk()],
+    )
+    assert outcome.verdict == "grounded"
+
+
+def test_claim_with_no_financial_figures_verifies_against_cited_text(
+    store: IngestStore,
+) -> None:
+    reconciler = XbrlNumericReconciler(store, FakeMapper(FactMappingOutput()))
+    chunk = make_chunk(text="We have experienced lead times of more than 12 months.")
+    outcome = reconciler.reconcile("Lead times extended beyond 12 months.", [chunk])
+    assert outcome.verdict == "grounded"
+    outcome = reconciler.reconcile(
+        "Lead times extended beyond 12 months.", [make_chunk(text="No numbers here.")]
+    )
+    assert outcome.verdict == "unsupported"
+
+
+# --- ADR 0016: period-free retry (never year-free) ---
+
+
+def test_instant_fact_with_null_period_grounds_despite_fy_mapping(tmp_path: Path) -> None:
+    """Balance-sheet facts store fiscal_period = NULL; a mapping that says
+    'FY' must still find them within the same fiscal year."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [make_fact(concept="us-gaap:Assets", label="Total assets", fiscal_period=None)],
+    )
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=96.8e9, concept_terms=["Assets"], fiscal_year=2025, fiscal_period="FY"
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA total assets were $96.8 billion as of December 31, 2025.", [make_chunk()]
+    )
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None and "us-gaap:Assets" in outcome.supporting_span
+
+
+def test_ytd_fact_grounds_when_mapper_says_quarter(tmp_path: Path) -> None:
+    """Nine-month figures live under 'YTD9'; a 'Q3' mapping must not make
+    them unreachable (7/53 baseline failures)."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts("acc-1", [make_fact(value=69_926_000_000.0, fiscal_period="YTD9")])
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=69.926e9, concept_terms=["Revenues"], fiscal_year=2025, fiscal_period="Q3"
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA total revenue for the nine months ended September 30, 2025 was $69,926 million.",
+        [make_chunk()],
+    )
+    assert outcome.verdict == "grounded"
+
+
+# --- ADR 0016: ratio percentages recompute from operand facts ---
+
+
+def ratio_store(tmp_path: Path) -> IngestStore:
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(concept="us-gaap:GrossProfit", label="Gross profit", value=4_370_000_000.0),
+            make_fact(value=23_350_000_000.0),  # Revenues
+        ],
+    )
+    return s
+
+
+def margin_mapping(value: float) -> FactMappingOutput:
+    return FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=value,
+                concept_terms=[],
+                fiscal_year=2025,
+                fiscal_period="FY",
+                numerator_terms=["GrossProfit"],
+                denominator_terms=["Revenues"],
+            )
+        ]
+    )
+
+
+def test_ratio_percent_grounds_by_recomputation(tmp_path: Path) -> None:
+    reconciler = XbrlNumericReconciler(ratio_store(tmp_path), FakeMapper(margin_mapping(18.7)))
+    # 4,370 / 23,350 = 18.72% — matches 18.7% at its printed precision.
+    outcome = reconciler.reconcile("TSLA gross margin for FY 2025 was 18.7%.", [make_chunk()])
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None
+    assert "GrossProfit" in outcome.supporting_span
+    assert "Revenues" in outcome.supporting_span
+
+
+def test_wrong_ratio_percent_stays_unsupported(tmp_path: Path) -> None:
+    reconciler = XbrlNumericReconciler(ratio_store(tmp_path), FakeMapper(margin_mapping(25.0)))
+    outcome = reconciler.reconcile("TSLA gross margin for FY 2025 was 25.0%.", [make_chunk()])
+    assert outcome.verdict == "unsupported"

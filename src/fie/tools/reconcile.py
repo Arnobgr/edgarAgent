@@ -216,9 +216,21 @@ class FactCandidate(BaseModel):
         default=None, description="Fiscal year, if the claim states one"
     )
     fiscal_period: str | None = Field(
-        default=None, description="'FY' or 'Q1'..'Q4', if the claim implies one"
+        default=None,
+        description="'FY', 'Q1'..'Q4', 'YTD6' (six months), or 'YTD9' (nine "
+        "months), if the claim implies one; null for balance-sheet 'as of' "
+        "figures",
     )
     unit: str | None = Field(default=None, description="'usd', 'shares', 'pure', 'usdPerShare'...")
+    numerator_terms: list[str] = Field(
+        default_factory=list,
+        description="For a ratio percentage (margin, % of revenue): concept "
+        "terms for the numerator, e.g. ['GrossProfit']",
+    )
+    denominator_terms: list[str] = Field(
+        default_factory=list,
+        description="For a ratio percentage: concept terms for the denominator, e.g. ['Revenues']",
+    )
 
 
 class FactMappingOutput(BaseModel):
@@ -229,21 +241,28 @@ class FactMappingOutput(BaseModel):
 
 _MAPPING_SYSTEM = (
     "You map figures in a financial claim to XBRL fact queries. For every "
-    "numeric figure in the claim (ignore years used as dates), emit one "
-    "candidate: the figure as an absolute number (apply scale words — "
-    "'$96.8 billion' → 96800000000; percentages as the printed number), "
-    "likely US-GAAP concept names and label words, the fiscal year/period "
-    "the claim refers to (null if unstated), and the unit."
+    "monetary, share or percent figure in the claim (ignore dates, quarter "
+    "labels and form names), emit one candidate: the figure as an absolute "
+    "number (apply scale words — '$96.8 billion' → 96800000000; percentages "
+    "as the printed number), likely US-GAAP concept names and label words, "
+    "the fiscal year/period the claim refers to (null if unstated; use the "
+    "company's fiscal calendar, 'YTD6'/'YTD9' for six/nine-month figures, "
+    "and null period for balance-sheet 'as of' figures), and the unit. For "
+    "a percentage that is a ratio of filed amounts (a margin, a % of "
+    "revenue), also give numerator_terms and denominator_terms."
 )
 
 
 class XbrlNumericReconciler:
     """Exact numeric reconciliation against the local XBRL facts store.
 
-    Flow per claim: parse figures → cheap-model mapping to candidate
-    (concept, period, unit) triples → deterministic SQLite lookup → a
+    Flow per claim: parse figures (financial figures only — currency,
+    scale-worded, percent; see ADR 0016) → cheap-model mapping to candidate
+    (concept, period, unit) triples → deterministic SQLite lookup, with the
+    stated period first and a period-free (never year-free) retry → a
     figure is grounded only if a stored fact matches it exactly at the
-    claim's stated precision. Figures with no fact match fall back to
+    claim's stated precision. Ratio percentages recompute from operand
+    facts named by the mapping. Figures with no fact match fall back to
     cell-matching against cited *table* chunks (display provenance); still
     unmatched → unsupported, with feedback naming what was searched.
     """
@@ -275,6 +294,16 @@ class XbrlNumericReconciler:
                 supporting_span=None,
                 feedback="no numeric value could be parsed from the claim text",
             )
+        # Only financial figures — currency, explicit scale, percent — are
+        # reconciliation obligations. Dates, quarter ordinals and counts
+        # ("Q1", "September 27", "more than 12 months") are not amounts and
+        # XBRL has nothing to say about them; demanding they reconcile made
+        # 18/53 non-grounded claims in the 2026-07-27 baseline (ADR 0016).
+        figures = [n for n in claim_numbers if "$" in n.raw or n.explicit_scale or n.is_percent]
+        if not figures:
+            # A numeric claim with no amounts ("lead times of more than 12
+            # months") is prose detail — verify it against the cited text.
+            return self._fallback.reconcile(claim_text, chunks)
         candidates = self._map_claim(claim_text)
         tickers = sorted({c.ticker for c in chunks}) or None
 
@@ -282,7 +311,7 @@ class XbrlNumericReconciler:
         missing: list[str] = []
         searched: list[str] = []
         table_chunks = [c for c in chunks if c.metadata.get("chunk_type") == "table"]
-        for number in claim_numbers:
+        for number in figures:
             span = self._match_fact(number, candidates, tickers, searched)
             if span is None and table_chunks:
                 span = self._fallback._find_match(number, table_chunks)
@@ -332,7 +361,8 @@ class XbrlNumericReconciler:
         searched: list[str],
     ) -> str | None:
         """The candidate mappings whose value matches this figure drive the
-        lookup; a percent figure additionally tries its /100 'pure' form."""
+        lookup; a percent figure additionally tries its /100 'pure' form and
+        a ratio recomputation when the mapping names both operands."""
         for candidate in candidates:
             claim_forms = [(number.value, number.tolerance)]
             if number.is_percent:
@@ -340,16 +370,67 @@ class XbrlNumericReconciler:
             if not any(abs(candidate.value - v) <= tol for v, tol in claim_forms):
                 continue
             searched.extend(candidate.concept_terms)
-            facts = self._store.query_facts(
+            for fiscal_period in _period_attempts(candidate.fiscal_period):
+                facts = self._store.query_facts(
+                    tickers=tickers,
+                    concept_terms=candidate.concept_terms or None,
+                    fiscal_year=candidate.fiscal_year,
+                    fiscal_period=fiscal_period,
+                    unit=candidate.unit,
+                )
+                for fact in facts:
+                    if self._value_matches(number, fact):
+                        return _fact_span(fact)
+            if number.is_percent and candidate.numerator_terms and candidate.denominator_terms:
+                span = self._match_ratio(number, candidate, tickers, searched)
+                if span is not None:
+                    return span
+        return None
+
+    def _match_ratio(
+        self,
+        number: ParsedNumber,
+        candidate: FactCandidate,
+        tickers: list[str] | None,
+        searched: list[str],
+    ) -> str | None:
+        """Ground a ratio percentage by recomputing it from filed facts.
+
+        Margins and %-of-revenue figures are derived, never filed — but both
+        operands are (14/53 non-grounded claims in the 2026-07-27 baseline
+        were such percents, ADR 0016). Operand pairs must share ticker,
+        accession, fiscal year and period so the ratio is coherent; the
+        claim's printed precision gates the match, the same tolerance rule
+        as direct lookups."""
+        searched.extend(candidate.numerator_terms + candidate.denominator_terms)
+        target = number.value / 100.0
+        tolerance = number.tolerance / 100.0
+        for fiscal_period in _period_attempts(candidate.fiscal_period):
+            numerators = self._store.query_facts(
                 tickers=tickers,
-                concept_terms=candidate.concept_terms or None,
+                concept_terms=candidate.numerator_terms,
                 fiscal_year=candidate.fiscal_year,
-                fiscal_period=candidate.fiscal_period,
-                unit=candidate.unit,
+                fiscal_period=fiscal_period,
+                limit=40,
             )
-            for fact in facts:
-                if self._value_matches(number, fact):
-                    return _fact_span(fact)
+            denominators = self._store.query_facts(
+                tickers=tickers,
+                concept_terms=candidate.denominator_terms,
+                fiscal_year=candidate.fiscal_year,
+                fiscal_period=fiscal_period,
+                limit=40,
+            )
+            for num in numerators:
+                for den in denominators:
+                    if den.value == 0 or (
+                        num.ticker,
+                        num.accession_no,
+                        num.fiscal_year,
+                        num.fiscal_period,
+                    ) != (den.ticker, den.accession_no, den.fiscal_year, den.fiscal_period):
+                        continue
+                    if abs(num.value / den.value - target) <= tolerance:
+                        return _ratio_span(num, den)
         return None
 
     @staticmethod
@@ -365,6 +446,16 @@ class XbrlNumericReconciler:
         return any(abs(fact.value - v) <= tol for v, tol in pairs)
 
 
+def _period_attempts(fiscal_period: str | None) -> list[str | None]:
+    """The stated period first, then no period filter. The store labels
+    periods differently than claims do — instants (balance-sheet facts)
+    carry no period at all, nine-month figures are 'YTD9' — and fiscal_year
+    plus value-at-stated-precision still gate the relaxed match. The fiscal
+    *year* is never dropped: the right value under the wrong year must stay
+    unsupported (ADR 0016)."""
+    return [fiscal_period, None] if fiscal_period is not None else [None]
+
+
 def _fact_span(fact: Fact) -> str:
     period = fact.fiscal_period or ""
     year = str(fact.fiscal_year or "")
@@ -375,4 +466,15 @@ def _fact_span(fact: Fact) -> str:
     return (
         f"XBRL {fact.concept} ({fact.label or 'no label'}){dims} = {fact.value:g} "
         f"{fact.unit or ''} for {when}, {fact.form_type or '?'} acc {fact.accession_no}"
+    )
+
+
+def _ratio_span(num: Fact, den: Fact) -> str:
+    period = num.fiscal_period or ""
+    year = str(num.fiscal_year or "")
+    when = " ".join(x for x in (period, year) if x) or (num.period_end or "?")
+    return (
+        f"XBRL ratio {num.concept} ({num.label or 'no label'}) / {den.concept} "
+        f"({den.label or 'no label'}) = {num.value:g} / {den.value:g} = "
+        f"{num.value / den.value:.4f} for {when}, acc {num.accession_no}"
     )
