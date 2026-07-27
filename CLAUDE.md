@@ -13,12 +13,16 @@ local-only). `plans/00-overview.md` resolves its open decisions and defines
 conventions; each phase has a self-contained plan in `plans/`. **Current phase:
 3** (production RAG + evaluation). The 2026-07-27 exit-gate failure was
 diagnosed to metric mis-specification and reconciler defects, both fixed the
-same day (ADR 0015 + 0016; verifier P/R re-measured 1.000). Phase 4 stays
-blocked on one clean 30-Q re-baseline, which is now the *only* thing left —
-pre-run chores are done and the numeric_fidelity target is settled at 0.85
-(ADR 0015). The live entry point is `plans/phase-3-metric-diagnosis.md`
-§ "NEXT SESSION STARTS HERE". Retrieval, prompts and models are all cleared
-— do not tune them for the gate metrics.
+same day (ADR 0015 + 0016; verifier P/R re-measured 1.000). The 30-Q
+re-baseline then ran **30/30 with no drops** — `hallucination_rate` 0.017
+passed for the first time — but missed two targets: `numeric_fidelity` 0.654
+(root-caused to a parser defect and **fixed**, ADR 0017, re-scores 0.877) and
+`grounding_rate` 0.893, one claim short of 0.90. Phase 4 stays blocked on that
+last metric plus a second re-baseline; the live entry point is
+`plans/phase-3-metric-diagnosis.md` § "NEXT SESSION STARTS HERE" (Task 5),
+which is self-contained and starts with a *free* checkpoint diagnosis before
+any spend. Retrieval, prompts and models are all cleared — do not tune them
+for the gate metrics.
 
 ## Working guidelines
 
@@ -86,9 +90,9 @@ never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
 `--write-baseline` is gated since 2026-07-27 (ADR 0016): it refuses a run
 that misses the §13 `TARGETS` or dropped questions unless `--force`, and
 records `n_questions`/`n_completed` in `eval/baselines.json`. The file is
-still all-`null` until the re-baseline described in
-`plans/phase-3-metric-diagnosis.md` § "NEXT SESSION STARTS HERE" passes —
-note the numeric_fidelity target there must be re-set *before* that run.
+still all-`null`: the 2026-07-27 re-baseline ran 30/30 but missed two targets,
+so the guard correctly refused it. `TARGETS` is settled (numeric_fidelity 0.85,
+ADR 0015).
 
 ## Architecture
 

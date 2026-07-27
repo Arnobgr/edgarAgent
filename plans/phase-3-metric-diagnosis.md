@@ -4,39 +4,119 @@
 root-caused and one fixed (ADR 0017) — **awaiting a second re-baseline** ·
 **Created:** 2026-07-26 · **Updated:** 2026-07-27 · **Blocks:** Phase 4
 
-## ▶ NEXT SESSION STARTS HERE — the second re-baseline run
+## ▶ NEXT SESSION STARTS HERE — Task 5: close `grounding_rate`, then re-run
 
-The 2026-07-27 re-baseline (`eval/reports/agent-20260727-224458.json`) is
+**Do the free diagnosis (step 1) before spending on the run (step 2).** On
+current evidence a run today clears `numeric_fidelity` but still misses
+`grounding_rate` by a claim or two, i.e. burns 75 minutes and real money to
+refuse a baseline again.
+
+### Where things stand
+
+The 2026-07-27 re-baseline (`eval/reports/agent-20260727-224458.json`) was
 **the first structurally clean run**: 30/30 questions, no drops, no budget
-aborts, `hallucination_rate` **0.017 ✓** (first time under the 0.02 target),
-verifier P/R **1.000**, `citation_accuracy` 0.731 (216 pairs, 0 judge
-failures). It missed two targets:
+aborts, `citation_accuracy` 0.731 (216 pairs, 0 judge failures). Working tree
+is green (`make check`, 142 tests) at commit `fdcb37f`.
 
-| metric | target | measured | after the ADR 0017 fix (re-scored) |
+| metric | target | measured | status |
 |---|---|---|---|
-| numeric_fidelity | ≥ 0.85 | **0.654** (53/81) | **0.877** ✓ |
-| grounding_rate | ≥ 0.90 | **0.893** (108/121) | untested — one claim short |
+| n_completed | 30 | **30** | ✅ (previous run: 29) |
+| hallucination_rate | ≤ 0.02 | **0.017** | ✅ first time passing |
+| verifier P/R (all) | — | **1.000** | ✅ |
+| numeric_fidelity | ≥ 0.85 | **0.654** (53/81) | **fixed** → re-scores **0.877** ✓ |
+| grounding_rate | ≥ 0.90 | **0.893** (108/121) | ✗ **this task** |
+| citation_accuracy | (info) | 0.731 | stable vs 0.728 |
+| expected_fact_coverage | (info) | 0.250 (7/28) | ✗ undiagnosed, not a gate |
 
-`numeric_fidelity` was a **parser defect, not a quality regression**:
-`parse_numbers` read "$391 billion" but not "$298,085M", so 18 of the 28
-misses were figures compared 10^6 too small. Fixed and re-scored to 0.877 on
-the same answers; the 10 residual misses are the legitimate ceiling (correct
-figures absent from the ingested XBRL, plus per-share repurchase prices) with
-**zero fabrications**. Full decomposition in ADR 0017.
+`numeric_fidelity` is **already fixed** (ADR 0017): `parse_numbers` read
+"$391 billion" but not "$298,085M", so 18 of 28 misses were figures compared
+10^6 too small. Re-scored on the same answers with the fixed parser: 0.877.
+The 10 residual misses are the honest ceiling (correct figures with no
+ingested XBRL counterpart, per-share repurchase prices) — **zero
+fabrications**. Nothing further to do there; do not tune retrieval or
+synthesis for it.
 
-`grounding_rate` 0.893 needs **one more grounded claim** out of 121. The 13
-non-grounded ones are 8 numeric/`partial`, 3 qualitative/`partial` and 2
-numeric/`unsupported`; only 2 use suffix notation, and both are ratio claims
-whose *percent* is the primary failure — so the parser fix is not guaranteed
-to close the gap. The `partial`-heavy shape says ADR 0016's ratio-grounding
-path is still not firing on these; classify all 13 by their `feedback` field
-from `data/checkpoints.db` before changing anything else (run ids are in the
-report).
+### Step 1 — classify the 13 non-grounded claims (free, no API spend)
 
-**Before spending on the run:** the parser change alters verifier behavior, so
-re-measure verifier P/R on the labeled claims first (ADR 0016's standing
-rule). `expected_fact_coverage` fell to 0.250 (7/28) and is *not* explained by
-the parser defect — informational, undiagnosed, not a gate.
+`grounding_rate` 0.893 needs **one more grounded claim out of 121**. Known
+shape of the 13 failures:
+
+| verdict | n | note |
+|---|---|---|
+| numeric / `partial` | 8 | the target population — mostly derived ratios |
+| qualitative / `partial` | 3 | check whether the verifier is right before "fixing" |
+| numeric / `unsupported` | 2 | these two *are* the `hallucination_rate` numerator |
+
+**Leading hypothesis:** ADR 0016 added a ratio-grounding path (recompute a
+percent from store facts named by the mapper) but the `partial`-heavy shape
+says it is not firing on these claims. Four known examples, all g-013 — note
+the feedback names the *percent* as the missing figure while the dollar
+operands reconcile:
+
+```
+numeric/partial: "Products revenue declined approximately 5.7% in FY2023
+  compared to FY2022, derived from the absolute figures of $298,085M and
+  $316,199M."
+  feedback: figure(s) 5.7% not found in the XBRL facts store — searched XBRL
+  concepts: ProductsRevenue, decline, percentage and 1 cited table chunk(s).
+```
+
+Start by checking whether the mapper emits usable ratio operands for these,
+and whether the recomputation path in `src/fie/tools/reconcile.py` is reached
+at all (a log line or a targeted offline test on the claim text above is
+enough — the ratio path itself is deterministic once the mapping exists).
+
+**Recipe — recovering claims, verdicts and answers from checkpoints.** Run
+ids are in the report's `run_ids`; `thread_id` is the run id. Only claims
+whose `status != "retracted"` are in the `grounding` population that the
+metric scores, which is what makes the ratio come out at exactly 108/121:
+
+```python
+import json, sqlite3, warnings
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+
+warnings.filterwarnings("ignore")  # unregistered-type msgpack noise
+report = json.load(open("eval/reports/agent-20260727-224458.json"))
+serde, conn = JsonPlusSerializer(), sqlite3.connect("data/checkpoints.db")
+
+for qid, run_id in report["run_ids"].items():
+    for typ, blob in conn.execute(
+        "select type, checkpoint from checkpoints where thread_id = ?"
+        " order by checkpoint_id desc", (run_id,)
+    ):
+        vals = serde.loads_typed((typ, blob)).get("channel_values", {})
+        claims, verdicts = vals.get("claims"), vals.get("verdicts")
+        if claims and verdicts:                    # newest complete checkpoint
+            vmap = {v.claim_id: v for v in verdicts}
+            for c in claims:
+                if c.status != "retracted" and (v := vmap.get(c.id)):
+                    print(qid, c.claim_type, v.verdict, c.text, v.feedback)
+            break                                  # `draft_answer` is here too
+```
+
+**Scope guards.** Retrieval (ADR 0011), synthesis prompts and model selection
+are all settled and are *not* how this metric gets closed — the same
+conclusion Tasks 1–4 reached. Any reconciler change re-opens verifier
+behavior, so re-measure verifier P/R on the 112 labeled claims before
+trusting the result (ADR 0016's standing rule); it runs automatically inside
+`eval-agent` as `verifier_precision_*`. If the 13 turn out to be *correct*
+rulings, say so and raise the question of whether 0.90 is the right target
+rather than tuning toward it.
+
+### Step 2 — the second re-baseline
+
+Only after step 1 lands. **Smoke first** — `uv run eval-agent --limit 2
+--skip-judge` (~5 min, cents) caught a run-killing bug before the last paid
+run and would have cost 75 wasted minutes otherwise. Then the full run per
+"The run" below. `eval/baselines.json` is still all-`null` on purpose; the
+guard refuses to write it unless the run hits every target with 30/30.
+
+### Deferred, deliberately
+
+`expected_fact_coverage` 0.250 (7/28) is informational and undiagnosed. It is
+**not** explained by the ADR 0017 parser defect — re-scoring the same answers
+with scales normalized leaves it at 7/28 exactly. Its denominator also became
+honest only recently (ADR 0015), so it is not comparable to the older 0.400.
 
 ## The original re-baseline instructions (still current)
 
