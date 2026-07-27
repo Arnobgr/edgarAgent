@@ -1,9 +1,81 @@
 # Phase 3 — Diagnosing the three failing gate metrics
 
-**Status:** diagnosis complete, fixes landed (ADR 0015) · **Created:** 2026-07-26 ·
-**Updated:** 2026-07-27 after executing Tasks 1–4 · **Blocks:** Phase 4
+**Status:** all fixes landed (ADR 0015 + 0016), verifier P/R 1.000 —
+**awaiting the 30-Q re-baseline** · **Created:** 2026-07-26 ·
+**Updated:** 2026-07-27 · **Blocks:** Phase 4
 
-## ✔ OUTCOME (2026-07-27) — read this first
+## ▶ NEXT SESSION STARTS HERE — the re-baseline run
+
+Everything below this section is history; nothing else needs re-deriving.
+All diagnosis and fixes are committed through `9541b8d` (metric re-scope
+ADR 0015; reconciler fixes + harness hardening ADR 0016; verifier P/R
+re-measured at **1.000/1.000** on the 112 labeled claims, up from 0.982).
+
+### Decision required BEFORE the run: the numeric_fidelity target
+
+The §13 target of **0.95 is above the re-scoped metric's honest ceiling
+(~0.9)** — derived figures and correct-but-not-XBRL figures score as misses
+by design (ADR 0015). The harness now *gates `--write-baseline` on the
+targets*, so with 0.95 in place the run will refuse to write a baseline no
+matter how well it goes.
+
+**Recommendation: set it to 0.85** — comfortably above the ~0.5 a
+fabricating system would score (the metric's role is now a fabrication
+tripwire, not a quality ladder), below the honest ceiling. To apply: edit
+`TARGETS` in `src/fie/eval/agent_runner.py:49` and note the decision in
+ADR 0015 (its "Consequences" already flags the re-set as pending).
+
+### The run
+
+```bash
+make qdrant-up          # Qdrant only is enough; keys in .env
+uv run eval-agent --write-baseline    # ~75 min, real money
+```
+
+New harness behavior since the failed run: the report always lands in
+`eval/reports/`, per-pair citation judgments are persisted (no paid
+re-judge needed for diagnosis), a dropped question exits non-zero and
+refuses the baseline, and `--write-baseline` refuses a run that misses the
+targets unless `--force`. So a single run either writes the Phase 4
+baseline or fails loudly with everything needed to diagnose.
+
+### What to expect (projections from the recovered baseline answers)
+
+| metric | target | last measured | expected now |
+|---|---|---|---|
+| grounding_rate | ≥ 0.90 | 0.735 | **0.87–0.94** (reconciler fixes; upper half needs the mapper to use its new YTD/ratio vocabulary) |
+| numeric_fidelity (re-scoped) | 0.85 (proposed) | 0.878 equiv. | **~0.88** |
+| hallucination_rate | ≤ 0.02 | 0.030 | ~0.02 — was 6 claims; several were mechanical `unsupported`s the fixes may ground |
+| expected_fact_coverage | (info) | 0.400 | up — denominator fixed, labels resolvable |
+| n_completed | = 30 | 29 | **must be 30** (guard enforces) |
+
+### If it fails
+
+Diagnose **free** from `data/checkpoints.db` — answers, claims, verdicts
+and feedback are all recoverable per run_id (recipe: the extraction scripts
+described under "grounding_rate diagnosis" below; run ids are in the
+report). Classify residual non-grounded claims by the feedback field before
+touching anything. Retrieval/synthesis/model changes remain out of scope
+unless genuinely-wrong figures dominate, which no evidence so far supports.
+
+### Before Phase 4 (`plans/phase-4-backend-and-deploy.md`), also finalize
+
+1. **`make typecheck` is red on clean dev** — 25 pre-existing mypy errors
+   in `src/fie/llm/__init__.py` (langchain stub drift, predates this work).
+   Phase 4 CI presumably runs `make check`; clear this first or CI is born
+   red.
+2. **`unanswerable_declined` counts an errored empty answer as a successful
+   decline** (a zero-claim result passes the no-surviving-numeric check).
+   Not a gate metric; small integrity fix in `agent_runner.py`, same
+   pattern as the ADR 0015 fixes.
+3. Accepted deferrals, recorded so they aren't re-litigated: fact-reference
+   rendering (revisit at Phase 5 as a product feature), store ingest gaps
+   (`period_end` NULL for instants, dimensions collapsed to a flag),
+   citation-span structure (fact spans don't name the company; absence
+   claims unsupportable by any span — citation_accuracy is not a gate),
+   g-010's SQLITE_MISUSE root cause (unreproduced; detection guard landed).
+
+## ✔ OUTCOME (2026-07-27) — the diagnosis this plan produced
 
 All four tasks ran against the baseline artifacts (answers recovered from
 `data/checkpoints.db` — no paid re-run). Full decision record: ADR 0015.
@@ -51,10 +123,10 @@ All four tasks ran against the baseline artifacts (answers recovered from
   results, and an errored empty answer currently counts as a successful
   decline in `unanswerable_declined`. Not yet addressed.
 
-**Next steps (require a decision / spend):** re-set the numeric_fidelity
-target or adopt fact-reference rendering (ADR-worthy); promote
-`grounding_rate` 0.735 → 0.90 to a real task (see end of this file); then
-one clean 30-Q re-baseline with the fixed harness.
+**Next steps:** superseded — see "▶ NEXT SESSION STARTS HERE" at the top.
+(Of the decisions this paragraph once listed: fact-reference rendering was
+evaluated and deferred to Phase 5; the grounding_rate task was promoted,
+diagnosed and fixed the same day — sections below.)
 
 ## ✔ grounding_rate diagnosis (2026-07-27, same recovered states)
 

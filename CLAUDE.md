@@ -11,13 +11,14 @@ every factual claim is verified against a source or explicitly retracted.
 The design spec is `financial-intelligence-engine-blueprint.md` (gitignored,
 local-only). `plans/00-overview.md` resolves its open decisions and defines
 conventions; each phase has a self-contained plan in `plans/`. **Current phase:
-3** (production RAG + evaluation). Its exit gate ran on 2026-07-27 and
-**failed** all three §13 targets (grounding 0.735, hallucination 0.030,
-numeric_fidelity 0.566, n=29), so Phase 4 stays blocked;
-`plans/phase-3-exit-gate.md` is terminal and the live entry point is
-`plans/phase-3-metric-diagnosis.md`. At least one failing metric is suspected
-mis-specified rather than genuinely failing — read that plan before trying to
-"fix" retrieval, prompts, or models.
+3** (production RAG + evaluation). The 2026-07-27 exit-gate failure was
+diagnosed to metric mis-specification and reconciler defects, both fixed the
+same day (ADR 0015 + 0016; verifier P/R re-measured 1.000). Phase 4 stays
+blocked on one clean 30-Q re-baseline; the live entry point is
+`plans/phase-3-metric-diagnosis.md` § "NEXT SESSION STARTS HERE", which
+includes the one decision to make before running it (the numeric_fidelity
+target). Retrieval, prompts and models are all cleared — do not tune them
+for the gate metrics.
 
 ## Working guidelines
 
@@ -82,12 +83,12 @@ the README's setup step still says 3000 and is stale). Qdrant on 6333.
 `uv run eval-agent` (30 questions) takes ~75 minutes and costs real money —
 never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
 
-**Do not pass `--write-baseline` until the metric work in
-`plans/phase-3-metric-diagnosis.md` is settled.** It overwrites
-`eval/baselines.json` unconditionally, even when the gate fails
-(`agent_runner.py:267-281`); the last run's failing numbers were reverted by
-hand to stop them locking in as the Phase 4 CI bar. The file is deliberately
-still all-`null`.
+`--write-baseline` is gated since 2026-07-27 (ADR 0016): it refuses a run
+that misses the §13 `TARGETS` or dropped questions unless `--force`, and
+records `n_questions`/`n_completed` in `eval/baselines.json`. The file is
+still all-`null` until the re-baseline described in
+`plans/phase-3-metric-diagnosis.md` § "NEXT SESSION STARTS HERE" passes —
+note the numeric_fidelity target there must be re-set *before* that run.
 
 ## Architecture
 
