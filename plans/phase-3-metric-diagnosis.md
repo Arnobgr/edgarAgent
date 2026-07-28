@@ -33,6 +33,22 @@ failures now ground** → projected ~227/242 ≈ 0.94. Verifier P/R re-measured
 after the change: **1.000/1.000 on all 112 labeled claims**. `make check`
 green (149 tests). Step 2 is go.
 
+### ✗ Step 2, first attempt (2026-07-28, `agent-20260728-180910.json`) — operational failures, not metric ones
+
+The guard refused it, correctly: 29/30 (g-013 died with the recurring
+`SQLITE_MISUSE` — second occurrence, this time mid-verify, so the previous
+"post-graph tail" account doesn't generalize; cause still unreproduced),
+`hallucination_rate` 0.075 and `grounding_rate` 0.846. Checkpoint diagnosis:
+**both misses are one event** — g-011's re-synthesis (103 evidence chunks,
+30 claims) exceeded the 300s node timeout and the abort skipped `retract`,
+leaving 17 correctly-flagged Data-Center prose figures in the answer (17 of
+the 19 hallucination-numerator claims, 18 of 39 grounding failures).
+Excluding g-011, grounding is ~0.91 — the ADR 0018 fixes held (g-016 5→3
+failures, g-029/g-018 clean). `numeric_fidelity` 0.889 and verifier P/R
+1.000 passed. Mitigations, same session: `node_timeout_seconds` 300 → 600
+(budget caps remain the runaway guard) and the eval runner retries a failed
+question once with a fresh run id before dropping it.
+
 ### Where things stand
 
 The 2026-07-27 re-baseline (`eval/reports/agent-20260727-224458.json`) was

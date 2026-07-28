@@ -137,7 +137,11 @@ class Settings(BaseSettings):
     # Iteration caps count node passes: 2 verify passes = 1 loop-back.
     max_verify_iterations: int = 2
     max_critic_iterations: int = 2
-    node_timeout_seconds: float = 300.0
+    # 600s: a legitimate re-synthesis over a full fan-in (103 evidence
+    # chunks, 30 claims) exceeded 300s on 2026-07-28 and the abort skipped
+    # retraction, turning 17 excisable claims into surviving hallucinations.
+    # The budget caps remain the guard against true runaways.
+    node_timeout_seconds: float = 600.0
     llm_retry_attempts: int = 3
     llm_retry_base_delay_seconds: float = 1.0
     budget_max_tokens: int = 500_000

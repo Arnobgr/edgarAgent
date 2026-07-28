@@ -192,18 +192,25 @@ async def _run_gold(
     results: dict[str, RunResult] = {}
     run_ids: dict[str, str] = {}
     for question in questions:
-        run_id = new_run_id()
-        run_ids[question.id] = run_id
-        typer.echo(f"[{question.id}] {question.question}")
-        try:
-            results[question.id] = await answer_question(
-                question=question.question,
-                run_id=run_id,
-                settings=settings,
-                run_name="fie-eval-agent",
-            )
-        except Exception as exc:
-            logger.error("gold run %s failed: %s", question.id, exc)
+        # One retry with a fresh run id: an infra death (the recurring,
+        # still-unreproduced SQLITE_MISUSE killed one question in each of
+        # the last two 30-Q runs) must not cost the run its baseline when
+        # the guard demands 30/30. A question that fails twice still drops
+        # loudly.
+        for attempt in (1, 2):
+            run_id = new_run_id()
+            run_ids[question.id] = run_id
+            typer.echo(f"[{question.id}] {question.question}")
+            try:
+                results[question.id] = await answer_question(
+                    question=question.question,
+                    run_id=run_id,
+                    settings=settings,
+                    run_name="fie-eval-agent",
+                )
+                break
+            except Exception as exc:
+                logger.error("gold run %s failed (attempt %d): %s", question.id, attempt, exc)
     return results, run_ids
 
 
