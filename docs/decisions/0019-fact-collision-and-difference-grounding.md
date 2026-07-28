@@ -67,3 +67,21 @@ table-form sibling of the ADR 0017 suffix-letter gap.
 - False-accept surface of the difference form: bounded by printed-precision
   tolerance, concept+label equality, and year adjacency; the labeled-set
   P/R run remains the standing tripwire.
+
+## Addendum (same day) — the run-killer was a close/query race in IngestStore
+
+The third re-baseline attempt segfaulted (SIGSEGV) at g-010 — the same
+question as the first-ever SQLITE_MISUSE. Root cause of the whole family:
+`verify` fans claims out with `asyncio.gather` and runs each reconcile in
+`asyncio.to_thread`; **those threads cannot be cancelled**, so after a node
+timeout or abort they keep querying the shared SQLite connection, and
+`answer_question`'s teardown (`reconciler.close()`) then closes the
+connection mid-statement at the C level. Serialized mode protects
+individual calls, not close-vs-query. This also explains why the first
+occurrence "hit the post-graph tail" (the tail is `close()`), and why the
+ADR 0018/0019 lookups — more queries per reconcile — escalated the race
+from occasional SQLITE_MISUSE to a segfault. Fix: a `threading.Lock`
+serializing `query_facts` and `close()`, plus a closed flag so an orphaned
+late query raises a clean `ProgrammingError` instead of touching a closed
+connection. The eval runner's retry-once and the 600s timeout stay as
+defense in depth.

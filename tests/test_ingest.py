@@ -1,6 +1,7 @@
 """Ingestion: store idempotency, table extraction, chunking, facts."""
 
 import itertools
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -67,6 +68,17 @@ def test_replace_facts_is_idempotent(store: IngestStore) -> None:
     store.replace_facts("acc-1", [make_fact()])
     store.replace_facts("acc-1", [make_fact()])
     assert store.count_facts() == 1
+
+
+def test_query_after_close_raises_cleanly(store: IngestStore) -> None:
+    """A timed-out verify branch's to_thread cannot be cancelled, so its
+    reconcile may query after run teardown closed the store. That must be a
+    clean Python error, not the C-level SQLITE_MISUSE/segfault that killed
+    one question in each 2026-07-28 eval run (ADR 0019)."""
+    store.replace_facts("acc-1", [make_fact()])
+    store.close()
+    with pytest.raises(sqlite3.ProgrammingError):
+        store.query_facts(concept_terms=["Revenues"])
 
 
 def test_query_facts_by_concept_and_period(store: IngestStore) -> None:

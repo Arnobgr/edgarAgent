@@ -10,6 +10,7 @@ cells are display-only provenance.
 
 import json
 import sqlite3
+import threading
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -119,9 +120,21 @@ class IngestStore:
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
+        # Serialized mode protects individual calls, but not close() racing
+        # an in-flight query: a timed-out verify branch's to_thread cannot
+        # be cancelled, so its reconcile keeps querying after the graph
+        # aborts, and the run teardown's close() then hit the C layer mid-
+        # statement — the SQLITE_MISUSE/segfault that killed one question
+        # in each of the three 2026-07-28 eval runs (ADR 0019). The lock
+        # makes close() wait out in-flight queries; the flag turns orphaned
+        # late queries into a clean error instead of a native crash.
+        self._lock = threading.Lock()
+        self._closed = False
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._closed = True
+            self._conn.close()
 
     # --- Manifest ---
 
@@ -277,11 +290,14 @@ class IngestStore:
         if not include_dimensioned:
             where.append("dimensions = ''")
         clause = f"WHERE {' AND '.join(where)}" if where else ""
-        cur = self._conn.execute(
-            f"SELECT * FROM facts {clause} ORDER BY dimensions != '', concept LIMIT ?",
-            (*params, limit),
-        )
-        return [_to_fact(r) for r in cur.fetchall()]
+        with self._lock:
+            if self._closed:
+                raise sqlite3.ProgrammingError("IngestStore is closed (orphaned late query)")
+            cur = self._conn.execute(
+                f"SELECT * FROM facts {clause} ORDER BY dimensions != '', concept LIMIT ?",
+                (*params, limit),
+            )
+            return [_to_fact(r) for r in cur.fetchall()]
 
     def count_facts(self) -> int:
         cur = self._conn.execute("SELECT COUNT(*) FROM facts")
