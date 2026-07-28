@@ -1,8 +1,26 @@
 # Phase 3 — Diagnosing the three failing gate metrics
 
-**Status:** re-baseline ran 30/30 and missed 2 of 3 targets; both misses
-root-caused and one fixed (ADR 0017) — **awaiting a second re-baseline** ·
-**Created:** 2026-07-26 · **Updated:** 2026-07-27 · **Blocks:** Phase 4
+**Status:** ✅ **CLOSED — exit gate PASSED 2026-07-28** and the baseline is
+written (`eval/baselines.json`, run `agent-20260728-212914.json`: 30/30,
+grounding 0.935, hallucination 0.015, numeric_fidelity 0.926, verifier P/R
+1.000). Phase 4 is unblocked. ·
+**Created:** 2026-07-26 · **Updated:** 2026-07-28 · **Blocked:** nothing
+
+## ✔ FINAL OUTCOME (2026-07-28) — four attempts, every failure root-caused
+
+Attempt-by-attempt, each diagnosed free from checkpoints before the next:
+
+1. Refused: g-011 300s-timeout abort skipped retraction (17 surviving
+   hallucinations) + g-013 SQLITE_MISUSE drop → 600s timeout, retry-once.
+2. Refused: grounding 0.891 / numeric_fidelity 0.759, zero fabrications →
+   found the **fact-collision bug** (label missing from the facts UNIQUE
+   key deleted most disaggregation facts — Apple Services/iPhone, NVDA Data
+   Center were filed all along); + difference-form grounding and metric
+   context scale (ADR 0019).
+3. Segfault at g-010 → the run-killer family root-caused: uncancellable
+   `to_thread` reconciles racing `store.close()`; fixed with a lock.
+4. **Passed.** ADRs 0018 + 0019 carry the decisions; the sections below are
+   the working history.
 
 ## ▶ NEXT SESSION STARTS HERE — Task 5: close `grounding_rate`, then re-run
 

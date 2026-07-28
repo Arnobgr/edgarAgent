@@ -10,19 +10,19 @@ every factual claim is verified against a source or explicitly retracted.
 
 The design spec is `financial-intelligence-engine-blueprint.md` (gitignored,
 local-only). `plans/00-overview.md` resolves its open decisions and defines
-conventions; each phase has a self-contained plan in `plans/`. **Current phase:
-3** (production RAG + evaluation). The 2026-07-27 exit-gate failure was
-diagnosed to metric mis-specification and reconciler defects, both fixed the
-same day (ADR 0015 + 0016; verifier P/R re-measured 1.000). The 30-Q
-re-baseline then ran **30/30 with no drops** — `hallucination_rate` 0.017
-passed for the first time — but missed two targets: `numeric_fidelity` 0.654
-(root-caused to a parser defect and **fixed**, ADR 0017, re-scores 0.877) and
-`grounding_rate` 0.893, one claim short of 0.90. Phase 4 stays blocked on that
-last metric plus a second re-baseline; the live entry point is
-`plans/phase-3-metric-diagnosis.md` § "NEXT SESSION STARTS HERE" (Task 5),
-which is self-contained and starts with a *free* checkpoint diagnosis before
-any spend. Retrieval, prompts and models are all cleared — do not tune them
-for the gate metrics.
+conventions; each phase has a self-contained plan in `plans/`. **Current
+phase: 3 → 4 transition.** The Phase 3 exit gate **PASSED on 2026-07-28**
+(30/30, grounding_rate 0.935, hallucination_rate 0.015, numeric_fidelity
+0.926, verifier P/R 1.000) and `eval/baselines.json` holds the accepted
+baseline (run `agent-20260728-212914`). Getting there took four run attempts,
+each failure diagnosed free from checkpoints: ADR 0018 (derived-percent /
+change grounding, mapper label vocabulary), ADR 0019 (the facts UNIQUE key
+was silently deleting disaggregation facts — Apple Services/iPhone and NVDA
+Data Center revenue were filed all along; difference-form grounding; metric
+context scale; and the run-killer was a close/query race on the shared
+SQLite connection, fixed with a lock). The next work is
+`plans/phase-4-backend-and-deploy.md`. Retrieval, prompts and models remain
+cleared — do not tune them for gate metrics.
 
 ## Working guidelines
 
