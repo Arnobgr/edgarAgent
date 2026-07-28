@@ -24,6 +24,14 @@ SQLite connection, fixed with a lock). The next work is
 `plans/phase-4-backend-and-deploy.md`. Retrieval, prompts and models remain
 cleared — do not tune them for gate metrics.
 
+Two open issues found *after* the gate passed, in the passing run's own
+artifacts, are documented as evidence (no remedies proposed) in
+`docs/findings/2026-07-28-answer-recall-and-claim-staleness.md`: the system
+declines questions whose facts are in the corpus
+(`expected_fact_coverage` 0.393, traced to retrieval not surfacing the
+figure), and ~10% of scored claims are stale relative to the answer
+delivered. Read it before acting on either.
+
 ## Working guidelines
 
 Adapted from Karpathy's CLAUDE.md
