@@ -585,6 +585,127 @@ def test_percent_inconsistent_with_claim_figures_stays_partial(store: IngestStor
     assert outcome.feedback is not None and "25%" in outcome.feedback
 
 
+def difference_mapping(value: float, fiscal_period: str | None = "YTD9") -> FactMappingOutput:
+    return FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=value,
+                concept_terms=["Revenues"],
+                fiscal_year=2025,
+                fiscal_period=fiscal_period,
+            )
+        ]
+    )
+
+
+def test_change_amount_grounds_as_year_over_year_difference(tmp_path: Path) -> None:
+    """'Declined by $2,057 million' is |this year's value - last year's| of
+    the same concept — filed nowhere, derivable exactly (ADR 0019)."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                value=69_926_000_000.0,
+                fiscal_year=2025,
+                fiscal_period="YTD9",
+                label="Revenues",
+                period_start="2025-01-01",
+                period_end="2025-09-30",
+            ),
+            make_fact(
+                value=71_983_000_000.0,
+                fiscal_year=2024,
+                fiscal_period="YTD9",
+                label="Revenues",
+                period_start="2024-01-01",
+                period_end="2024-09-30",
+            ),
+        ],
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(difference_mapping(2_057_000_000.0)))
+    outcome = reconciler.reconcile(
+        "Nine-month revenue declined by $2,057 million in 2025.", [make_chunk()]
+    )
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None and "difference" in outcome.supporting_span
+
+
+def test_unfiled_q4_grounds_as_fy_minus_ytd9(tmp_path: Path) -> None:
+    """Q4 is never filed on its own; FY minus YTD9 of the same concept is
+    how it is derived, and both operands are filed (ADR 0019)."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(value=416_161_000_000.0, fiscal_year=2025, label="Net sales"),
+            make_fact(
+                value=313_661_000_000.0,
+                fiscal_year=2025,
+                fiscal_period="YTD9",
+                label="Net sales",
+                period_start="2024-09-29",
+                period_end="2025-06-28",
+            ),
+        ],
+    )
+    reconciler = XbrlNumericReconciler(
+        s, FakeMapper(difference_mapping(102.5e9, fiscal_period="Q4"))
+    )
+    outcome = reconciler.reconcile("Q4 FY2025 revenue was $102.5 billion.", [make_chunk()])
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None and "difference" in outcome.supporting_span
+
+
+def test_wrong_change_amount_stays_unsupported(tmp_path: Path) -> None:
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(value=69_926_000_000.0, fiscal_year=2025, fiscal_period="YTD9"),
+            make_fact(
+                value=71_983_000_000.0,
+                fiscal_year=2024,
+                fiscal_period="YTD9",
+                period_start="2024-01-01",
+                period_end="2024-09-30",
+            ),
+        ],
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(difference_mapping(5_000_000_000.0)))
+    outcome = reconciler.reconcile(
+        "Nine-month revenue declined by $5,000 million in 2025.", [make_chunk()]
+    )
+    assert outcome.verdict == "unsupported"
+
+
+def test_distinct_disaggregation_labels_all_survive_ingest(tmp_path: Path) -> None:
+    """Products, Services and iPhone share concept, period and the collapsed
+    dimensions flag — only the label tells them apart. The old UNIQUE key
+    silently deleted every row after the first (ADR 0019)."""
+    s = IngestStore(tmp_path / "ingest.db")
+    n = s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                label="Products",
+                value=294_866_000_000.0,
+                dimensions={"dimensioned": "true"},
+            ),
+            make_fact(
+                concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                label="Services",
+                value=96_169_000_000.0,
+                dimensions={"dimensioned": "true"},
+            ),
+        ],
+    )
+    stored = s.query_facts(concept_terms=["RevenueFromContract"])
+    assert n == 2
+    assert {f.label for f in stored} == {"Products", "Services"}
+
+
 def test_date_day_is_not_an_obligation_in_cited_text_path(store: IngestStore) -> None:
     """'As of September 27, 2025' must not demand a bare 27 in the cited
     text — g-029's two share-count claims failed only on the day-of-month

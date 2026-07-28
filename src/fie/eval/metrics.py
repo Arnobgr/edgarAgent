@@ -139,19 +139,31 @@ def numeric_fidelity(results: list[RunResult], fact_values: list[float]) -> floa
     usually derived, not filed facts.
 
     `fact_values` is the full store's value column; matching is pure so the
-    metric stays reproducible from the report inputs."""
-    from fie.tools.reconcile import parse_numbers
+    metric stays reproducible from the report inputs.
+
+    Answers render tables under an "(in millions)" header with bare-$ cells
+    ("$23,329"), so figures without their own scale word also try the
+    answer's context scale — the same rule the reconciler applies to source
+    chunks, with the tolerance scaled alongside (ADR 0019). This is the
+    table-form sibling of the ADR 0017 suffix-letter gap: 19 of 24 residual
+    misses on the 2026-07-28 run were correct in-store values off by the
+    table's scale."""
+    from fie.tools.reconcile import _context_scale, parse_numbers
 
     sorted_values = sorted(fact_values)
     total = 0
     matched = 0
     for result in results:
         answer = _CITATION_RE.sub(" ", result.answer.split(RETRACTED_HEADER)[0])
+        context_scale = _context_scale(answer)
         for number in parse_numbers(answer):
             if number.is_percent or not (number.raw.startswith("$") or number.explicit_scale):
                 continue
             total += 1
-            if _binary_match(sorted_values, number.value, number.tolerance):
+            forms = [(number.value, number.tolerance)]
+            if context_scale is not None and not number.explicit_scale:
+                forms.append((number.value * context_scale, number.tolerance * context_scale))
+            if any(_binary_match(sorted_values, v, tol) for v, tol in forms):
                 matched += 1
     return matched / total if total else 1.0
 

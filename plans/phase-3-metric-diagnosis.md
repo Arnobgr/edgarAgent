@@ -141,6 +141,23 @@ trusting the result (ADR 0016's standing rule); it runs automatically inside
 rulings, say so and raise the question of whether 0.90 is the right target
 rather than tuning toward it.
 
+### ✗ Step 2, second attempt (2026-07-28, `agent-20260728-192552.json`) — root cause found under both misses, ADR 0019
+
+30/30 (the retry + 600s timeout held), `hallucination_rate` 0.015 ✓, but
+`grounding_rate` 0.891 and `numeric_fidelity` 0.759. Every failure
+classified from checkpoints: **zero fabrications**. The dominant root cause
+was upstream of both metrics: the facts table's UNIQUE key omitted `label`
+while dimensions are collapsed to a flag, so `INSERT OR IGNORE` silently
+deleted every disaggregation row after the first — the store had Apple
+"Products" for every period but not one "Services" row, and NVDA's Data
+Center revenue (written off as "never filed" all through this plan) was
+filed all along and discarded at ingest. Fixed + full facts re-extraction
+(free, SEC network only; 28,550 facts); plus a reconciler difference form
+(change amounts, Q4 = FY − YTD9) and answer-context-scale in
+`numeric_fidelity` (the table-cell sibling of ADR 0017). Re-scored on this
+run's own artifacts: numeric_fidelity **0.938**, grounding projects ~0.93,
+verifier P/R still 1.000/1.000. Third attempt is go.
+
 ### Step 2 — the second re-baseline
 
 Only after step 1 lands. **Smoke first** — `uv run eval-agent --limit 2

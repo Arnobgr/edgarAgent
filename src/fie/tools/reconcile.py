@@ -289,7 +289,9 @@ _MAPPING_SYSTEM = (
     "revenue), also give numerator_terms and denominator_terms. For a "
     "year-over-year change percentage ('revenue up 41%'), give the changing "
     "concept as both numerator_terms and denominator_terms with the current "
-    "period's fiscal year."
+    "period's fiscal year. For a change amount ('an increase of $433 "
+    "million'), give the changing concept's terms with the current period's "
+    "fiscal year."
 )
 
 
@@ -445,6 +447,69 @@ class XbrlNumericReconciler:
                 span = self._match_ratio(number, candidate, tickers, searched)
                 if span is not None:
                     return span
+            if not number.is_percent and candidate.fiscal_year is not None:
+                span = self._match_difference(number, candidate, tickers)
+                if span is not None:
+                    return span
+        return None
+
+    def _match_difference(
+        self,
+        number: ParsedNumber,
+        candidate: FactCandidate,
+        tickers: list[str] | None,
+    ) -> str | None:
+        """Ground a change amount by recomputing it from filed facts.
+
+        "Declined by $2,057 million" and Q4 figures ("Q4 FY2025 revenue was
+        $102.5 billion" — never filed; every analyst derives it as FY minus
+        YTD9) are differences of filed values. Two forms, both requiring the
+        same ticker and concept so like subtracts from like (ADR 0019):
+        year-over-year at the same period, and FY minus YTD9 within the
+        year. The claim's printed precision gates the match."""
+        if candidate.fiscal_year is None:
+            return None
+        pairs: list[tuple[list[Fact], list[Fact]]] = []
+        for fiscal_period in _period_attempts(candidate.fiscal_period):
+            current = self._store.query_facts(
+                tickers=tickers,
+                concept_terms=candidate.concept_terms or None,
+                fiscal_year=candidate.fiscal_year,
+                fiscal_period=fiscal_period,
+                limit=40,
+            )
+            current = [f for f in current if _period_admissible(f, fiscal_period, candidate)]
+            prior = self._store.query_facts(
+                tickers=tickers,
+                concept_terms=candidate.concept_terms or None,
+                fiscal_year=candidate.fiscal_year - 1,
+                fiscal_period=fiscal_period,
+                limit=40,
+            )
+            prior = [f for f in prior if _period_admissible(f, fiscal_period, candidate)]
+            pairs.append((current, prior))
+        full_year = self._store.query_facts(
+            tickers=tickers,
+            concept_terms=candidate.concept_terms or None,
+            fiscal_year=candidate.fiscal_year,
+            fiscal_period="FY",
+            limit=40,
+        )
+        ytd9 = self._store.query_facts(
+            tickers=tickers,
+            concept_terms=candidate.concept_terms or None,
+            fiscal_year=candidate.fiscal_year,
+            fiscal_period="YTD9",
+            limit=40,
+        )
+        pairs.append((full_year, ytd9))
+        for currents, priors in pairs:
+            for a in currents:
+                for b in priors:
+                    if (a.ticker, a.concept, a.label) != (b.ticker, b.concept, b.label):
+                        continue
+                    if abs(abs(abs(a.value) - abs(b.value)) - number.value) <= number.tolerance:
+                        return _difference_span(a, b)
         return None
 
     def _match_ratio(
@@ -603,6 +668,17 @@ def _fact_span(fact: Fact) -> str:
     return (
         f"XBRL {fact.concept} ({fact.label or 'no label'}){dims} = {fact.value:g} "
         f"{fact.unit or ''} for {when}, {fact.form_type or '?'} acc {fact.accession_no}"
+    )
+
+
+def _difference_span(a: Fact, b: Fact) -> str:
+    def _when(f: Fact) -> str:
+        return " ".join(x for x in (f.fiscal_period or "", str(f.fiscal_year or "")) if x)
+
+    return (
+        f"XBRL difference {a.concept} ({a.label or 'no label'}): "
+        f"|{a.value:g} ({_when(a)}) - {b.value:g} ({_when(b)})| = "
+        f"{abs(abs(a.value) - abs(b.value)):g}, acc {a.accession_no}"
     )
 
 

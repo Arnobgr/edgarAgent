@@ -51,7 +51,12 @@ CREATE TABLE IF NOT EXISTS facts (
     accession_no TEXT NOT NULL,
     form_type TEXT,
     dimensions TEXT NOT NULL DEFAULT '',
-    UNIQUE (accession_no, concept, unit, period_start, period_end, dimensions)
+    -- `label` is in the key because this edgartools version collapses
+    -- dimensions to a flag: distinct axis members (Products/Services/
+    -- iPhone...) share concept, period and the flag, and only the label
+    -- tells them apart. Without it, INSERT OR IGNORE silently deleted
+    -- every disaggregation row after the first (ADR 0019).
+    UNIQUE (accession_no, concept, label, unit, period_start, period_end, dimensions)
 );
 CREATE INDEX IF NOT EXISTS idx_facts_concept ON facts (concept);
 CREATE INDEX IF NOT EXISTS idx_facts_ticker_period ON facts (ticker, fiscal_year, fiscal_period);

@@ -118,6 +118,17 @@ def test_numeric_fidelity_matches_store_values_excluding_percents() -> None:
     assert numeric_fidelity(results, [96_773_000_000.0]) == 0.5
 
 
+def test_numeric_fidelity_applies_answer_context_scale() -> None:
+    # Markdown tables render "(in millions)" headers with bare-$ cells; the
+    # figure's true magnitude is the cell times the context scale, the same
+    # rule the reconciler applies to source chunks (ADR 0019).
+    answer = "Revenue by quarter (in millions):\n| Q1 | $23,329 |"
+    assert numeric_fidelity([result([], answer=answer)], [23_329_000_000.0]) == 1.0
+    # An explicit scale word on the figure wins over the context marker.
+    answer = "Revenue by quarter (in millions):\n| FY | $96.8 billion |"
+    assert numeric_fidelity([result([], answer=answer)], [96_773_000_000.0]) == 1.0
+
+
 def test_numeric_fidelity_scores_only_financial_figures() -> None:
     # Citation markup, dates, ordinals and product names must not be scored:
     # only the $96.8 billion figure counts (ADR 0015).
