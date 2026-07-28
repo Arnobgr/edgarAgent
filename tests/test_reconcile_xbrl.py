@@ -412,3 +412,187 @@ def test_wrong_ratio_percent_stays_unsupported(tmp_path: Path) -> None:
     reconciler = XbrlNumericReconciler(ratio_store(tmp_path), FakeMapper(margin_mapping(25.0)))
     outcome = reconciler.reconcile("TSLA gross margin for FY 2025 was 25.0%.", [make_chunk()])
     assert outcome.verdict == "unsupported"
+
+
+# --- ADR 0018: change percentages, derived percents, mapper label vocabulary ---
+
+
+def test_ratio_operands_reachable_through_spaced_labels(tmp_path: Path) -> None:
+    """The mapper says 'NetSales'; the label is filed as 'Net sales'. The
+    space-stripped label match must bridge that — four of g-016's ratio
+    claims failed only here in the 2026-07-27 re-baseline."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(
+                concept="us-gaap:ResearchAndDevelopmentExpense",
+                label="Research and development",
+                value=7_903_000_000.0,
+                fiscal_period="Q2",
+            ),
+            make_fact(
+                concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                label="Net sales",
+                value=90_753_000_000.0,
+                fiscal_period="Q2",
+            ),
+        ],
+    )
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=9.0,
+                concept_terms=["percentage"],
+                fiscal_year=2025,
+                fiscal_period="Q2",
+                numerator_terms=["ResearchAndDevelopmentExpense"],
+                denominator_terms=["NetSales"],
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    # 7,903 / 90,753 = 8.71% — matches "9%" at its printed precision.
+    outcome = reconciler.reconcile("R&D was 9% of net sales in Q2 FY2025.", [make_chunk()])
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None and "Net sales" in outcome.supporting_span
+
+
+def growth_store(tmp_path: Path) -> IngestStore:
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(value=130_497_000_000.0, fiscal_year=2025),
+            make_fact(
+                value=60_922_000_000.0,
+                fiscal_year=2024,
+                period_start="2024-01-01",
+                period_end="2024-12-31",
+            ),
+        ],
+    )
+    return s
+
+
+def growth_mapping(value: float) -> FactMappingOutput:
+    return FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=value,
+                concept_terms=[],
+                fiscal_year=2025,
+                fiscal_period="FY",
+                numerator_terms=["Revenues"],
+                denominator_terms=["Revenues"],
+            )
+        ]
+    )
+
+
+def test_change_percent_grounds_against_prior_year_fact(tmp_path: Path) -> None:
+    """'Up 114% from a year ago' recomputes as this year's value over last
+    year's value of the same concept — different fiscal years, so the
+    same-accession ratio gate can never reach it (ADR 0018)."""
+    reconciler = XbrlNumericReconciler(growth_store(tmp_path), FakeMapper(growth_mapping(114.0)))
+    # 130,497 / 60,922 - 1 = 114.2% — matches "114%" at its printed precision.
+    outcome = reconciler.reconcile(
+        "TSLA revenue for FY 2025 was up 114% from a year ago.", [make_chunk()]
+    )
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None and "change" in outcome.supporting_span
+
+
+def test_wrong_change_percent_stays_unsupported(tmp_path: Path) -> None:
+    reconciler = XbrlNumericReconciler(growth_store(tmp_path), FakeMapper(growth_mapping(90.0)))
+    outcome = reconciler.reconcile(
+        "TSLA revenue for FY 2025 was up 90% from a year ago.", [make_chunk()]
+    )
+    assert outcome.verdict == "unsupported"
+
+
+def test_change_percent_requires_same_concept_across_years(tmp_path: Path) -> None:
+    """The prior-year base must be the *same concept* — revenue growth must
+    not ground against last year's gross profit hitting the ratio by luck."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "acc-1",
+        [
+            make_fact(value=130_497_000_000.0, fiscal_year=2025),
+            make_fact(
+                concept="us-gaap:GrossProfit",
+                label="Gross profit",
+                value=60_922_000_000.0,
+                fiscal_year=2024,
+            ),
+        ],
+    )
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=114.0,
+                concept_terms=[],
+                fiscal_year=2025,
+                fiscal_period="FY",
+                numerator_terms=["Revenues"],
+                denominator_terms=["Revenues", "GrossProfit"],
+            )
+        ]
+    )
+    reconciler = XbrlNumericReconciler(s, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA revenue for FY 2025 was up 114% from a year ago.", [make_chunk()]
+    )
+    assert outcome.verdict == "unsupported"
+
+
+def test_percent_derived_from_verified_claim_figures_grounds(store: IngestStore) -> None:
+    """'Declined 5.7% ... from $X to $Y' with both operands reconciled: the
+    percent is arithmetic over verified figures and must not hold the claim
+    at partial (4 of 26 non-grounded claims in the 2026-07-27 re-baseline,
+    ADR 0018)."""
+    store.replace_facts(
+        "acc-2",
+        [make_fact(value=90_000_000_000.0, fiscal_year=2024, accession_no="acc-2")],
+    )
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=96.8e9, concept_terms=["Revenues"], fiscal_year=2025, fiscal_period="FY"
+            ),
+            FactCandidate(
+                value=90.0e9, concept_terms=["Revenues"], fiscal_year=2024, fiscal_period="FY"
+            ),
+        ]
+    )
+    reconciler = XbrlNumericReconciler(store, FakeMapper(mapping))
+    # (96.8 - 90.0) / 90.0 = 7.6% — consistent with the verified operands.
+    outcome = reconciler.reconcile(
+        "Revenue grew 7.6% in FY 2025, from $90.0 billion to $96.8 billion.", [make_chunk()]
+    )
+    assert outcome.verdict == "grounded"
+
+
+def test_percent_inconsistent_with_claim_figures_stays_partial(store: IngestStore) -> None:
+    """A percent that doesn't follow from the claim's own verified figures
+    keeps the claim partial — the derivation must not become a rubber
+    stamp."""
+    reconciler = XbrlNumericReconciler(store, FakeMapper(revenue_mapping()))
+    outcome = reconciler.reconcile(
+        "Revenue of $96.8 billion for FY 2025 was up 25% year-over-year.", [make_chunk()]
+    )
+    assert outcome.verdict == "partial"
+    assert outcome.feedback is not None and "25%" in outcome.feedback
+
+
+def test_date_day_is_not_an_obligation_in_cited_text_path(store: IngestStore) -> None:
+    """'As of September 27, 2025' must not demand a bare 27 in the cited
+    text — g-029's two share-count claims failed only on the day-of-month
+    (ADR 0018)."""
+    reconciler = XbrlNumericReconciler(store, FakeMapper(FactMappingOutput()))
+    chunk = make_chunk(text="14,773,260 shares issued and outstanding at period end")
+    outcome = reconciler.reconcile(
+        "As of September 27, 2025, Apple had 14,773,260 shares issued and outstanding.",
+        [chunk],
+    )
+    assert outcome.verdict == "grounded"

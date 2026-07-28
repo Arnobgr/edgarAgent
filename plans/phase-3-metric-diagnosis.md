@@ -11,6 +11,28 @@ current evidence a run today clears `numeric_fidelity` but still misses
 `grounding_rate` by a claim or two, i.e. burns 75 minutes and real money to
 refuse a baseline again.
 
+### ✔ Step 1 OUTCOME (2026-07-28) — diagnosed and fixed, ADR 0018
+
+First correction: the report's 108/121 is the *reduced fraction* — the real
+population is **242 non-retracted claims, 216 grounded, 26 failures**
+(`citation_judged` 216 confirms it), so the gate needs **+2** grounded
+claims (218/242 = 0.9008), and the failure shape is 16 numeric-partial /
+6 qualitative-partial / 4 numeric-unsupported.
+
+The leading hypothesis was wrong in a useful way: the mapper *does* emit
+ratio operands. The real blocks, each verified by store probe or live mapper
+call: (1) growth percents need `(a−b)/b` across two fiscal years — the ratio
+path computes `num/den` inside one year; (2) the mapper's camel-case terms
+(`NetSales`) can't reach spaced labels ("Net sales") through `LIKE`; (3) the
+cited-text fallback still demanded day-of-month fragments ("September 27" →
+27). All fixed reconciler-side (ADR 0018); g-012's 19.0% margin and g-011's
+133% segment growth are **correct rulings** and stay unsupported.
+
+Replay of the 26 failures through the fixed reconciler: **11/20 numeric
+failures now ground** → projected ~227/242 ≈ 0.94. Verifier P/R re-measured
+after the change: **1.000/1.000 on all 112 labeled claims**. `make check`
+green (149 tests). Step 2 is go.
+
 ### Where things stand
 
 The 2026-07-27 re-baseline (`eval/reports/agent-20260727-224458.json`) was

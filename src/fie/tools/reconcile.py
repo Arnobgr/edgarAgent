@@ -60,6 +60,14 @@ _NUM_RE = re.compile(
 # bare figures in that chunk.
 _CONTEXT_RE = re.compile(r"in (thousands|millions|billions)", re.IGNORECASE)
 
+# A month name directly before a bare 1-31 marks a day-of-month ("September
+# 27, 2025"), not an amount.
+_MONTH_RE = re.compile(
+    r"(?:january|february|march|april|may|june|july|august|september|october"
+    r"|november|december)\s+$",
+    re.IGNORECASE,
+)
+
 _SPAN_WINDOW = 70
 
 
@@ -130,6 +138,15 @@ def parse_numbers(text: str) -> list[ParsedNumber]:
     return numbers
 
 
+def _is_date_day(text: str, number: ParsedNumber) -> bool:
+    """Whether this number is a day-of-month rather than an amount."""
+    if "$" in number.raw or number.is_percent or number.explicit_scale:
+        return False
+    if not (1 <= number.value <= 31 and number.value == int(number.value)):
+        return False
+    return _MONTH_RE.search(text[: number.start]) is not None
+
+
 def _context_scale(text: str) -> float | None:
     """The scale implied by an "in millions"-style marker, if present."""
     match = _CONTEXT_RE.search(text)
@@ -152,6 +169,14 @@ class InterimNumericReconciler:
 
     def reconcile(self, claim_text: str, chunks: list[EvidenceChunk]) -> ReconcileOutcome:
         claim_numbers = parse_numbers(claim_text)
+        # Day-of-month fragments ("as of September 27, 2025" → 27) are not
+        # obligations for the cited-text path either — the same defect class
+        # ADR 0016 removed from the XBRL path grounded two more claims here
+        # in the 2026-07-27 re-baseline (ADR 0018). A claim that is nothing
+        # but a date keeps the original behavior.
+        amounts = [n for n in claim_numbers if not _is_date_day(claim_text, n)]
+        if amounts:
+            claim_numbers = amounts
         if not claim_numbers:
             return ReconcileOutcome(
                 verdict="unsupported",
@@ -261,7 +286,10 @@ _MAPPING_SYSTEM = (
     "for six/nine-month figures — and null period for balance-sheet 'as "
     "of' figures), and the unit. For "
     "a percentage that is a ratio of filed amounts (a margin, a % of "
-    "revenue), also give numerator_terms and denominator_terms."
+    "revenue), also give numerator_terms and denominator_terms. For a "
+    "year-over-year change percentage ('revenue up 41%'), give the changing "
+    "concept as both numerator_terms and denominator_terms with the current "
+    "period's fiscal year."
 )
 
 
@@ -273,10 +301,12 @@ class XbrlNumericReconciler:
     (concept, period, unit) triples → deterministic SQLite lookup, with the
     stated period first and a period-free (never year-free) retry → a
     figure is grounded only if a stored fact matches it exactly at the
-    claim's stated precision. Ratio percentages recompute from operand
-    facts named by the mapping. Figures with no fact match fall back to
-    cell-matching against cited *table* chunks (display provenance); still
-    unmatched → unsupported, with feedback naming what was searched.
+    claim's stated precision. Ratio and year-over-year change percentages
+    recompute from operand facts named by the mapping; a percent consistent
+    with verified figures in its own claim grounds by recomputation too
+    (ADR 0018). Figures with no fact match fall back to cell-matching
+    against cited *table* chunks (display provenance); still unmatched →
+    unsupported, with feedback naming what was searched.
     """
 
     def __init__(
@@ -320,13 +350,28 @@ class XbrlNumericReconciler:
         tickers = sorted({c.ticker for c in chunks}) or None
 
         matched_spans: list[str] = []
-        missing: list[str] = []
+        unmatched: list[ParsedNumber] = []
         searched: list[str] = []
+        operands: list[float] = []
         table_chunks = [c for c in chunks if c.metadata.get("chunk_type") == "table"]
         for number in figures:
             span = self._match_fact(number, candidates, tickers, searched)
             if span is None and table_chunks:
                 span = self._fallback._find_match(number, table_chunks)
+            if span is None:
+                unmatched.append(number)
+            else:
+                matched_spans.append(span)
+                if not number.is_percent:
+                    operands.append(number.value)
+
+        # Second pass: a percent that is arithmetic over figures already
+        # verified in the same claim ("declined 5.7% ... from $316,199M to
+        # $298,085M") adds no unverified information — ground it by
+        # recomputation at its stated precision (ADR 0018).
+        missing: list[str] = []
+        for number in unmatched:
+            span = _derive_percent(number, operands) if number.is_percent else None
             if span is None:
                 missing.append(number.raw)
             else:
@@ -416,7 +461,13 @@ class XbrlNumericReconciler:
         were such percents, ADR 0016). Operand pairs must share ticker,
         accession, fiscal year and period so the ratio is coherent; the
         claim's printed precision gates the match, the same tolerance rule
-        as direct lookups."""
+        as direct lookups.
+
+        Change percentages ("up 41% from FY2025") are a second form: the
+        prior year's value of the *same concept* is the base, so the pair
+        gate swaps accession equality for concept equality — the comparative
+        may sit in a different filing, but like must compare to like
+        (ADR 0018)."""
         searched.extend(candidate.numerator_terms + candidate.denominator_terms)
         target = number.value / 100.0
         tolerance = number.tolerance / 100.0
@@ -450,6 +501,26 @@ class XbrlNumericReconciler:
                         continue
                     if abs(abs(num.value / den.value) - target) <= tolerance:
                         return _ratio_span(num, den)
+            if candidate.fiscal_year is not None:
+                priors = self._store.query_facts(
+                    tickers=tickers,
+                    concept_terms=candidate.denominator_terms,
+                    fiscal_year=candidate.fiscal_year - 1,
+                    fiscal_period=fiscal_period,
+                    limit=40,
+                )
+                priors = [f for f in priors if _period_admissible(f, fiscal_period, candidate)]
+                for num in numerators:
+                    for den in priors:
+                        if den.value == 0 or (num.ticker, num.fiscal_period, num.concept) != (
+                            den.ticker,
+                            den.fiscal_period,
+                            den.concept,
+                        ):
+                            continue
+                        growth = abs(num.value) / abs(den.value) - 1.0
+                        if abs(abs(growth) - target) <= tolerance:
+                            return _growth_span(num, den)
         return None
 
     @staticmethod
@@ -499,6 +570,29 @@ def _period_admissible(fact: Fact, attempt: str | None, candidate: FactCandidate
     return True
 
 
+def _derive_percent(number: ParsedNumber, operands: list[float]) -> str | None:
+    """Ground a percent as arithmetic over verified figures in its claim.
+
+    Tries the change form |a-b|/|b| and the share form |a/b| for every
+    ordered pair of already-reconciled non-percent figures, at the percent's
+    stated precision. Magnitudes throughout — claims state direction in
+    words. Growth/decline percents whose operands the claim itself states
+    were 4 of 26 non-grounded claims in the 2026-07-27 re-baseline; the
+    reconciled operands make the recomputation as trustworthy as the ratio
+    path's (ADR 0018)."""
+    for a in operands:
+        for b in operands:
+            if a == b or b == 0:
+                continue
+            for form, name in ((abs(a - b) / abs(b), "change"), (abs(a / b), "share")):
+                if abs(form * 100.0 - number.value) <= number.tolerance:
+                    return (
+                        f"derived {name} from verified claim figures: "
+                        f"|{a:g}| vs |{b:g}| = {form * 100.0:.2f}%"
+                    )
+    return None
+
+
 def _fact_span(fact: Fact) -> str:
     period = fact.fiscal_period or ""
     year = str(fact.fiscal_year or "")
@@ -509,6 +603,16 @@ def _fact_span(fact: Fact) -> str:
     return (
         f"XBRL {fact.concept} ({fact.label or 'no label'}){dims} = {fact.value:g} "
         f"{fact.unit or ''} for {when}, {fact.form_type or '?'} acc {fact.accession_no}"
+    )
+
+
+def _growth_span(num: Fact, den: Fact) -> str:
+    period = num.fiscal_period or ""
+    growth = abs(num.value) / abs(den.value) - 1.0
+    return (
+        f"XBRL change {num.concept} ({num.label or 'no label'}): "
+        f"{num.value:g} ({period} {num.fiscal_year}) vs {den.value:g} "
+        f"({period} {den.fiscal_year}) = {growth * 100.0:+.2f}%, acc {num.accession_no}"
     )
 
 

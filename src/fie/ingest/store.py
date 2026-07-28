@@ -239,8 +239,12 @@ class IngestStore:
         """Deterministic fact lookup for reconciliation and gold answers.
 
         `concept_terms` match the concept or label case-insensitively as
-        substrings (any term). Non-dimensioned facts sort first — headline
-        totals beat segment breakdowns when both match.
+        substrings (any term); labels are also compared space-stripped, so a
+        mapper's camel-case vocabulary ("NetSales") reaches a label filed
+        with spaces ("Net sales") — this gap alone kept four ratio claims
+        ungrounded in the 2026-07-27 re-baseline (ADR 0018). Non-dimensioned
+        facts sort first — headline totals beat segment breakdowns when both
+        match.
         """
         where: list[str] = []
         params: list[object] = []
@@ -248,11 +252,14 @@ class IngestStore:
             where.append(f"ticker IN ({','.join('?' * len(tickers))})")
             params.extend(t.upper() for t in tickers)
         if concept_terms:
-            ors = " OR ".join("(concept LIKE ? OR label LIKE ?)" for _ in concept_terms)
+            ors = " OR ".join(
+                "(concept LIKE ? OR label LIKE ? OR REPLACE(label, ' ', '') LIKE ?)"
+                for _ in concept_terms
+            )
             where.append(f"({ors})")
             for term in concept_terms:
                 like = f"%{term}%"
-                params.extend([like, like])
+                params.extend([like, like, f"%{term.replace(' ', '')}%"])
         if fiscal_year is not None:
             where.append("fiscal_year = ?")
             params.append(fiscal_year)
