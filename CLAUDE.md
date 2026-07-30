@@ -21,16 +21,35 @@ was silently deleting disaggregation facts — Apple Services/iPhone and NVDA
 Data Center revenue were filed all along; difference-form grounding; metric
 context scale; and the run-killer was a close/query race on the shared
 SQLite connection, fixed with a lock). The next work is
-`plans/phase-4-backend-and-deploy.md`. Retrieval, prompts and models remain
-cleared — do not tune them for gate metrics.
+`plans/phase-3-recall-and-retraction.md` — the three post-gate issues below
+must close before `plans/phase-4-backend-and-deploy.md` starts. Retrieval,
+prompts and models remain cleared — do not tune them for gate metrics.
 
-Two open issues found *after* the gate passed, in the passing run's own
-artifacts, are documented as evidence (no remedies proposed) in
-`docs/findings/2026-07-28-answer-recall-and-claim-staleness.md`: the system
-declines questions whose facts are in the corpus
-(`expected_fact_coverage` 0.393, traced to retrieval not surfacing the
-figure), and ~10% of scored claims are stale relative to the answer
-delivered. Read it before acting on either.
+Three open issues found *after* the gate passed, in the passing run's own
+artifacts, are diagnosed in
+`docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md` —
+read that one, not the earlier doc:
+
+1. **Answer recall.** The system declines questions whose facts are in the
+   corpus (`expected_fact_coverage` 0.393). Confirmed and decomposed: of 17
+   misses, 13 are retrieval, 2 packing, 2 synthesis, 0 corpus gap. The
+   architectural root is that `query_facts` resolves all 28 expected facts
+   but the store is wired into `verify`, not `research` — the system can
+   check a number it cannot look up.
+2. **Collateral excision.** `retract` deletes one sentence per unsupported
+   claim by token overlap over a mutating draft, so overlapping claims
+   collide and delete each other's sentences. Three `grounded` claims were
+   silently deleted while still advertised in the grounding table.
+3. **Instant facts have no date.** 15,211/28,550 instants have NULL
+   `period_start` and `period_end` (wrong column name at `facts.py:44`),
+   which makes ADR 0012's period-shift protection inoperative for those
+   rows. Recorded in `plans/phase-3-metric-diagnosis.md` as an accepted
+   deferral; its consequences are larger than that record implies.
+
+The earlier `docs/findings/2026-07-28-answer-recall-and-claim-staleness.md`
+is superseded on issue 2: its stated staleness mechanism (claim generations
+mixing) is wrong — `claims` has no reducer — and "~10% of scored claims"
+is actually 3.6%.
 
 ## Working guidelines
 
