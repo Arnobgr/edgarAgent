@@ -65,7 +65,19 @@ _LOWER_IS_BETTER = {"hallucination_rate"}
 # gated rather than informational (ADR 0020). Its threshold is set from the
 # measured post-fix value, not from ambition — picking it in advance is how
 # numeric_fidelity's 0.95 came to refuse a legitimate baseline (ADR 0015).
-TARGETS = {"hallucination_rate": 0.02, "numeric_fidelity": 0.85, "grounding_rate": 0.90}
+#
+# 0.65 comes from one measurement: the 2026-07-31 subset run took its 14
+# labels from 0.286 to 1.000, which puts a floor of 0.714 on the full set if
+# the 14 unmeasured labels do not improve at all. The target sits below that
+# floor — the unmeasured half is the harder cross-company questions — and far
+# above both the pre-fix 0.357 and the 0.000 a declining system scores.
+# Raise it once a full baseline has measured all 28.
+TARGETS = {
+    "hallucination_rate": 0.02,
+    "numeric_fidelity": 0.85,
+    "grounding_rate": 0.90,
+    "expected_fact_coverage": 0.65,
+}
 
 
 def judge_citations(
