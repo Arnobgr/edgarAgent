@@ -16,8 +16,11 @@ un-mutated draft, at most one sentence per claim and one claim per sentence,
 and only then applied.
 """
 
+import logging
 import re
 from collections.abc import Sequence
+
+logger = logging.getLogger(__name__)
 
 _SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
 _WORD_RE = re.compile(r"[a-z0-9]+")
@@ -72,6 +75,37 @@ def best_overlap(draft: str, claim_text: str) -> float:
     return max((_overlap(core, tokens, s) for _, s in _sentences(draft)), default=0.0)
 
 
+def excise_spans(draft: str, spans: Sequence[str]) -> str:
+    """Remove each claim's own quoted span from the draft.
+
+    The synthesizer wrote the prose and the claim list together and knows
+    which sentence states which claim; capturing that at synthesis makes
+    removal exact (ADR 0023). Two claims quoting the same sentence remove it
+    once — deletion is idempotent, so there is no order to get wrong and no
+    sentence can be taken from another claim by accident.
+    """
+    body = draft
+    for span in spans:
+        stripped = span.strip()
+        if stripped and stripped in body:
+            body = body.replace(stripped, "")
+    return _tidy(body) if body != draft else draft
+
+
+def claim_present(draft: str, claim_text: str, answer_span: str) -> bool:
+    """Whether a claim's text is still in the prose.
+
+    A quoted span answers this exactly. Token overlap is the fallback for a
+    claim that carries none — an older checkpoint, or a model that would not
+    quote even after repair — and its use is counted so the fallback's
+    reach stays visible rather than assumed to be zero."""
+    stripped = answer_span.strip()
+    if stripped:
+        return stripped in draft
+    logger.debug("claim has no answer span; falling back to token overlap")
+    return best_overlap(draft, claim_text) >= MIN_OVERLAP
+
+
 def excise_claims(draft: str, claim_texts: Sequence[str]) -> str:
     """Remove the sentences carrying `claim_texts`, assigned globally.
 
@@ -80,6 +114,9 @@ def excise_claims(draft: str, claim_texts: Sequence[str]) -> str:
     claim, then the earliest sentence — the old `score >= best_score` let
     whichever sentence came last win a tie, so the result depended on
     iteration order.
+
+    Demoted to a fallback by ADR 0023: claims that carry their own quoted
+    span go through `excise_spans` and never reach this heuristic.
     """
     sentences = _sentences(draft)
     scored: list[tuple[float, int, int]] = []

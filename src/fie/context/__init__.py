@@ -37,6 +37,24 @@ it will be researched as-is, without ceremony.
 - Never invent parts the question does not ask about.
 """
 
+QUERY_REWRITE_SYSTEM_PROMPT = """\
+You rewrite an analyst's question as the text that would appear in the SEC \
+filing passage answering it.
+
+Return one "query" string. Use the filing's vocabulary rather than the \
+question's: the caption of the statement or note carrying the figure \
+("consolidated statements of operations", "consolidated balance sheets", \
+"notes to consolidated financial statements"), the line item as filed \
+("total revenues", "net income", "research and development"), and the period \
+as a filing labels it ("fiscal year 2025", "years ended"). Keep the company \
+name so the query stays scoped to it.
+
+Do not answer the question, do not invent or recall figures, and do not add \
+topics it did not ask about. For a question about risks, strategy or \
+management commentary, use the wording of the relevant section instead \
+("risk factors", "management's discussion and analysis").
+"""
+
 SYNTHESIS_SYSTEM_PROMPT = """\
 You are a financial analyst answering questions about a company using only \
 the evidence excerpts provided from its SEC filings.
@@ -46,7 +64,13 @@ Produce structured output with two fields:
 every figure and material claim, like [c3].
 2. "claims" — every discrete factual claim made in the answer. For each:
    - "text": the claim restated as one self-contained sentence, staying \
-close to the answer's wording.
+close to the answer's wording. This is what the verifier checks, so it must \
+stand on its own.
+   - "answer_span": the sentence of "answer" that states this claim, copied \
+**verbatim** — character for character, including its inline citation \
+marker. Verification removes exactly this text when it rejects the claim, so \
+it must occur in "answer" exactly as written. When one sentence states two \
+claims, both quote that same sentence.
    - "claim_type": "numeric" if it asserts a specific figure or quantity; \
 "forward_looking" if it reports guidance, expectations, or projections; \
 otherwise "qualitative".
@@ -218,6 +242,20 @@ def build_synthesis_messages(
     return [
         SystemMessage(content=SYNTHESIS_SYSTEM_PROMPT),
         HumanMessage(content="\n\n".join(parts)),
+    ]
+
+
+def build_query_rewrite_messages(query: str) -> list[BaseMessage]:
+    """Messages for the retrieval query rewrite (one per research branch).
+
+    `research` retrieved with the analyst's own phrasing, and no
+    query-formulation stage existed anywhere in the system. Restating the
+    question in filing vocabulary moved 10 of 11 previously-failing figures
+    into the top 10, from ranks of 10-31 and worse — the single largest lever
+    in the 2026-07-30 retrieval ablation (ADR 0022)."""
+    return [
+        SystemMessage(content=QUERY_REWRITE_SYSTEM_PROMPT),
+        HumanMessage(content=f"Analyst question: {query}"),
     ]
 
 

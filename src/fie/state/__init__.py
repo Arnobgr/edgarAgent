@@ -70,6 +70,11 @@ class BranchResult(BaseModel):
     sub_question_id: str
     ok: bool
     detail: str | None = None
+    # What the branch actually searched with. Without it a retrieval failure
+    # is indistinguishable from a rewrite failure, and the next diagnosis
+    # session pays for that (ADR 0022). This channel already has a reducer,
+    # so recording it here costs no new state machinery.
+    query: str | None = None
 
 
 class ResearchBranch(BaseModel):
@@ -94,6 +99,8 @@ class Claim(BaseModel):
     source_chunk_ids: list[str] = Field(default_factory=list)
     status: ClaimStatus = "pending"
     sub_question_id: str | None = None
+    # Verbatim from the draft answer; see `DraftClaim.answer_span`.
+    answer_span: str = ""
 
 
 class Verdict(BaseModel):
@@ -160,12 +167,23 @@ class DecomposeOutput(BaseModel):
     sub_questions: list[DecomposedSubQuestion] = Field(default_factory=list)
 
 
+class QueryRewrite(BaseModel):
+    """A retrieval query restated in filing vocabulary (ADR 0022)."""
+
+    query: str
+
+
 class DraftClaim(BaseModel):
     """One claim as tagged by the synthesizer, before verification."""
 
     text: str
     claim_type: ClaimType
     source_chunk_ids: list[str] = Field(default_factory=list)
+    # The sentence of `answer` that states this claim, quoted verbatim. The
+    # synthesizer wrote both and knows the correspondence exactly; discarding
+    # it forced `retract` to guess the mapping back by token overlap, which
+    # deleted the wrong sentences (ADR 0023). Empty falls back to that guess.
+    answer_span: str = ""
 
 
 class SynthesisOutput(BaseModel):

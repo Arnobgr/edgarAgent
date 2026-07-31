@@ -12,13 +12,17 @@ import datetime as dt
 import json
 import logging
 from dataclasses import asdict, dataclass
+from itertools import zip_longest
 from pathlib import Path
+from typing import Any
 
 import typer
 
 from fie.config import Settings, get_settings
+from fie.context import build_query_rewrite_messages
 from fie.eval.datasets import EVAL_DIR, FigureQuery, RetrievalQuery, load_jsonl
 from fie.eval.metrics import figure_rank, figure_recall_at_k, mrr, ndcg_at_10, recall_at_k
+from fie.state import EvidenceChunk, QueryRewrite
 from fie.tools.retrieval import Retriever
 
 logger = logging.getLogger(__name__)
@@ -84,15 +88,60 @@ class FigureVariantResult:
     ranks: dict[str, int | None]
 
 
+# Memoized across arms so `on` and `union` score the *same* rewrite rather
+# than two samples of a non-deterministic one; comparing arms is the point.
+_REWRITES: dict[str, str] = {}
+
+
+def _rewrite(rewriter: Any, query: str) -> str:
+    """The query in filing vocabulary, or the original if the model fails —
+    the same fallback `research` applies (ADR 0022)."""
+    if query in _REWRITES:
+        return _REWRITES[query]
+    try:
+        output = rewriter.invoke(build_query_rewrite_messages(query))
+    except Exception as exc:
+        logger.warning("rewrite failed for %r: %s", query[:60], exc)
+        return query
+    rewritten = output.query if isinstance(output, QueryRewrite) else output.get("query", "")
+    _REWRITES[query] = str(rewritten).strip() or query
+    return _REWRITES[query]
+
+
+def _union(first: list[EvidenceChunk], second: list[EvidenceChunk], k: int) -> list[EvidenceChunk]:
+    """Both result lists interleaved by rank, deduped, truncated to k — the
+    hedge against a rewrite that scores worse than the original phrasing."""
+    merged: list[EvidenceChunk] = []
+    seen: set[str] = set()
+    for pair in zip_longest(first, second):
+        for chunk in pair:
+            if chunk is not None and chunk.chunk_id not in seen:
+                seen.add(chunk.chunk_id)
+                merged.append(chunk)
+    return merged[:k]
+
+
 def evaluate_figures(
-    retriever: Retriever, queries: list[FigureQuery], name: str
+    retriever: Retriever,
+    queries: list[FigureQuery],
+    name: str,
+    *,
+    rewriter: Any = None,
+    union: bool = False,
 ) -> FigureVariantResult:
     """Rank of the chunk carrying each figure, per query."""
+    depth = max(FIGURE_KS)
+
+    def search(query: str) -> list[EvidenceChunk]:
+        if rewriter is None:
+            return retriever.retrieve(query, k=depth)
+        rewritten = retriever.retrieve(_rewrite(rewriter, query), k=depth)
+        if not union:
+            return rewritten
+        return _union(rewritten, retriever.retrieve(query, k=depth), depth)
+
     ranks = {
-        query.id: figure_rank(
-            retriever.retrieve(query.query, k=max(FIGURE_KS)), query.relevant_chunk_ids
-        )
-        for query in queries
+        query.id: figure_rank(search(query.query), query.relevant_chunk_ids) for query in queries
     }
     ordered = list(ranks.values())
     return FigureVariantResult(
@@ -149,6 +198,12 @@ def write_figure_report(
 
 def _rank_cell(rank: int | None) -> str:
     return "—" if rank is None else str(rank)
+
+
+def _build_rewriter(settings: Settings) -> Any:
+    from fie.llm import bind_structured, get_model
+
+    return bind_structured(get_model("query_rewrite", settings), QueryRewrite)
 
 
 def _build_retriever(settings: Settings, embedding: str, rerank: bool) -> Retriever:
@@ -225,6 +280,9 @@ def run(
         "--figures",
         help="Score figure delivery against eval/figure_queries.jsonl instead of section labels.",
     ),
+    rewrite: str = typer.Option(
+        "off", "--rewrite", help="off | on | union | all — the C2 query-rewrite arm (--figures)."
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
     """Evaluate retriever variant(s) on the labeled query set."""
@@ -245,11 +303,23 @@ def run(
     ]
     if figures:
         figure_set = load_jsonl(queries_path, FigureQuery)
+        arms = ["off", "on", "union"] if rewrite == "all" else [rewrite]
+        rewriter = None if arms == ["off"] else _build_rewriter(settings)
         figure_results = []
         for name, provider, use_rerank in variants:
-            typer.echo(f"Evaluating {name} over {len(figure_set)} figures…")
             retriever = _build_retriever(settings, provider, use_rerank)
-            figure_results.append(evaluate_figures(retriever, figure_set, name))
+            for arm in arms:
+                label = name if arm == "off" else f"{name}+{arm}-rewrite"
+                typer.echo(f"Evaluating {label} over {len(figure_set)} figures…")
+                figure_results.append(
+                    evaluate_figures(
+                        retriever,
+                        figure_set,
+                        label,
+                        rewriter=None if arm == "off" else rewriter,
+                        union=arm == "union",
+                    )
+                )
         report = write_figure_report(figure_results, figure_set, EVAL_DIR / "reports")
     else:
         query_set = load_jsonl(queries_path, RetrievalQuery)

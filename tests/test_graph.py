@@ -16,6 +16,7 @@ from fie.state import (
     DraftClaim,
     EngineState,
     JudgeOutput,
+    QueryRewrite,
     SynthesisOutput,
     build_run_result,
 )
@@ -135,6 +136,52 @@ async def test_iteration_cap_of_one_skips_loop_back_and_retracts() -> None:
     assert state.verify_iteration == 1
     assert len(synthesis.calls) == 1
     assert sum(c.status == "retracted" for c in state.claims) == 2
+
+
+REWRITTEN = "Tesla consolidated statements of operations total revenues fiscal year 2025"
+
+
+def _grounded_output(answer: str) -> SynthesisOutput:
+    return SynthesisOutput(
+        answer=answer,
+        claims=[DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"])],
+    )
+
+
+async def test_research_retrieves_with_the_rewritten_query_and_records_it() -> None:
+    """`research` retrieved with `state.query or sub_question.text` — the raw
+    analyst phrasing — and no query-formulation stage existed anywhere in the
+    system. Filing vocabulary moved 10 of 11 previously-failing figures into
+    the top 10 (ADR 0022). The query used is recorded so a retrieval failure
+    stays distinguishable from a rewrite failure."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE}))
+    rewrite = StructuredFakeModel(default_output=QueryRewrite(query=REWRITTEN))
+    synthesis = StructuredFakeModel(outputs=[_grounded_output(f"{TRUE_NUMERIC} [c1].")])
+    critic = StructuredFakeModel(outputs=[CriticOutput(passed=True)])
+    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic, rewrite=rewrite)
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert retriever.queries == [REWRITTEN]
+    assert [b.query for b in state.branch_results] == [REWRITTEN]
+
+
+async def test_a_failed_rewrite_falls_back_to_the_analyst_phrasing() -> None:
+    """The rewrite is an improvement, not a dependency: losing it must cost
+    ranking, never the branch."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE}))
+    rewrite = StructuredFakeModel(default_output=QueryRewrite(query=REWRITTEN), fail_times=99)
+    synthesis = StructuredFakeModel(outputs=[_grounded_output(f"{TRUE_NUMERIC} [c1].")])
+    critic = StructuredFakeModel(outputs=[CriticOutput(passed=True)])
+    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic, rewrite=rewrite)
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert retriever.queries == [QUESTION]
+    assert state.error is None
+    assert state.draft_answer is not None
 
 
 async def test_all_grounded_single_pass_reaches_critic_and_ends() -> None:
@@ -428,6 +475,97 @@ async def test_a_verified_claim_that_lost_its_sentence_leaves_the_grounding_tabl
         )
     for row in run_result.retracted:
         assert best_overlap(body, row.text) < MIN_OVERLAP
+
+
+SPAN_ANSWER = f"{TRUE_NUMERIC} [c1]. {SHARED_SENTENCE}"
+
+
+def _spanned_output(*, quote: bool) -> SynthesisOutput:
+    """The same draft, with the claims either quoting their sentence or not."""
+
+    def span(text: str) -> str:
+        return text if quote else "a sentence that is not in the answer"
+
+    return SynthesisOutput(
+        answer=SPAN_ANSWER,
+        claims=[
+            DraftClaim(
+                text=TRUE_NUMERIC,
+                claim_type="numeric",
+                source_chunk_ids=["c1"],
+                answer_span=span(f"{TRUE_NUMERIC} [c1]."),
+            ),
+            DraftClaim(
+                text=SHARED_AMOUNT,
+                claim_type="numeric",
+                source_chunk_ids=["c2"],
+                answer_span=span(SHARED_SENTENCE),
+            ),
+            DraftClaim(
+                text=SHARED_GROWTH,
+                claim_type="qualitative",
+                source_chunk_ids=["c2"],
+                answer_span=span(SHARED_SENTENCE),
+            ),
+        ],
+    )
+
+
+async def test_quoted_spans_make_excision_exact() -> None:
+    """The synthesizer wrote the prose and the claim list and knows which
+    sentence states which claim; re-deriving that by token overlap is what
+    deleted the wrong sentences (ADR 0023). With spans, the sentence two
+    claims share is removed once and the verified claim beside it is
+    untouched — the Stage B invariant holds by construction."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(
+        outputs=[_spanned_output(quote=True), _spanned_output(quote=True)]
+    )
+    qualitative = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span")
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, qualitative=qualitative, critic=critic
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+    run_result = build_run_result("run-span", state)
+
+    assert all(c.answer_span in SPAN_ANSWER for c in state.claims if c.answer_span)
+    body = (state.draft_answer or "").partition(RETRACTED_HEADER)[0]
+    assert TRUE_NUMERIC in body
+    assert "Vision Pro" not in body
+    # The verified claim that shared the removed sentence is not advertised.
+    assert {row.text for row in run_result.grounding} == {TRUE_NUMERIC}
+
+
+async def test_a_non_quoting_model_triggers_one_repair() -> None:
+    """Models quote imperfectly, so the substring check is load-bearing —
+    but unlike the guess it replaces, the failure is detectable and one
+    bounded retry is the whole repair (ADR 0023)."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(
+        outputs=[
+            _spanned_output(quote=False),  # the draft, quoting nothing
+            _spanned_output(quote=True),  # the repair
+            _spanned_output(quote=True),  # the loop-back revision
+        ]
+    )
+    qualitative = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span")
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, qualitative=qualitative, critic=critic
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert "do not appear in 'answer'" in _human_text(synthesis.calls[1])
+    assert all(c.answer_span for c in state.claims)
 
 
 STRANDED_CLAIM = "Apple's Vision Pro segment expanded substantially during the fiscal period"

@@ -79,6 +79,14 @@ class Settings(BaseSettings):
             "verify_forward": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
             # Claim text → candidate XBRL (concept, period, unit) triples.
             "fact_mapping": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            # Question → the filed figures to look up on the research path.
+            # Its own role, not `fact_mapping`'s, so a Langfuse trace separates
+            # what research looked up from what verify checked (ADR 0022).
+            "fact_lookup": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            # Analyst phrasing → filing vocabulary, per research branch. Cheap
+            # by necessity: the call multiplies across the parallel fan-out and
+            # again on every verify loop-back (ADR 0022).
+            "query_rewrite": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
             # Retrieval-eval query seeding (candidates for hand-verification).
             "eval_seed": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
         }

@@ -30,6 +30,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -41,9 +42,10 @@ from fie.context import (
     build_critic_messages,
     build_decompose_messages,
     build_entailment_messages,
+    build_query_rewrite_messages,
     build_synthesis_messages,
 )
-from fie.graph.retract import MIN_OVERLAP, best_overlap, excise_claims
+from fie.graph.retract import claim_present, excise_claims, excise_spans
 from fie.guardrails import BudgetExceededError, BudgetTracker, ainvoke_with_retry, guarded
 from fie.llm import bind_structured
 from fie.state import (
@@ -52,15 +54,18 @@ from fie.state import (
     Claim,
     CriticOutput,
     DecomposeOutput,
+    DraftClaim,
     EngineState,
     EvidenceChunk,
     JudgeOutput,
+    QueryRewrite,
     ResearchBranch,
     SubQuestion,
     SynthesisOutput,
     Verdict,
     VerifyMethod,
 )
+from fie.tools.fact_lookup import FactLookup
 from fie.tools.reconcile import NumericReconciler
 from fie.tools.retrieval import Retriever
 
@@ -95,8 +100,10 @@ def build_graph(
     qualitative_model: BaseChatModel,
     forward_model: BaseChatModel,
     critic_model: BaseChatModel,
+    rewrite_model: BaseChatModel | None = None,
     reconciler: NumericReconciler,
     tracker: BudgetTracker,
+    fact_lookup: FactLookup | None = None,
     limits: GraphLimits | None = None,
     k: int = 6,
     chunks_per_sub_question: int = DEFAULT_CHUNKS_PER_SUB_QUESTION,
@@ -115,6 +122,7 @@ def build_graph(
     qualitative_llm = bind_structured(qualitative_model, JudgeOutput)
     forward_llm = bind_structured(forward_model, JudgeOutput)
     critic_llm = bind_structured(critic_model, CriticOutput)
+    rewrite_llm = bind_structured(rewrite_model, QueryRewrite) if rewrite_model else None
 
     # Bounds concurrently-running research branches. One semaphore per
     # compiled graph: a graph instance is bound to one event loop per run
@@ -166,17 +174,52 @@ def build_graph(
             "redecompose_requested": False,
         }
 
+    async def formulate(query: str, config: RunnableConfig) -> str:
+        """Restate a branch's query in filing vocabulary before retrieving.
+
+        Not a graph node: it is a per-branch step with no fan-in, so a node
+        would need its own channel and change the state machine for nothing.
+        One rewrite, never a multi-query fan-out — the ablation says one
+        clears the bar, and the call already multiplies across the parallel
+        Send fan-out and again on every verify loop-back (ADR 0022). A
+        rewrite failure falls back to the analyst's own phrasing rather than
+        failing the branch."""
+        if rewrite_llm is None:
+            return query
+        try:
+            output = cast(
+                QueryRewrite, await _call(rewrite_llm, build_query_rewrite_messages(query), config)
+            )
+        except (BudgetExceededError, asyncio.CancelledError):
+            raise
+        except Exception as exc:
+            logger.warning("query rewrite failed (%s); retrieving with the raw question", exc)
+            return query
+        return output.query.strip() or query
+
     async def research(state: ResearchBranch, config: RunnableConfig) -> dict[str, Any]:
         """One fan-out branch: retrieve evidence for its sub-question (or,
-        on a targeted loop-back, for the failed claim's text). Failures are
+        on a targeted loop-back, for the failed claim's text), and look the
+        question's filed figures up in the XBRL store. Failures are
         isolated — the branch reports its sub-question exhausted instead of
         killing the run (budget aborts and node timeouts stay global)."""
-        del config
         sub_question = state.sub_question
         query = state.query or sub_question.text
         try:
             async with research_gate:
-                chunks = await asyncio.to_thread(retriever.retrieve, query, k)
+                search = await formulate(query, config)
+                chunks = await asyncio.to_thread(retriever.retrieve, search, k)
+                # The store answers "what is this figure" exactly, where
+                # retrieval answers "what text is nearby" — 13 of the 17
+                # coverage misses were figures sitting in SQLite that the
+                # answering path could not reach (ADR 0022). Injection is
+                # additive: a lookup failure or a non-numeric question just
+                # yields nothing, and the retrieved prose stands alone.
+                facts = (
+                    await asyncio.to_thread(fact_lookup.lookup, query)
+                    if fact_lookup is not None
+                    else []
+                )
         except (BudgetExceededError, asyncio.CancelledError):
             raise
         except Exception as exc:
@@ -186,10 +229,14 @@ def build_graph(
                     BranchResult(sub_question_id=sub_question.id, ok=False, detail=str(exc))
                 ]
             }
-        tagged = [c.model_copy(update={"sub_question_id": sub_question.id}) for c in chunks]
+        tagged = [
+            c.model_copy(update={"sub_question_id": sub_question.id}) for c in [*facts, *chunks]
+        ]
         return {
             "evidence": tagged,
-            "branch_results": [BranchResult(sub_question_id=sub_question.id, ok=True)],
+            "branch_results": [
+                BranchResult(sub_question_id=sub_question.id, ok=True, query=search)
+            ],
         }
 
     def _stamp_sub_question_statuses(state: EngineState) -> list[SubQuestion]:
@@ -205,6 +252,49 @@ def build_graph(
             else sq.model_copy(update={"status": "researched" if latest[sq.id] else "exhausted"})
             for sq in state.sub_questions
         ]
+
+    def _unquoted(output: SynthesisOutput) -> list[DraftClaim]:
+        return [c for c in output.claims if c.answer_span.strip() not in output.answer]
+
+    async def repair_spans(
+        output: SynthesisOutput, messages: list[Any], config: RunnableConfig
+    ) -> SynthesisOutput:
+        """Re-ask once for claims whose span is not verbatim in the answer.
+
+        Models quote imperfectly, so validation is load-bearing — but unlike
+        the token-overlap guess it replaces, this failure is *detectable*
+        (a substring check) rather than silent, and one bounded retry is the
+        whole repair (ADR 0023). A claim still unquoted after it keeps an
+        empty span and falls back to token overlap, counted at retract."""
+        bad = _unquoted(output)
+        if not bad:
+            return output
+        listing = "\n".join(f"- {claim.text}" for claim in bad)
+        logger.info(
+            "span repair: %d of %d claims did not quote the answer", len(bad), len(output.claims)
+        )
+        repair = [
+            *messages,
+            HumanMessage(
+                content=(
+                    "These claims' 'answer_span' values do not appear in 'answer' "
+                    f"verbatim:\n{listing}\n"
+                    "Re-emit the same answer and claims, copying each claim's "
+                    "sentence out of 'answer' character for character."
+                )
+            ),
+        ]
+        try:
+            retried = cast(SynthesisOutput, await _call(synthesis_llm, repair, config))
+        except (BudgetExceededError, asyncio.CancelledError):
+            raise
+        except Exception as exc:
+            logger.warning("span repair failed (%s); keeping the original draft", exc)
+            return output
+        if len(_unquoted(retried)) < len(bad):
+            return retried
+        logger.warning("span repair did not improve quoting; keeping the original draft")
+        return output
 
     async def synthesize(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
         """Fan-in: draft (or revise) the answer over evidence merged across
@@ -222,6 +312,7 @@ def build_graph(
             critic_feedback=state.critic_feedback,
         )
         output = cast(SynthesisOutput, await _call(synthesis_llm, messages, config))
+        output = await repair_spans(output, messages, config)
         chunk_owner = {c.chunk_id: c.sub_question_id for c in state.evidence}
         draft_no = state.verify_iteration + state.critic_iteration + 1
         claims = [
@@ -237,6 +328,9 @@ def build_graph(
                         if chunk_owner.get(cid) is not None
                     ),
                     None,
+                ),
+                answer_span=(
+                    draft.answer_span.strip() if draft.answer_span.strip() in output.answer else ""
                 ),
             )
             for i, draft in enumerate(output.claims)
@@ -334,14 +428,25 @@ def build_graph(
         if not unsupported:
             return {}
         draft = state.draft_answer or ""
-        body = excise_claims(draft, [c.text for c in unsupported])
+        # Spans first — exact, order-independent, no collateral. Only claims
+        # the synthesizer would not quote reach the token-overlap assignment.
+        body = excise_spans(draft, [c.answer_span for c in unsupported if c.answer_span])
+        guessed = [c for c in unsupported if not c.answer_span]
+        if guessed:
+            logger.warning(
+                "%d of %d unsupported claim(s) carry no answer span; "
+                "falling back to token-overlap excision",
+                len(guessed),
+                len(unsupported),
+            )
+            body = excise_claims(body, [c.text for c in guessed])
 
         claims: list[Claim] = []
         excised: list[Claim] = []
         stranded: list[Claim] = []
         for claim in state.claims:
-            was_present = best_overlap(draft, claim.text) >= MIN_OVERLAP
-            survives = best_overlap(body, claim.text) >= MIN_OVERLAP
+            was_present = claim_present(draft, claim.text, claim.answer_span)
+            survives = claim_present(body, claim.text, claim.answer_span)
             if claim.status == "unsupported":
                 if was_present and not survives:
                     excised.append(claim)

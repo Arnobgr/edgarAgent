@@ -16,6 +16,7 @@ from fie.guardrails import BudgetTracker
 from fie.llm import bind_structured, get_model
 from fie.observability import get_langfuse_handler, trace_metadata
 from fie.state import EngineState, RunBudget, RunResult, build_run_result
+from fie.tools.fact_lookup import FactLookupOutput, XbrlFactLookup
 from fie.tools.reconcile import FactMappingOutput, XbrlNumericReconciler
 from fie.tools.retrieval import (
     Bm25SparseEncoder,
@@ -80,6 +81,22 @@ def build_production_reconciler(settings: Settings) -> XbrlNumericReconciler:
     return XbrlNumericReconciler(IngestStore(settings.ingest_db_path), mapper)
 
 
+def build_production_fact_lookup(settings: Settings) -> XbrlFactLookup:
+    """The facts store on the *research* path — the half of decision §3.3
+    that was never built (ADR 0022). Its own store connection: the graph
+    reads it from research branches while `verify` reads the reconciler's,
+    and one connection shared across both would widen the close/query race
+    ADR 0019 closed."""
+    from fie.ingest.store import IngestStore
+
+    if not settings.ingest_db_path.exists():
+        raise RuntimeError(
+            f"facts store {settings.ingest_db_path} does not exist — run `fie ingest` first"
+        )
+    mapper = bind_structured(get_model("fact_lookup", settings), FactLookupOutput)
+    return XbrlFactLookup(IngestStore(settings.ingest_db_path), mapper)
+
+
 async def answer_question(
     *,
     question: str | None,
@@ -92,6 +109,7 @@ async def answer_question(
     the production corpus, checkpointed and traced."""
     retriever = build_production_retriever(settings)
     reconciler = build_production_reconciler(settings)
+    fact_lookup = build_production_fact_lookup(settings)
     tracker = BudgetTracker(
         settings.budget_max_tokens, settings.budget_max_cost_usd, settings.model_prices
     )
@@ -111,8 +129,10 @@ async def answer_question(
                 qualitative_model=get_model("verify_qualitative", settings),
                 forward_model=get_model("verify_forward", settings),
                 critic_model=get_model("critic", settings),
+                rewrite_model=get_model("query_rewrite", settings),
                 reconciler=reconciler,
                 tracker=tracker,
+                fact_lookup=fact_lookup,
                 limits=GraphLimits(
                     max_verify_iterations=settings.max_verify_iterations,
                     max_critic_iterations=settings.max_critic_iterations,
@@ -146,6 +166,7 @@ async def answer_question(
             raw = await graph.ainvoke(initial, config)
     finally:
         reconciler.close()
+        fact_lookup.close()
 
     if trace is not None:
         trace.flush()

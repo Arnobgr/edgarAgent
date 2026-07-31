@@ -27,6 +27,8 @@ Role = Literal[
     "verify_qualitative",
     "verify_forward",
     "fact_mapping",
+    "fact_lookup",
+    "query_rewrite",
     "eval_judge",
     "eval_seed",
 ]
