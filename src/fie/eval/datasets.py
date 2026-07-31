@@ -43,6 +43,25 @@ class RetrievalQuery(BaseModel):
     label_status: Literal["seed", "verified"] = "seed"
 
 
+class FigureQuery(BaseModel):
+    """One "query → the chunk carrying this figure" label.
+
+    Generated, never hand-written: the chunks whose text prints a fact's
+    filing-scale mantissa are its gold set (`eval/figures.py`). `source`
+    records whether the query is a gold question verbatim — the string
+    production actually retrieves with — or a template over the same
+    concept vocabulary, so a retrieval change can be measured on figures the
+    exit gate does not score (ADR 0020)."""
+
+    id: str
+    query: str
+    source: Literal["gold", "template"] = "template"
+    ticker: str
+    value: float
+    description: str = ""
+    relevant_chunk_ids: list[str] = Field(default_factory=list)
+
+
 class ExpectedFact(BaseModel):
     """One expected key fact of a gold answer. Numeric facts reference the
     XBRL store (concept terms + period) so the expected value is *pulled

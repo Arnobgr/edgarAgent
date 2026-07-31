@@ -17,8 +17,8 @@ from pathlib import Path
 import typer
 
 from fie.config import Settings, get_settings
-from fie.eval.datasets import EVAL_DIR, RetrievalQuery, load_jsonl
-from fie.eval.metrics import mrr, ndcg_at_10, recall_at_k
+from fie.eval.datasets import EVAL_DIR, FigureQuery, RetrievalQuery, load_jsonl
+from fie.eval.metrics import figure_rank, figure_recall_at_k, mrr, ndcg_at_10, recall_at_k
 from fie.tools.retrieval import Retriever
 
 logger = logging.getLogger(__name__)
@@ -67,6 +67,88 @@ def evaluate_variant(
 
 def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+# Production consumes `retrieval_k` (8); the deeper points say how much a
+# bigger k would buy, which is the only honest basis for changing it.
+FIGURE_KS = (5, 8, 10, 20, 50)
+
+
+@dataclass
+class FigureVariantResult:
+    """Figure-delivery metrics for one retriever variant."""
+
+    variant: str
+    n_queries: int
+    recall: dict[int, float]
+    ranks: dict[str, int | None]
+
+
+def evaluate_figures(
+    retriever: Retriever, queries: list[FigureQuery], name: str
+) -> FigureVariantResult:
+    """Rank of the chunk carrying each figure, per query."""
+    ranks = {
+        query.id: figure_rank(
+            retriever.retrieve(query.query, k=max(FIGURE_KS)), query.relevant_chunk_ids
+        )
+        for query in queries
+    }
+    ordered = list(ranks.values())
+    return FigureVariantResult(
+        variant=name,
+        n_queries=len(queries),
+        recall={k: figure_recall_at_k(ordered, k) for k in FIGURE_KS},
+        ranks=ranks,
+    )
+
+
+def write_figure_report(
+    results: list[FigureVariantResult], queries: list[FigureQuery], out_dir: Path
+) -> Path:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    payload = {
+        "generated": stamp,
+        "n_queries": len(queries),
+        "n_gold_wording": sum(1 for q in queries if q.source == "gold"),
+        "variants": [asdict(r) for r in results],
+    }
+    (out_dir / f"figures-{stamp}.json").write_text(json.dumps(payload, indent=2))
+
+    header = " | ".join(f"recall@{k}" for k in FIGURE_KS)
+    lines = [
+        "# Figure-level retrieval report",
+        "",
+        f"Generated: {stamp} · {len(queries)} figures · "
+        f"{payload['n_gold_wording']} on gold question wording",
+        "",
+        f"| variant | {header} |",
+        "|---" * (len(FIGURE_KS) + 1) + "|",
+    ]
+    lines.extend(
+        f"| {r.variant} | " + " | ".join(f"{r.recall[k]:.3f}" for k in FIGURE_KS) + " |"
+        for r in results
+    )
+    by_id = {q.id: q for q in queries}
+    lines += [
+        "",
+        "## Rank of the chunk carrying each figure (— = outside the top 50)",
+        "",
+        "| figure | source | " + " | ".join(r.variant for r in results) + " |",
+        "|---|---|" + "---|" * len(results),
+    ]
+    for query_id in sorted(by_id):
+        query = by_id[query_id]
+        cells = " | ".join(_rank_cell(r.ranks.get(query_id)) for r in results)
+        lines.append(f"| {query.description} | {query.source} | {cells} |")
+    md_path = out_dir / f"figures-{stamp}.md"
+    md_path.write_text("\n".join(lines) + "\n")
+    return md_path
+
+
+def _rank_cell(rank: int | None) -> str:
+    return "—" if rank is None else str(rank)
 
 
 def _build_retriever(settings: Settings, embedding: str, rerank: bool) -> Retriever:
@@ -138,27 +220,45 @@ def run(
     ),
     rerank: str = typer.Option("on", "--rerank", help="on | off | both."),
     queries: str = typer.Option("", "--queries", help="Query-set JSONL path override."),
+    figures: bool = typer.Option(
+        False,
+        "--figures",
+        help="Score figure delivery against eval/figure_queries.jsonl instead of section labels.",
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
     """Evaluate retriever variant(s) on the labeled query set."""
     logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
     settings = get_settings()
-    queries_path = Path(queries) if queries else EVAL_DIR / "retrieval_queries.jsonl"
-    query_set = load_jsonl(queries_path, RetrievalQuery)
+    default_set = "figure_queries.jsonl" if figures else "retrieval_queries.jsonl"
+    queries_path = Path(queries) if queries else EVAL_DIR / default_set
     if embedding == "both":
         embeddings = list(settings.embedding_models)
     else:
         embeddings = [embedding or settings.embedding_provider]
     reranks = [True, False] if rerank == "both" else [rerank == "on"]
 
-    results = []
-    for provider in embeddings:
-        for use_rerank in reranks:
-            name = f"{provider}+rerank" if use_rerank else f"{provider}+rrf-only"
+    variants = [
+        (f"{provider}+rerank" if use_rerank else f"{provider}+rrf-only", provider, use_rerank)
+        for provider in embeddings
+        for use_rerank in reranks
+    ]
+    if figures:
+        figure_set = load_jsonl(queries_path, FigureQuery)
+        figure_results = []
+        for name, provider, use_rerank in variants:
+            typer.echo(f"Evaluating {name} over {len(figure_set)} figures…")
+            retriever = _build_retriever(settings, provider, use_rerank)
+            figure_results.append(evaluate_figures(retriever, figure_set, name))
+        report = write_figure_report(figure_results, figure_set, EVAL_DIR / "reports")
+    else:
+        query_set = load_jsonl(queries_path, RetrievalQuery)
+        results = []
+        for name, provider, use_rerank in variants:
             typer.echo(f"Evaluating {name} over {len(query_set)} queries…")
             retriever = _build_retriever(settings, provider, use_rerank)
             results.append(evaluate_variant(retriever, query_set, name))
-    report = write_report(results, query_set, EVAL_DIR / "reports")
+        report = write_report(results, query_set, EVAL_DIR / "reports")
     typer.echo(report.read_text())
     typer.echo(f"Report: {report}")
 

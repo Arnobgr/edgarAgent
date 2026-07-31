@@ -1,9 +1,15 @@
 """Eval metrics: pure-function checks on tiny fixtures."""
 
+import json
+from pathlib import Path
+
 from fie.eval.datasets import LabeledClaim, SectionRef
+from fie.eval.figures import build_figure_queries, mantissas
 from fie.eval.metrics import (
     CitationJudgment,
     citation_accuracy,
+    figure_rank,
+    figure_recall_at_k,
     grounding_rate,
     hallucination_rate,
     mrr,
@@ -12,6 +18,7 @@ from fie.eval.metrics import (
     recall_at_k,
     verifier_scores,
 )
+from fie.ingest.store import Fact, IngestStore
 from fie.state import EvidenceChunk, GroundingRow, RunResult
 
 REL = [SectionRef(ticker="TSLA", form_type="10-K", section="Item 7")]
@@ -29,6 +36,80 @@ def chunk(
         text="…",
         metadata={"fiscal_period": period},
     )
+
+
+def test_figure_rank_finds_the_chunk_carrying_the_figure() -> None:
+    """Section labels credit any chunk of the right section; figure labels
+    credit only the chunk that prints the number (ADR 0020)."""
+    retrieved = [chunk("Item 1A"), chunk("Item 7"), chunk("Item 8")]
+    assert figure_rank(retrieved, ["TSLA-Item 8"]) == 3
+    assert figure_rank(retrieved, ["TSLA-Item 99"]) is None
+    assert figure_recall_at_k([3, None, 1], k=2) == 1 / 3
+    assert figure_recall_at_k([3, None, 1], k=3) == 2 / 3
+
+
+def test_mantissas_need_four_significant_digits() -> None:
+    """The 3-digit billions form matches arbitrary filing text — "161" for
+    161,148,000,000 produced two spurious "the figure was available"
+    readings during the 2026-07-30 diagnosis."""
+    assert mantissas(94_827_000_000.0) == [
+        "94,827",
+        "94827",
+        "94,827,000",
+        "94827000",
+        "94,827,000,000",
+        "94827000000",
+    ]
+    # 161 billion has no 4-digit rendering shorter than its thousands form.
+    assert "161" not in mantissas(161_000_000_000.0)
+    # Per-share and ratio values have no filing-scale mantissa at all.
+    assert mantissas(1.26) == []
+
+
+def test_figure_labels_target_the_year_end_balance_not_a_quarter(tmp_path: Path) -> None:
+    """A fiscal year holds four balance dates for a concept. Labeling any of
+    them "FY2026 total assets" is the defect that made NVDA's total assets
+    unscoreable (ADR 0020), so the generator keeps only the closing one."""
+    store = IngestStore(tmp_path / "ingest.db")
+    store.replace_facts(
+        "acc-1",
+        [
+            Fact(
+                ticker="NVDA",
+                concept="us-gaap:Assets",
+                label="Total assets",
+                value=value,
+                unit="usd",
+                decimals=-6,
+                period_start=None,
+                period_end=date,
+                fiscal_period=None,
+                fiscal_year=2026,
+                accession_no="acc-1",
+                form_type="10-K",
+            )
+            for value, date in ((125_254e6, "2025-04-27"), (206_803e6, "2026-01-25"))
+        ],
+    )
+    chunks_dir = tmp_path / "chunks"
+    chunks_dir.mkdir()
+    (chunks_dir / "acc-1.json").write_text(
+        json.dumps(
+            {
+                "chunks": [
+                    {
+                        "chunk_id": "acc-1:table-1",
+                        "ticker": "NVDA",
+                        "text": "Total assets 206,803 125,254",
+                    }
+                ]
+            }
+        )
+    )
+    queries = build_figure_queries(store, chunks_dir, [])
+    store.close()
+    assert [(q.id, q.value) for q in queries] == [("fq-NVDA-Assets-2026", 206_803e6)]
+    assert queries[0].relevant_chunk_ids == ["acc-1:table-1"]
 
 
 def test_recall_at_k_counts_covered_sections() -> None:

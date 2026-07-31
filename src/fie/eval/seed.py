@@ -1,6 +1,6 @@
 """`uv run eval-seed` — generate eval-set candidates for hand-verification.
 
-Two artifacts, both derived from the ingested corpus so they can't drift
+Three artifacts, all derived from the ingested corpus so they can't drift
 from it:
 
 - **Retrieval query candidates** (`eval/retrieval_queries.candidates.jsonl`):
@@ -10,6 +10,13 @@ from it:
 - **Verifier labeled claims** (`eval/verifier_claims.jsonl`): real claims
   rendered from XBRL facts + systematic perturbations, true verdicts known
   by construction (no hand-labeling needed — the generator is the label).
+- **Figure retrieval labels** (`eval/figure_queries.jsonl`): "query → the
+  chunk carrying this figure", built by finding each fact's filing-scale
+  mantissa in the chunk text. Also self-labeling, and the only measurement
+  of figure *delivery* — ADR 0011's section labels cannot see it (ADR 0020).
+
+The first needs a model; the other two are free, so `--skip-queries`
+regenerates them with no API keys.
 """
 
 import logging
@@ -20,7 +27,15 @@ import typer
 from pydantic import BaseModel, Field
 
 from fie.config import get_settings
-from fie.eval.datasets import EVAL_DIR, RetrievalQuery, SectionRef, save_jsonl
+from fie.eval.datasets import (
+    EVAL_DIR,
+    GoldQuestion,
+    RetrievalQuery,
+    SectionRef,
+    load_jsonl,
+    save_jsonl,
+)
+from fie.eval.figures import build_figure_queries
 from fie.eval.perturb import build_labeled_claims
 from fie.ingest.parse import ParsedFiling
 from fie.ingest.store import IngestStore
@@ -59,6 +74,12 @@ def run(
             raise typer.Exit(code=1)
         save_jsonl(EVAL_DIR / "verifier_claims.jsonl", claims)
         typer.echo(f"verifier_claims.jsonl: {len(claims)} labeled claims")
+
+        gold = load_jsonl(EVAL_DIR / "gold_set.jsonl", GoldQuestion)
+        figures = build_figure_queries(store, settings.data_dir / "chunks", gold)
+        save_jsonl(EVAL_DIR / "figure_queries.jsonl", figures)
+        n_gold = sum(1 for f in figures if f.source == "gold")
+        typer.echo(f"figure_queries.jsonl: {len(figures)} figure labels ({n_gold} on gold wording)")
 
         if skip_queries:
             return

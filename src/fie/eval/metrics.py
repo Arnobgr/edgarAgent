@@ -75,6 +75,24 @@ def ndcg_at_10(retrieved: list[EvidenceChunk], relevant: list[SectionRef]) -> fl
     return dcg / idcg if idcg else 0.0
 
 
+def figure_rank(retrieved: list[EvidenceChunk], relevant: list[str]) -> int | None:
+    """1-based rank of the first retrieved chunk that carries the figure.
+
+    Section labels cannot see this: `recall_at_k` credits any chunk of the
+    right section, so a retriever that never surfaces the statement table
+    still scores well. Figure delivery is what an analyst answer needs, and
+    the only thing ADR 0011's numbers never measured (ADR 0020)."""
+    wanted = set(relevant)
+    return next((i for i, chunk in enumerate(retrieved, start=1) if chunk.chunk_id in wanted), None)
+
+
+def figure_recall_at_k(ranks: list[int | None], k: int) -> float:
+    """Share of figures whose carrying chunk lands inside the top k."""
+    if not ranks:
+        return 0.0
+    return sum(1 for rank in ranks if rank is not None and rank <= k) / len(ranks)
+
+
 # --- End-to-end answer metrics (workstream C.3, blueprint §6) ---
 
 
