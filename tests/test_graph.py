@@ -10,6 +10,7 @@ from typing import Any
 from fie.eval.metrics import hallucination_rate
 from fie.graph import GraphLimits
 from fie.graph.build import RETRACTED_HEADER
+from fie.graph.retract import MIN_OVERLAP, best_overlap
 from fie.state import (
     CriticOutput,
     DraftClaim,
@@ -328,6 +329,105 @@ async def test_node_timeout_sets_error_state() -> None:
     assert "timed out" in (state.error or "")
     assert state.evidence  # research completed before the timeout hit
     assert state.draft_answer is None
+
+
+# Two claims restated from one sentence, the way a real draft produces them:
+# "Data Center revenue was $X billion, up Y% year-on-year" yields both an
+# amount claim and a growth claim over the same prose.
+SHARED_SENTENCE = "Vision Pro revenue was $500.0 billion, up 41% year-on-year [c2]."
+SHARED_AMOUNT = "Vision Pro revenue was $500.0 billion"
+SHARED_GROWTH = "Vision Pro revenue was up 41% year-on-year"
+
+
+def _shared_sentence_output() -> SynthesisOutput:
+    return SynthesisOutput(
+        answer=f"{TRUE_NUMERIC} [c1]. {SHARED_SENTENCE}",
+        claims=[
+            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
+            DraftClaim(text=SHARED_AMOUNT, claim_type="numeric", source_chunk_ids=["c2"]),
+            DraftClaim(text=SHARED_GROWTH, claim_type="numeric", source_chunk_ids=["c2"]),
+        ],
+    )
+
+
+async def test_claims_sharing_a_sentence_are_both_retracted_by_one_deletion() -> None:
+    """Overlapping claims used to delete each other's sentences: excision
+    re-derived its target against a draft that mutated as it went, so the
+    second claim found its sentence already gone and was logged "could not
+    locate" — reported as a surviving hallucination when its text had in fact
+    left the answer (ADR 0021). One sentence, one deletion, both retracted."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(outputs=[_shared_sentence_output(), _shared_sentence_output()])
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic)
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    statuses = {c.text: c.status for c in state.claims}
+    assert statuses[SHARED_AMOUNT] == "retracted"
+    assert statuses[SHARED_GROWTH] == "retracted"
+
+    body, _, retracted_section = (state.draft_answer or "").partition(RETRACTED_HEADER)
+    assert "Vision Pro" not in body
+    assert "still appear above" not in retracted_section  # nothing was stranded
+
+    run_result = build_run_result("run-shared", state)
+    assert hallucination_rate([run_result]) == 0.0
+
+
+GROUNDED_NEIGHBOUR = "Vision Pro revenue reached a record in the fourth quarter"
+
+
+def _collateral_output() -> SynthesisOutput:
+    """A verified claim and an unsupported one restated from the same
+    sentence — the shape that silently deleted verified prose."""
+    return SynthesisOutput(
+        answer=f"{TRUE_NUMERIC} [c1]. {SHARED_SENTENCE}",
+        claims=[
+            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
+            DraftClaim(text=SHARED_AMOUNT, claim_type="numeric", source_chunk_ids=["c2"]),
+            DraftClaim(text=SHARED_GROWTH, claim_type="qualitative", source_chunk_ids=["c2"]),
+        ],
+    )
+
+
+async def test_a_verified_claim_that_lost_its_sentence_leaves_the_grounding_table() -> None:
+    """Three `grounded` claims in the accepted run lost their home sentence to
+    another claim's excision and stayed listed as delivered, verified claims.
+    Citing a source for prose the reader never saw is the precise failure this
+    system exists to prevent, so the claim is dropped and logged (ADR 0021).
+
+    The invariant, asserted absolutely here and only corrected in the graph:
+    every surviving grounded/partial claim's sentence is still present, and
+    every retracted claim's is gone."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(outputs=[_collateral_output(), _collateral_output()])
+    # The qualitative sibling verifies fine — it is the collateral victim.
+    qualitative = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span")
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, qualitative=qualitative, critic=critic
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+    run_result = build_run_result("run-collateral", state)
+
+    body = (state.draft_answer or "").partition(RETRACTED_HEADER)[0]
+    assert "Vision Pro" not in body  # the shared sentence is gone
+    delivered = {row.text for row in run_result.grounding}
+    assert SHARED_GROWTH not in delivered, (
+        "a verified claim whose sentence was deleted must not be advertised as delivered"
+    )
+    for row in run_result.grounding:
+        assert best_overlap(body, row.text) >= MIN_OVERLAP, (
+            f"grounding row {row.claim_id} cites prose that is not in the answer"
+        )
+    for row in run_result.retracted:
+        assert best_overlap(body, row.text) < MIN_OVERLAP
 
 
 STRANDED_CLAIM = "Apple's Vision Pro segment expanded substantially during the fiscal period"

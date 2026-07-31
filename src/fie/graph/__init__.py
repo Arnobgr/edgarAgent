@@ -8,6 +8,6 @@ critic→decompose edge.
 """
 
 from fie.graph.build import GraphLimits, build_graph
-from fie.graph.retract import excise_claim
+from fie.graph.retract import excise_claims
 
-__all__ = ["GraphLimits", "build_graph", "excise_claim"]
+__all__ = ["GraphLimits", "build_graph", "excise_claims"]

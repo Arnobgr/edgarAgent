@@ -43,7 +43,7 @@ from fie.context import (
     build_entailment_messages,
     build_synthesis_messages,
 )
-from fie.graph.retract import excise_claim
+from fie.graph.retract import MIN_OVERLAP, best_overlap, excise_claims
 from fie.guardrails import BudgetExceededError, BudgetTracker, ainvoke_with_retry, guarded
 from fie.llm import bind_structured
 from fie.state import (
@@ -319,37 +319,63 @@ def build_graph(
 
     async def retract(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
         """Deterministically excise still-unsupported claims from the answer
-        and list them in a retracted-claims section — never silently drop."""
+        and list them in a retracted-claims section — never silently drop.
+
+        Whether a claim left the answer is decided by comparing the draft
+        before and after one global excision pass, not by whether this
+        claim's own excision call reported success. Claims overlap, so a
+        claim's sentence is routinely removed by a *different* claim's
+        excision; reading that as "could not locate" mislabelled four real
+        retractions as surviving hallucinations and, worse, left three
+        verified claims advertised in the grounding table for prose the
+        reader never saw (ADR 0021)."""
         del config
         unsupported = [c for c in state.claims if c.status == "unsupported"]
         if not unsupported:
             return {}
         draft = state.draft_answer or ""
+        body = excise_claims(draft, [c.text for c in unsupported])
+
         claims: list[Claim] = []
         excised: list[Claim] = []
         stranded: list[Claim] = []
         for claim in state.claims:
-            if claim.status != "unsupported":
-                claims.append(claim)
-                continue
-            draft, removed = excise_claim(draft, claim.text)
-            if removed:
-                excised.append(claim)
-                claims.append(claim.model_copy(update={"status": "retracted"}))
-            else:
-                # The claim's sentence is still in the prose, so this is NOT a
-                # successful retraction — keep it `unsupported` so it stays in
-                # the grounding rows and counts against hallucination_rate.
-                # Marking it "retracted" here would route it to `retracted`
-                # (state.build_result) and hide surviving unsupported text from
-                # the exit-gate metric.
+            was_present = best_overlap(draft, claim.text) >= MIN_OVERLAP
+            survives = best_overlap(body, claim.text) >= MIN_OVERLAP
+            if claim.status == "unsupported":
+                if was_present and not survives:
+                    excised.append(claim)
+                    claims.append(claim.model_copy(update={"status": "retracted"}))
+                else:
+                    # Its text is still in the prose (or was never locatable
+                    # there): NOT a successful retraction. Keeping it
+                    # `unsupported` keeps it in the grounding rows and against
+                    # hallucination_rate — marking it "retracted" would hide
+                    # surviving unsupported text from the exit-gate metric.
+                    logger.warning(
+                        "could not locate claim %s in draft for excision; "
+                        "text remains in the answer and still counts as unsupported",
+                        claim.id,
+                    )
+                    stranded.append(claim)
+                    claims.append(claim)
+            elif was_present and not survives:
+                # A verified claim whose sentence another claim's excision
+                # took. Citing a source for prose the user never saw is the
+                # precise failure this system exists to prevent, so it leaves
+                # the grounding table rather than being advertised as
+                # delivered. Detected and corrected here, asserted in tests —
+                # a hard assertion in the graph would have killed the accepted
+                # run over three claims in 275.
                 logger.warning(
-                    "could not locate claim %s in draft for excision; "
-                    "text remains in the answer and still counts as unsupported",
+                    "claim %s (%s) lost its sentence to another claim's excision — "
+                    "dropping it from the grounding table, it was not delivered",
                     claim.id,
+                    claim.status,
                 )
-                stranded.append(claim)
+            else:
                 claims.append(claim)
+        draft = body
 
         sections = []
         if excised:
