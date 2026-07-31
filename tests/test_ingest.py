@@ -118,6 +118,92 @@ def test_exclude_dimensioned(store: IngestStore) -> None:
     assert len(hits) == 1 and hits[0].dimensions is None
 
 
+# --- Facts extraction ---
+
+
+class _FakeXbrl:
+    """Stands in for an edgartools XBRL object: `.facts.query().to_dataframe()`.
+
+    Built through pandas on purpose — the defect this guards is a pandas
+    artifact (a missing cell is NaN, not absent), so a plain list of dicts
+    would not reproduce it.
+    """
+
+    def __init__(self, rows: list[dict]) -> None:
+        from types import SimpleNamespace
+
+        import pandas as pd
+
+        query = SimpleNamespace(to_dataframe=lambda: pd.DataFrame(rows))
+        self.facts = SimpleNamespace(query=lambda: query)
+
+
+def test_instant_facts_keep_their_balance_date() -> None:
+    """An instant's date arrives in `period_instant`, and its `period_end`
+    cell is NaN — which is *truthy*, so a single `a or b` over the raw cells
+    silently keeps the NaN and discards the date (ADR 0020). That left every
+    balance-sheet fact dateless, which in turn defeated `_own_fiscal_year`:
+    a prior-year comparative kept the filing's year and could ground a
+    period-shifted claim, the exact defect ADR 0012 exists to prevent."""
+    from fie.ingest.facts import extract_facts
+
+    xbrl = _FakeXbrl(
+        [
+            {
+                "concept": "us-gaap:Revenues",
+                "label": "Total revenue",
+                "numeric_value": 130_497e6,
+                "unit_ref": "usd",
+                "period_start": "2025-01-27",
+                "period_end": "2026-01-25",
+                "fiscal_period": "FY",
+                "fiscal_year": 2026,
+            },
+            # The prior-year balance as it appears in the FY2026 10-K.
+            {
+                "concept": "us-gaap:Assets",
+                "label": "Total assets",
+                "numeric_value": 111_601e6,
+                "unit_ref": "usd",
+                "period_instant": "2025-01-26",
+                "fiscal_year": 2026,
+            },
+        ]
+    )
+    flow, instant = extract_facts(xbrl, ticker="NVDA", accession_no="acc-1", form_type="10-K")
+    assert (flow.period_start, flow.period_end, flow.fiscal_year) == (
+        "2025-01-27",
+        "2026-01-25",
+        2026,
+    )
+    assert instant.period_end == "2025-01-26"
+    assert instant.period_start is None  # an instant has one date, not a range
+    assert instant.fiscal_year == 2025  # its own year, not the filing's 2026
+
+
+@pytest.mark.parametrize(
+    ("ticker", "period_end", "expected"),
+    [
+        ("NVDA", "2026-01-25", 2026),  # fiscal year-end itself
+        ("NVDA", "2026-04-26", 2027),  # Q1 FY2027, a year past its calendar year
+        ("AAPL", "2025-09-27", 2025),
+        ("AAPL", "2025-12-27", 2026),  # Q1 FY2026
+        ("TSLA", "2025-12-31", 2025),  # December year-end: never shifts
+        ("TSLA", "2025-03-31", 2025),
+    ],
+)
+def test_off_calendar_fiscal_years_shift_to_the_year_they_end_in(
+    ticker: str, period_end: str, expected: int
+) -> None:
+    """A fiscal year is named for the calendar year it ends in, so an
+    interim period ending after the company's year-end month belongs to the
+    *next* fiscal year. Reading the period end's year verbatim mislabeled
+    every AAPL and NVDA interim period (ADR 0020)."""
+    from fie.ingest.facts import _own_fiscal_year
+
+    assert _own_fiscal_year(period_end, None, ticker) == expected
+
+
 # --- Table extraction ---
 
 TABLE_HTML = """
