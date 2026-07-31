@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from fie.context import pack_evidence_by_sub_question
-from fie.ingest.store import Fact, IngestStore
+from fie.ingest.store import Fact, IngestStore, ManifestRow
 from fie.state import EvidenceChunk, SubQuestion
 from fie.tools.fact_lookup import (
     INJECTED_SCORE,
@@ -55,6 +55,15 @@ def make_fact(**overrides: Any) -> Fact:
 @pytest.fixture
 def store(tmp_path: Path) -> IngestStore:
     store = IngestStore(tmp_path / "ingest.db")
+    store.upsert_manifest(
+        ManifestRow(
+            accession_no="0001045810-26-000021",
+            ticker="NVDA",
+            form_type="10-K",
+            # Weeks after the period it covers — that gap is the point.
+            filing_date="2026-02-25",
+        )
+    )
     store.replace_facts(
         "0001045810-26-000021",
         [
@@ -87,6 +96,10 @@ def test_a_filed_figure_becomes_evidence_with_its_accession(store: IngestStore) 
     assert "206,803,000,000" in chunk.text
     assert chunk.metadata["accession_no"] == "0001045810-26-000021"
     assert chunk.ticker == "NVDA"
+    # The date the document was filed, not the period the fact covers: they
+    # differ by weeks, and the citation names the document (ADR 0022).
+    assert chunk.metadata["filing_date"] == "2026-02-25"
+    assert chunk.metadata["period_end"] == "2026-01-25"
     # Not `table`: the reconciler's table fallback cell-matches chunk text,
     # and letting it match this would make the store corroborate itself.
     assert chunk.metadata["chunk_type"] == "xbrl"
@@ -174,6 +187,87 @@ def test_injected_facts_survive_the_fan_in_packing_cap(store: IngestStore) -> No
         chunks_per_sub_question=2,
     )
     assert "206,803,000,000" in packed
+
+
+def test_a_vague_term_does_not_decide_the_row(store: IngestStore) -> None:
+    """ORing the terms together let a vague trailing term pick the row
+    whenever its concept sorted earlier: "revenue" pulled
+    ContractWithCustomerLiabilityRevenueRecognized ahead of the real revenue
+    concept, and g-001 was injected with the wrong figure (ADR 0022)."""
+    store.replace_facts(
+        "acc-2",
+        [
+            make_fact(
+                concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                label="Net sales",
+                value=391_035e6,
+                period_start="2023-10-01",
+                period_end="2024-09-28",
+                fiscal_period="FY",
+                fiscal_year=2024,
+                accession_no="acc-2",
+            ),
+            make_fact(
+                concept="us-gaap:ContractWithCustomerLiabilityRevenueRecognized",
+                label="Portion of total net sales included in deferred revenue",
+                value=8_000e6,
+                period_start="2023-10-01",
+                period_end="2024-09-28",
+                fiscal_period="FY",
+                fiscal_year=2024,
+                accession_no="acc-2",
+            ),
+        ],
+    )
+    mapper = StubMapper(
+        FactLookupOutput(
+            requests=[
+                FactRequest(
+                    ticker="NVDA",  # the fixture's ticker
+                    concept_terms=["NetSales", "Sales", "Revenues"],
+                    fiscal_year=2024,
+                    fiscal_period="FY",
+                )
+            ]
+        )
+    )
+    chunks = XbrlFactLookup(store, mapper).lookup("total net sales in fiscal 2024?")
+    store.close()
+    # The filed label names it exactly; the wrong concept merely contains the
+    # term and happens to have the shorter name.
+    assert "391,035,000,000" in chunks[0].text
+
+
+def test_a_balance_claimed_as_FY_still_finds_the_instant(store: IngestStore) -> None:
+    """The mapper says `FY` for balance-sheet figures often enough to matter,
+    and `fiscal_period = 'FY'` excludes instants outright — so "total assets"
+    matched %Assets% against an amortization expense. The stated period is
+    dropped on a second pass, the reconciler's rule (ADR 0022)."""
+    mapper = StubMapper(
+        FactLookupOutput(
+            requests=[
+                FactRequest(
+                    ticker="NVDA",
+                    concept_terms=["Assets", "total assets"],
+                    fiscal_year=2026,
+                    fiscal_period="FY",
+                )
+            ]
+        )
+    )
+    chunks = XbrlFactLookup(store, mapper).lookup("Nvidia's total assets at year end?")
+    store.close()
+    assert "206,803,000,000" in chunks[0].text
+
+
+def test_the_lookup_states_where_the_corpus_ends(store: IngestStore) -> None:
+    """Asked for Apple's last three years of R&D, the mapper asked for
+    FY2021-2023: a model cannot know where a corpus frozen at ingest time
+    ends, so the prompt tells it (ADR 0022)."""
+    mapper = StubMapper(FactLookupOutput(requests=[]))
+    lookup = XbrlFactLookup(store, mapper)
+    store.close()
+    assert "Latest fiscal year in the corpus" in lookup._system
 
 
 def test_injection_is_capped(store: IngestStore) -> None:

@@ -321,6 +321,21 @@ class IngestStore:
             )
             return [_to_fact(r) for r in cur.fetchall()]
 
+    def latest_fiscal_years(self) -> dict[str, int]:
+        """The most recent fiscal year each ticker has annual facts for.
+
+        A model cannot know where a corpus frozen at ingest time ends, and
+        guessing costs real figures: asked for Apple's last three years of
+        R&D, the research lookup asked for FY2021-2023 (ADR 0022)."""
+        with self._lock:
+            if self._closed:
+                raise sqlite3.ProgrammingError("IngestStore is closed (orphaned late query)")
+            cur = self._conn.execute(
+                "SELECT ticker, MAX(fiscal_year) FROM facts"
+                " WHERE fiscal_period = 'FY' AND fiscal_year IS NOT NULL GROUP BY ticker"
+            )
+            return {str(row[0]): int(row[1]) for row in cur.fetchall()}
+
     def count_facts(self) -> int:
         cur = self._conn.execute("SELECT COUNT(*) FROM facts")
         return int(cur.fetchone()[0])
