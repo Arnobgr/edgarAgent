@@ -56,6 +56,15 @@ _LOWER_IS_BETTER = {"hallucination_rate"}
 # narrative figures score as misses by construction. Its role is a
 # fabrication tripwire — a system inventing numbers scores ~0.5 (the measured
 # chance floor) — so the target sits above that floor and below the ceiling.
+#
+# Every other entry measures the *quality of what was said*, so a system that
+# answers all 30 questions with "I cannot determine that from the filings"
+# scores a perfect gate: no claims means no ungrounded claims, no
+# hallucinations, no numeric errors. `expected_fact_coverage` is the only
+# entry that costs something when the system says nothing, which is why it is
+# gated rather than informational (ADR 0020). Its threshold is set from the
+# measured post-fix value, not from ambition — picking it in advance is how
+# numeric_fidelity's 0.95 came to refuse a legitimate baseline (ADR 0015).
 TARGETS = {"hallucination_rate": 0.02, "numeric_fidelity": 0.85, "grounding_rate": 0.90}
 
 
@@ -455,7 +464,14 @@ def run(
             if isinstance(v, int | float)
             and not isinstance(v, bool)
             and k.startswith(
-                ("grounding", "hallucination", "citation_accuracy", "numeric", "verifier")
+                (
+                    "grounding",
+                    "hallucination",
+                    "citation_accuracy",
+                    "numeric",
+                    "verifier",
+                    "expected_fact_coverage",
+                )
             )
         }
         baselines_path.write_text(

@@ -14,6 +14,7 @@ from fie.eval.agent_runner import (
     judge_citations,
 )
 from fie.eval.datasets import ExpectedFact, GoldQuestion
+from fie.eval.metrics import grounding_rate, hallucination_rate, numeric_fidelity
 from fie.ingest.store import Fact, IngestStore
 from fie.state import GroundingRow, JudgeOutput, RunResult, SourceRef
 
@@ -203,6 +204,31 @@ def test_derived_figure_near_the_filed_one_is_not_covered(eval_settings: Setting
     results = {"g-x": run_result("This implies R&D spending of about $18,571 million.")}
     coverage, rows = expected_fact_coverage(results, [question], eval_settings)
     assert (coverage, rows[0].bucket) == (0.0, "derived")
+
+
+def test_a_declining_system_scores_a_perfect_gate_except_on_recall(
+    eval_settings: Settings,
+) -> None:
+    """The hole recall exists to close: an answer that asserts nothing has no
+    ungrounded claims, no surviving hallucinations and no wrong figures, so
+    every quality metric reads perfect. Only coverage notices that the
+    question went unanswered (ADR 0020)."""
+    question = gold(
+        "g-x",
+        [
+            ExpectedFact(
+                ticker="TSLA",
+                concept_terms=["us-gaap:Revenues"],
+                fiscal_year=2025,
+                fiscal_period="FY",
+            )
+        ],
+    )
+    refusal = run_result("The provided evidence does not contain Tesla's total revenue.")
+    assert grounding_rate([refusal]) == 0.0  # no claims at all
+    assert hallucination_rate([refusal]) == 0.0
+    assert numeric_fidelity([refusal], [96_773_000_000.0]) == 1.0
+    assert expected_fact_coverage({"g-x": refusal}, [question], eval_settings)[0] == 0.0
 
 
 def unanswerable(qid: str) -> GoldQuestion:
