@@ -440,7 +440,7 @@ class XbrlNumericReconciler:
                     unit=candidate.unit,
                 )
                 facts = [f for f in facts if _period_admissible(f, fiscal_period, candidate)]
-                for fact in facts:
+                for fact in _year_end_only(facts, candidate):
                     if matches_at_stated_precision(number, fact.value):
                         return _fact_span(fact)
             if number.is_percent and candidate.numerator_terms and candidate.denominator_terms:
@@ -638,6 +638,40 @@ def _period_admissible(fact: Fact, attempt: str | None, candidate: FactCandidate
     if candidate.fiscal_year is not None:
         return fact.fiscal_period is None or fact.fiscal_period == "FY"
     return True
+
+
+def _year_end_only(facts: list[Fact], candidate: FactCandidate) -> list[Fact]:
+    """For a year-scoped balance claim, only the year's closing balance.
+
+    `_period_admissible` admits any instant of the stated fiscal year, which
+    was safe while instants had no date and unsafe the moment they did: a
+    fiscal year holds four balance dates per concept, so "total assets at the
+    end of FY2024" has three wrong answers the store returns. All 8 claims of
+    that shape were accepted when the class was first measured, taking
+    verifier precision to 0.889 (ADR 0021).
+
+    Durations pass through untouched, and a claim that names its quarter
+    still reaches it through the stated-period query — the narrowing only
+    applies when the mapping gives a year and no period, which is what the
+    mapper emits for an "as of" figure. The cost is a claim about a *quarterly*
+    balance that does not name its quarter; it falls through to the cited
+    table-chunk match. The ratio and difference paths keep admitting any
+    same-year instant: their operand pairs are gated on matching accession and
+    period, and no claim of that shape is labeled, so the class stays
+    unmeasured rather than assumed safe."""
+    if candidate.fiscal_period is not None or candidate.fiscal_year is None:
+        return facts
+    latest: dict[tuple[str, str, int | None], str] = {}
+    for fact in facts:
+        if fact.period_start is None and fact.period_end:
+            key = (fact.ticker, fact.concept, fact.fiscal_year)
+            latest[key] = max(latest.get(key, ""), fact.period_end)
+    return [
+        fact
+        for fact in facts
+        if fact.period_start is not None
+        or latest.get((fact.ticker, fact.concept, fact.fiscal_year)) == fact.period_end
+    ]
 
 
 def _derive_percent(number: ParsedNumber, operands: list[float]) -> str | None:
