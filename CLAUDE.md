@@ -127,10 +127,11 @@ never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
 
 `--write-baseline` is gated since 2026-07-27 (ADR 0016): it refuses a run
 that misses the §13 `TARGETS` or dropped questions unless `--force`, and
-records `n_questions`/`n_completed` in `eval/baselines.json`. The file is
-still all-`null`: the 2026-07-27 re-baseline ran 30/30 but missed two targets,
-so the guard correctly refused it. `TARGETS` is settled (numeric_fidelity 0.85,
-ADR 0015).
+records `n_questions`/`n_completed` in `eval/baselines.json`. That file now
+holds the accepted 2026-07-28 run (30/30) and Stage E replaces it. `TARGETS`
+is settled — `numeric_fidelity` 0.85 (ADR 0015), `expected_fact_coverage`
+0.65 (ADR 0020). **`citation_accuracy` is recorded there but is not in
+`TARGETS`, so it never refuses a run.**
 
 ## Architecture
 

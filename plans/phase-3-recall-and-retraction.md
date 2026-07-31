@@ -461,7 +461,8 @@ wrong and what it left open.
 | figure delivery, recall@8 | 0.354 | **0.451** |
 | verifier P/R incl. the new balance-date class | 0.889 | **1.000 / 1.000** |
 | dateless facts / wrong fiscal year | 15,211 / 5,838 | **0 / 0** |
-| `citation_accuracy`, same 10 questions | 0.623 | 0.556 |
+| `citation_accuracy`, same 10 questions | 0.623 | **0.741** (0.370 as first measured; ADRs 0022, 0024) |
+| cost per run, same 10 questions | $0.041 | **$0.014** — C2's extra call is repaid by the loop-backs it prevents |
 
 ### Where the plan was wrong
 
@@ -495,11 +496,16 @@ wrong and what it left open.
 
 1. **Stage E.** One `eval-agent --write-baseline`. `eval/baselines.json` still
    holds the pre-remediation numbers until it runs.
-2. **`citation_accuracy` is the one metric that got worse** (0.623 → 0.556 on
-   the same questions). Span rendering was a real defect and its fix recovered
-   0.370 → 0.556 with zero regressions; the residual is numeric claims
-   asserting document locations a single XBRL row cannot support. Closing it
-   means tuning the synthesis prompt against a gate metric, so it is the operator's
-   call, not an oversight.
+2. **`citation_accuracy` fell to 0.370 and was recovered to 0.741**, above the
+   0.623 baseline on those questions, by two rendering fixes (ADR 0022
+   formatting, ADR 0024 cite-every-figure). The drop was never mainly a
+   citation defect: the *claims* changed, and the plain claims that scored
+   0.857 disappeared. It is **not in `TARGETS`** and never gated. The residual
+   6 of 23 — claims naming a document location, or a different filing than the
+   citation — needs synthesis constrained, which stays the operator's call.
 3. **The recall threshold is 0.65, set from a subset.** A subset gives a
    floor, not a ceiling; raise it once a full baseline has measured all 28.
+   This is the **tightest gate** going into Stage E: the full-set floor is
+   0.714 and the unmeasured half is the harder cross-company work.
+4. **`main` is 49 commits behind `dev`** (33 when this plan was written).
+   Phase 4 §5's CI work assumes a sane default branch; merge first.
