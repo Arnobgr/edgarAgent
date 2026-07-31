@@ -2,9 +2,10 @@
 
 Real claims are rendered from XBRL facts (true verdict `grounded` by
 construction); perturbed variants — digits changed, periods shifted, scale
-shifted — are `unsupported` by construction. Qualitative pairs come from a
-small hand-written template set with sentiment inversion. Deterministic
-(seeded RNG) so the labeled set is reproducible and versionable.
+shifted, balance dates moved within a year — are `unsupported` by
+construction. Qualitative pairs come from a small hand-written template set
+with sentiment inversion. Deterministic (seeded RNG) so the labeled set is
+reproducible and versionable.
 """
 
 import random
@@ -63,6 +64,83 @@ def _claim_text(fact: Fact, name: str, value: float) -> str:
     return f"{fact.ticker}'s {name} for {when} was {_fmt_value(value)}."
 
 
+# Balance-sheet concepts: the ones filed as instants, so a fiscal year holds
+# four of them and only the date says which.
+_BALANCE_CONCEPTS: list[tuple[str, str]] = [
+    ("us-gaap:Assets", "total assets"),
+    ("us-gaap:StockholdersEquity", "stockholders' equity"),
+    ("us-gaap:CashAndCashEquivalentsAtCarryingValue", "cash and cash equivalents"),
+]
+
+# Pairs of (year-end, quarter-end) claims to emit. Enough to measure the
+# class without swamping the flow axes it sits beside.
+_BALANCE_PAIRS = 8
+
+
+def _balance_claim_text(ticker: str, name: str, year: int, value: float) -> str:
+    return f"{ticker}'s {name} at the end of FY {year} was {_fmt_value(value)}."
+
+
+def build_balance_date_claims(store: IngestStore, rng: random.Random) -> list[LabeledClaim]:
+    """Balance-date perturbations: a quarter-end balance stated as the
+    year-end figure.
+
+    The `period` axis shifts a fiscal *year* on a flow concept, and every one
+    of its 16 claims does. Nothing shifted a balance *within* a year, so the
+    reconciler's admission of any same-fiscal-year instant
+    (`_period_admissible`, deliberate under ADR 0016) went unmeasured — while
+    a fiscal year holds four balance dates per concept, so "total assets at
+    the end of FY2026" has three wrong answers the store will return. These
+    claims are `unsupported` by construction and are expected to be accepted
+    until the admission rule consults the date (ADR 0020)."""
+    by_year: dict[tuple[str, str, int], list[Fact]] = {}
+    for concept, name in _BALANCE_CONCEPTS:
+        for fact in store.query_facts(
+            concept_terms=[concept], unit="usd", include_dimensioned=False, limit=10**5
+        ):
+            if fact.concept != concept or fact.period_start is not None or not fact.period_end:
+                continue
+            if fact.fiscal_year is None or abs(fact.value) < 1e6:
+                continue
+            by_year.setdefault((fact.ticker, name, fact.fiscal_year), []).append(fact)
+
+    candidates = []
+    for (ticker, name, year), facts in sorted(by_year.items()):
+        year_end = max(facts, key=lambda f: f.period_end or "")
+        decoys = [
+            f
+            for f in facts
+            if f.period_end != year_end.period_end
+            and abs(abs(f.value) - abs(year_end.value)) > abs(year_end.value) * 0.02
+        ]
+        if decoys:
+            candidates.append((ticker, name, year, year_end, min(decoys, key=lambda f: f.value)))
+    rng.shuffle(candidates)
+
+    claims: list[LabeledClaim] = []
+    for i, (ticker, name, year, year_end, decoy) in enumerate(candidates[:_BALANCE_PAIRS]):
+        claims.append(
+            LabeledClaim(
+                id=f"vc-balreal-{i:03d}",
+                text=_balance_claim_text(ticker, name, year, year_end.value),
+                claim_type="numeric",
+                true_verdict="grounded",
+                ticker=ticker,
+            )
+        )
+        claims.append(
+            LabeledClaim(
+                id=f"vc-balance-{i:03d}",
+                text=_balance_claim_text(ticker, name, year, decoy.value),
+                claim_type="numeric",
+                true_verdict="unsupported",
+                perturbation="balance_date",
+                ticker=ticker,
+            )
+        )
+    return claims
+
+
 def build_labeled_claims(
     store: IngestStore, *, per_type_target: int = 100, seed: int = 20260719
 ) -> list[LabeledClaim]:
@@ -110,6 +188,8 @@ def build_labeled_claims(
                 ticker=fact.ticker,
             )
         )
+
+    claims.extend(build_balance_date_claims(store, rng))
 
     for i, (real, inverted, evidence) in enumerate(_QUALITATIVE_TEMPLATES):
         for ticker in ("TSLA", "AAPL", "NVDA"):
