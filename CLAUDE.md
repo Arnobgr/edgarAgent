@@ -20,36 +20,38 @@ change grounding, mapper label vocabulary), ADR 0019 (the facts UNIQUE key
 was silently deleting disaggregation facts — Apple Services/iPhone and NVDA
 Data Center revenue were filed all along; difference-form grounding; metric
 context scale; and the run-killer was a close/query race on the shared
-SQLite connection, fixed with a lock). The next work is
-`plans/phase-3-recall-and-retraction.md` — the three post-gate issues below
-must close before `plans/phase-4-backend-and-deploy.md` starts. Retrieval,
-prompts and models remain cleared — do not tune them for gate metrics.
+SQLite connection, fixed with a lock). `plans/phase-3-recall-and-retraction.md` fixed the three post-gate issues
+(ADRs 0020-0023, all landed 2026-07-31). **Only its Stage E — one
+`eval-agent --write-baseline` re-baseline — is outstanding**, and until it
+runs `eval/baselines.json` still holds the pre-remediation numbers.
+`plans/phase-4-backend-and-deploy.md` starts after it. Retrieval, prompts
+and models remain cleared — do not tune them for gate metrics.
 
-Three open issues found *after* the gate passed, in the passing run's own
-artifacts, are diagnosed in
-`docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md` —
-read that one, not the earlier doc:
+What the remediation changed, measured:
 
-1. **Answer recall.** The system declines questions whose facts are in the
-   corpus (`expected_fact_coverage` 0.393). Confirmed and decomposed: of 17
-   misses, 13 are retrieval, 2 packing, 2 synthesis, 0 corpus gap. The
-   architectural root is that `query_facts` resolves all 28 expected facts
-   but the store is wired into `verify`, not `research` — the system can
-   check a number it cannot look up.
-2. **Collateral excision.** `retract` deletes one sentence per unsupported
-   claim by token overlap over a mutating draft, so overlapping claims
-   collide and delete each other's sentences. Three `grounded` claims were
-   silently deleted while still advertised in the grounding table.
-3. **Instant facts have no date.** 15,211/28,550 instants have NULL
-   `period_start` and `period_end` (wrong column name at `facts.py:44`),
-   which makes ADR 0012's period-shift protection inoperative for those
-   rows. Recorded in `plans/phase-3-metric-diagnosis.md` as an accepted
-   deferral; its consequences are larger than that record implies.
+| | before | after |
+|---|---|---|
+| `expected_fact_coverage` (strict, ADR 0020) | 0.357 | **1.000** on the 10-question subset; floor 0.714 full-set |
+| figure delivery, recall@8 | 0.354 | **0.451** (query rewrite) |
+| verifier P/R, incl. new balance-date class | 0.889 | **1.000 / 1.000** |
+| store facts with no date | 15,211 | **0** |
+| facts with a wrong fiscal year | 5,838 | **0** |
 
-The earlier `docs/findings/2026-07-28-answer-recall-and-claim-staleness.md`
-is superseded on issue 2: its stated staleness mechanism (claim generations
-mixing) is wrong — `claims` has no reducer — and "~10% of scored claims"
-is actually 3.6%.
+Two things a future session must not re-derive. **`hallucination_rate: 0.000`
+now has two possible meanings** — see "Retraction is load-bearing". And
+**`citation_accuracy` is the one metric that got worse**: 0.623 → 0.556 on
+the same 10 questions (span rendering was a real defect and its fix recovered
+0.370 → 0.556 with zero regressions). The residual is claims asserting
+document locations — "the segment table in MD&A" — that a single XBRL row
+cannot support. Closing that means tuning the synthesis prompt against a gate
+metric, which is out of bounds; it is an open decision, not an oversight.
+
+The findings documents
+(`docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md` and
+the earlier `2026-07-28-...`) are the diagnosis and remain accurate on
+mechanism, with three corrections recorded in ADR 0020: the instant-date bug
+is pandas NaN truthiness, not a missing column; the facts UNIQUE key was
+never at risk; and g-008's `$35,934M` was right all along.
 
 ## Working guidelines
 
@@ -101,6 +103,7 @@ uv run fie resume <run-id>                     # resume a killed run from its ch
 uv run fie ingest [--tickers TSLA] [--years 1] [--embedding openai] [--skip-embed]
 
 uv run eval-retrieval --embedding both --rerank both   # retrieval benchmark (ADR 0011)
+uv run eval-retrieval --figures --rewrite all          # figure delivery + rewrite arms (ADR 0020/0022)
 uv run eval-agent [--limit 3] [--skip-judge] [--write-baseline]  # gold set → §6 metrics + gate
 uv run eval-seed                                       # regenerate derived eval sets
 
@@ -179,6 +182,46 @@ retracted hides surviving hallucinated text from the exit-gate metric. Every
 `hallucination_rate: 0.000` measured before 2026-07-26 is an artifact of that
 bug and is not trustworthy.
 
+Since 2026-07-31 the claim → sentence mapping is captured **at synthesis**,
+not guessed back afterwards: `DraftClaim.answer_span` quotes the sentence
+verbatim, is validated as a substring of the answer, and is repaired by one
+bounded retry when it is not (ADR 0023). Excision deletes that span — exact,
+idempotent when two claims quote one sentence, and incapable of taking a
+sentence from another claim. Token overlap survives only as a fallback for a
+claim carrying no span, and its use is logged. Before this, per-claim overlap
+matching over a *mutating* draft deleted 26 of 204 answer sentences across
+one run, including three that carried `grounded` claims still advertised in
+the grounding table (ADR 0021).
+
+**Two `hallucination_rate: 0.000` readings now exist and mean opposite
+things.** The pre-2026-07-26 one hid surviving hallucinated text. The
+post-ADR-0021 one is real — the four claims it used to count were already
+gone from the prose. The distinguishing evidence is the pre/post-retract diff
+and the invariant test in `tests/test_graph.py`; a 0.000 with no invariant
+asserted is suspect.
+
+### The facts store on both sides of the graph
+
+`plans/00-overview.md` §3.3 put numeric truth in XBRL, and until 2026-07-31
+only the verification half existed — the system could **check** a number it
+could not **look up**. `tools/fact_lookup.py` closes that: `research` maps its
+query to filed figures and injects them as evidence carrying their own
+accession, so a claim citing one keeps the same citation trail as a claim
+citing prose (ADR 0022). Three things about it are load-bearing, not
+incidental: injected chunks outrank retrieved ones in the fan-in packing sort
+(the cap silently dropped two figures retrieval *had* found), their
+`chunk_type` is `xbrl` rather than `table` so the reconciler's table fallback
+cannot make the store corroborate itself, and a year-scoped balance resolves
+to the year's closing date. Injection is additive — an empty mapping or a
+model failure leaves the branch exactly as it was.
+
+`research` also rewrites its query into filing vocabulary before retrieving
+(one call, no fan-out, no new graph node — it is a per-branch step with no
+fan-in). Measured on the figure labels, that moves recall@8 from 0.354 to
+0.451. The `{raw, rewritten}` union was measured and **rejected**: worse at
+every depth. The query actually searched is recorded on `branch_results`, so a
+retrieval failure stays distinguishable from a rewrite failure.
+
 ### Model routing
 
 `src/fie/llm/get_model(role)` is the **only** way to obtain a chat model. Model
@@ -198,7 +241,10 @@ Roles currently on the GLM challenger arm for the cost A/B — `synthesis` and
 `critic` point at `z-ai/glm-5.2-20260616`; revert both to
 `ModelSpec(provider="anthropic", model="claude-sonnet-5")` for the Sonnet
 baseline. `eval_judge` stays on a strong stable model: it is the measuring
-stick.
+stick. `fact_lookup` (question → the figures to look up) and `query_rewrite`
+(analyst phrasing → filing vocabulary) are their own cheap roles rather than
+reuses of `fact_mapping`, so a Langfuse trace separates what research looked
+up from what verify checked.
 
 ### Retrieval and ingestion
 

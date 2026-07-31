@@ -1,6 +1,9 @@
 # Phase 3 — Post-gate remediation: answer recall and retraction integrity
 
-**Status:** ▶ **OPEN — this is the next work.** · **Created:** 2026-07-30 ·
+**Status:** ✅ **Stages A-D COMPLETE (2026-07-31, ADRs 0020-0023). Stage E —
+the one paid re-baseline — is outstanding and is the only thing left.**
+Results, deviations and the two open decisions are at the end under
+"Outcome". · **Created:** 2026-07-30 ·
 **Blocks:** `plans/phase-4-backend-and-deploy.md` (see "Relationship to Phase
 4") · **Evidence:**
 `docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md`
@@ -440,3 +443,63 @@ depends on none of them. Two tracks can run in parallel:
    re-scored value; choosing it in advance is the ADR 0015 failure mode.
 2. **C3** — `retrieval_k` and the fan-in cap, movable only on A4's figure-level
    recall curve with the cost delta recorded.
+
+---
+
+## Outcome (2026-07-31)
+
+Stages A-D landed. ADRs 0020 (the instrument), 0021 (retraction integrity and
+fact matching), 0022 (facts store in research, query formulation) and 0023
+(claim spans) carry the reasoning; this section records what the plan got
+wrong and what it left open.
+
+### Measured
+
+| | before | after |
+|---|---|---|
+| `expected_fact_coverage`, strict | 0.357 | **1.000** on the 10-question subset (floor 0.714 full-set) |
+| figure delivery, recall@8 | 0.354 | **0.451** |
+| verifier P/R incl. the new balance-date class | 0.889 | **1.000 / 1.000** |
+| dateless facts / wrong fiscal year | 15,211 / 5,838 | **0 / 0** |
+| `citation_accuracy`, same 10 questions | 0.623 | 0.556 |
+
+### Where the plan was wrong
+
+1. **A1's root cause.** Not a missing edgartools column — `period_instant`
+   exists. An instant's `period_end` cell is NaN, and NaN is truthy, so
+   `a or b` never reached its fallback.
+2. **A1's UNIQUE-key hazard does not exist.** `period_start` stays NULL for
+   instants and SQLite treats NULLs in a unique key as distinct, so the
+   constraint was never activated. Row counts confirm it: 28,550 either side.
+3. **"A1 is what closes" the balance-date false accepts.** It does not. A1
+   supplied the date; nothing consulted it. Closing the class needed a
+   reconciler change (ADR 0021), taken with the operator's decision.
+4. **A fourth defect the plan never saw**, surfaced by fixing A1: a fiscal
+   year is named for the year it *ends* in, so 5,838 facts — every AAPL and
+   NVDA interim period — carried a year one too low.
+5. **C1 needed more than "a lookup, a formatter and a wiring change".** The
+   first smoke delivered 2 of 8 expected figures: the plumbing worked and the
+   row selection did not. Three fixes (term-at-a-time matching, a period-free
+   retry, the corpus boundary in the prompt) took it to 28 of 28.
+
+### Decided by measurement, not taste
+
+- **The `{raw, rewritten}` union is rejected** — worse than the rewrite alone
+  at every depth (0.423 vs 0.451 at k=8).
+- **`retrieval_k` and `chunks_per_sub_question` stay at 8.** Raising `k`
+  alone changes nothing (the fan-in cap cuts the extra chunks back out), and
+  raising both costs ~2.5x synthesis context to buy figures C1 now delivers
+  exactly at no context cost.
+
+### Open
+
+1. **Stage E.** One `eval-agent --write-baseline`. `eval/baselines.json` still
+   holds the pre-remediation numbers until it runs.
+2. **`citation_accuracy` is the one metric that got worse** (0.623 → 0.556 on
+   the same questions). Span rendering was a real defect and its fix recovered
+   0.370 → 0.556 with zero regressions; the residual is numeric claims
+   asserting document locations a single XBRL row cannot support. Closing it
+   means tuning the synthesis prompt against a gate metric, so it is the operator's
+   call, not an oversight.
+3. **The recall threshold is 0.65, set from a subset.** A subset gives a
+   floor, not a ceiling; raise it once a full baseline has measured all 28.
