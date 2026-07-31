@@ -1,6 +1,6 @@
 # Phase 3 — Post-gate remediation: answer recall and retraction integrity
 
-**Status:** ✅ **Stages A-D COMPLETE (2026-07-31, ADRs 0020-0023). Stage E —
+**Status:** ✅ **Stages A-D COMPLETE (2026-07-31, ADRs 0020-0024). Stage E —
 the one paid re-baseline — is outstanding and is the only thing left.**
 Results, deviations and the two open decisions are at the end under
 "Outcome". · **Created:** 2026-07-30 ·

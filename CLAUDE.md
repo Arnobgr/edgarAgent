@@ -21,7 +21,7 @@ was silently deleting disaggregation facts — Apple Services/iPhone and NVDA
 Data Center revenue were filed all along; difference-form grounding; metric
 context scale; and the run-killer was a close/query race on the shared
 SQLite connection, fixed with a lock). `plans/phase-3-recall-and-retraction.md` fixed the three post-gate issues
-(ADRs 0020-0023, all landed 2026-07-31). **Only its Stage E — one
+(ADRs 0020-0024, all landed 2026-07-31). **Only its Stage E — one
 `eval-agent --write-baseline` re-baseline — is outstanding**, and until it
 runs `eval/baselines.json` still holds the pre-remediation numbers.
 `plans/phase-4-backend-and-deploy.md` starts after it. Retrieval, prompts
@@ -39,12 +39,20 @@ What the remediation changed, measured:
 
 Two things a future session must not re-derive. **`hallucination_rate: 0.000`
 now has two possible meanings** — see "Retraction is load-bearing". And
-**`citation_accuracy` is the one metric that got worse**: 0.623 → 0.556 on
-the same 10 questions (span rendering was a real defect and its fix recovered
-0.370 → 0.556 with zero regressions). The residual is claims asserting
-document locations — "the segment table in MD&A" — that a single XBRL row
-cannot support. Closing that means tuning the synthesis prompt against a gate
-metric, which is out of bounds; it is an open decision, not an oversight.
+**`citation_accuracy` fell and was recovered by two rendering fixes**:
+0.623 baseline → 0.370 as measured → 0.556 (span formatting, ADR 0022) →
+**0.741** (cite every figure, ADR 0024), all on the same 10 questions. It
+**does not gate** — it is written to `baselines.json` but is absent from
+`TARGETS`. Do not re-derive the diagnosis: the drop was a change in the
+*claims*, not the citations. Plain claims — entity, metric, period, value —
+were 28 of 47 and scored 0.857; post-remediation there are none, because ADR
+0023 tells synthesis a claim "must stand on its own" and ADR 0020 gave every
+fact a date to state. Per-class rates barely moved; the population did. The
+residual 6 of 23 is claims asserting document locations — "the segment table
+in MD&A" — or naming a different filing than the citation, which a single
+XBRL row cannot support; closing that means constraining synthesis against a
+gate metric, an open decision rather than an oversight. The judge flips on
+about 1 in 27 byte-identical spans, so a single reading carries ±0.037.
 
 The findings documents
 (`docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md` and
