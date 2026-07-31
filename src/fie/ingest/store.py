@@ -65,6 +65,22 @@ CREATE INDEX IF NOT EXISTS idx_facts_value ON facts (value);
 """
 
 
+# How one `concept_terms` entry matches a fact. The first three directions are
+# term-inside-field. The fourth is field-inside-term, and it is what lets a
+# mapper's compound vocabulary reach a shorter filed label: `%ProductsRevenue%`
+# against a label of `Products` is unsatisfiable by construction, so any term
+# longer than the label it names could never match, and g-013's
+# services-vs-products growth comparison was ruled unsupported on exactly that
+# (ADR 0021). The length floor stops generic labels — "Total", "Other", "Net",
+# "Cost" — from matching every compound term an analyst could write.
+_MIN_LABEL_MATCH = 6
+_CONCEPT_MATCH = (
+    "(concept LIKE ? OR label LIKE ? OR REPLACE(label, ' ', '') LIKE ?"
+    " OR (LENGTH(REPLACE(label, ' ', '')) >= ?"
+    " AND REPLACE(?, ' ', '') LIKE '%' || REPLACE(label, ' ', '') || '%'))"
+)
+
+
 @dataclass(frozen=True)
 class ManifestRow:
     """One filing's manifest entry."""
@@ -276,14 +292,11 @@ class IngestStore:
             where.append(f"ticker IN ({','.join('?' * len(tickers))})")
             params.extend(t.upper() for t in tickers)
         if concept_terms:
-            ors = " OR ".join(
-                "(concept LIKE ? OR label LIKE ? OR REPLACE(label, ' ', '') LIKE ?)"
-                for _ in concept_terms
-            )
+            ors = " OR ".join(_CONCEPT_MATCH for _ in concept_terms)
             where.append(f"({ors})")
             for term in concept_terms:
                 like = f"%{term}%"
-                params.extend([like, like, f"%{term.replace(' ', '')}%"])
+                params.extend([like, like, f"%{term.replace(' ', '')}%", _MIN_LABEL_MATCH, term])
         if fiscal_year is not None:
             where.append("fiscal_year = ?")
             params.append(fiscal_year)

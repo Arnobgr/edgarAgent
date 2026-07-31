@@ -96,6 +96,28 @@ def test_query_facts_by_concept_and_period(store: IngestStore) -> None:
     assert store.query_facts(concept_terms=["net income"])[0].value == 7e9
 
 
+def test_a_term_longer_than_the_filed_label_still_matches(store: IngestStore) -> None:
+    """`%ProductsRevenue%` against a label of `Products` is unsatisfiable by
+    construction, so every mapper term longer than the label it names could
+    never match — g-013's services-vs-products growth comparison was ruled
+    unsupported on that alone (ADR 0021)."""
+    store.replace_facts(
+        "acc-1",
+        [
+            make_fact(concept="us-gaap:RevenueFromContractWithCustomer", label="Products"),
+            make_fact(
+                concept="us-gaap:RevenueFromContractWithCustomer", label="Services", value=1e9
+            ),
+            # A generic label must not be reachable this way, or it would
+            # match every compound term an analyst could write.
+            make_fact(concept="us-gaap:AssetsFairValueDisclosure", label="Total", value=2e9),
+        ],
+    )
+    assert [f.label for f in store.query_facts(concept_terms=["ProductsRevenue"])] == ["Products"]
+    assert [f.label for f in store.query_facts(concept_terms=["ServicesRevenue"])] == ["Services"]
+    assert store.query_facts(concept_terms=["TotalRevenues"]) == []
+
+
 def test_non_dimensioned_facts_sort_first(store: IngestStore) -> None:
     store.replace_facts(
         "acc-1",
