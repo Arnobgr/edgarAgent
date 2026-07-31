@@ -201,7 +201,7 @@ class InterimNumericReconciler:
 
         if not missing:
             return ReconcileOutcome(
-                verdict="grounded", supporting_span=matched_spans[0], feedback=None
+                verdict="grounded", supporting_span=_join_spans(matched_spans), feedback=None
             )
 
         cited = ", ".join(c.chunk_id for c in chunks)
@@ -211,7 +211,7 @@ class InterimNumericReconciler:
         )
         return ReconcileOutcome(
             verdict="partial" if matched_spans else "unsupported",
-            supporting_span=matched_spans[0] if matched_spans else None,
+            supporting_span=_join_spans(matched_spans) if matched_spans else None,
             feedback=feedback,
         )
 
@@ -381,7 +381,7 @@ class XbrlNumericReconciler:
 
         if not missing:
             return ReconcileOutcome(
-                verdict="grounded", supporting_span=matched_spans[0], feedback=None
+                verdict="grounded", supporting_span=_join_spans(matched_spans), feedback=None
             )
         searched_note = (
             f"searched XBRL concepts: {', '.join(sorted(set(searched))) or '(no mapping produced)'}"
@@ -393,7 +393,7 @@ class XbrlNumericReconciler:
         )
         return ReconcileOutcome(
             verdict="partial" if matched_spans else "unsupported",
-            supporting_span=matched_spans[0] if matched_spans else None,
+            supporting_span=_join_spans(matched_spans) if matched_spans else None,
             feedback=(
                 f"figure(s) {', '.join(missing)} not found in the XBRL facts store — "
                 f"{searched_note}{fallback_note}. Re-check the figure against the "
@@ -716,6 +716,19 @@ def _amount(value: float, unit: str | None = None) -> str:
     if (unit or "").lower() == "usd":
         return f"{value:,.0f}{suffix} (${value / 1e6:,.0f} million)"
     return f"{value:,.0f}{suffix}"
+
+
+def _join_spans(spans: list[str]) -> str:
+    """Every figure the claim states, in the order it states them.
+
+    `verdict="grounded"` already means *each* figure reconciled — the spans
+    were all built, then all but the first thrown away. A claim stating a
+    level, a change and a percent therefore cited evidence for the level
+    alone, and the citation judge, told to require support for every part of
+    a claim, correctly refused it: 1 of 7 comparison claims passed while all
+    7 were fully verified. Deduplicated, because two figures in one claim
+    can resolve to the same fact (ADR 0024)."""
+    return "\n".join(dict.fromkeys(spans))
 
 
 def _fact_span(fact: Fact) -> str:

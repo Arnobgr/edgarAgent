@@ -80,6 +80,51 @@ def test_satisfies_protocol(store: IngestStore) -> None:
     assert isinstance(reconciler, NumericReconciler)
 
 
+def test_span_shows_every_figure_the_claim_states(store: IngestStore) -> None:
+    """A claim that reconciles two figures must cite the evidence for both.
+
+    Showing only the first made a fully verified comparison claim look
+    half-cited, which is what the citation judge measured (ADR 0024)."""
+    mapping = FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=96.773e9,
+                concept_terms=["Revenues"],
+                fiscal_year=2025,
+                fiscal_period="FY",
+                unit="usd",
+            ),
+            FactCandidate(
+                value=7.091e9,
+                concept_terms=["Net income"],
+                fiscal_year=2025,
+                fiscal_period="FY",
+                unit="usd",
+            ),
+        ]
+    )
+    reconciler = XbrlNumericReconciler(store, FakeMapper(mapping))
+    outcome = reconciler.reconcile(
+        "TSLA reported revenue of $96,773 million and net income of $7,091 million in FY 2025.",
+        [make_chunk()],
+    )
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None
+    assert "96,773" in outcome.supporting_span
+    assert "7,091" in outcome.supporting_span
+
+
+def test_span_does_not_repeat_one_fact_twice(store: IngestStore) -> None:
+    """Two figures resolving to the same fact cite it once."""
+    reconciler = XbrlNumericReconciler(store, FakeMapper(revenue_mapping(96.773e9)))
+    outcome = reconciler.reconcile(
+        "TSLA revenue was $96,773 million in FY 2025, i.e. $96,773 million.", [make_chunk()]
+    )
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None
+    assert outcome.supporting_span.count("us-gaap:Revenues") == 1
+
+
 def test_exact_match_at_stated_precision_grounds(store: IngestStore) -> None:
     reconciler = XbrlNumericReconciler(store, FakeMapper(revenue_mapping()))
     outcome = reconciler.reconcile(
