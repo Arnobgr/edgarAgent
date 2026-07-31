@@ -441,7 +441,7 @@ class XbrlNumericReconciler:
                 )
                 facts = [f for f in facts if _period_admissible(f, fiscal_period, candidate)]
                 for fact in facts:
-                    if self._value_matches(number, fact):
+                    if matches_at_stated_precision(number, fact.value):
                         return _fact_span(fact)
             if number.is_percent and candidate.numerator_terms and candidate.denominator_terms:
                 span = self._match_ratio(number, candidate, tickers, searched)
@@ -588,19 +588,24 @@ class XbrlNumericReconciler:
                             return _growth_span(num, den)
         return None
 
-    @staticmethod
-    def _value_matches(number: ParsedNumber, fact: Fact) -> bool:
-        """Exact after scale normalization: the stored fact equals the claim
-        figure at the claim's stated precision (half a unit of the last
-        significant digit — '$96.8B' matches 96,773,000,000). Percent claims
-        also try the /100 ratio form XBRL stores, with the tolerance scaled
-        down accordingly. The fact's magnitude is compared — matching is
-        sign-blind on both sides ('$-23.0 million' parses as 23.0 million;
-        claims state direction in words, not signs)."""
-        pairs = [(number.value, number.tolerance)]
-        if number.is_percent:
-            pairs.append((number.value / 100.0, number.tolerance / 100.0))
-        return any(abs(abs(fact.value) - v) <= tol for v, tol in pairs)
+
+def matches_at_stated_precision(number: ParsedNumber, value: float) -> bool:
+    """Exact after scale normalization: `value` equals the stated figure at
+    the figure's own stated precision (half a unit of the last significant
+    digit — '$96.8B' matches 96,773,000,000). Percent figures also try the
+    /100 ratio form XBRL stores, with the tolerance scaled down accordingly.
+    Magnitudes are compared — matching is sign-blind on both sides ('$-23.0
+    million' parses as 23.0 million; claims state direction in words, not
+    signs).
+
+    This is ADR 0012's grounding rule and the single definition of "the same
+    figure" in the system. `expected_fact_coverage` scores against it too:
+    two components disagreeing about what counts as the same number is how a
+    metric ends up reading something other than what it names (ADR 0020)."""
+    pairs = [(number.value, number.tolerance)]
+    if number.is_percent:
+        pairs.append((number.value / 100.0, number.tolerance / 100.0))
+    return any(abs(abs(value) - v) <= tol for v, tol in pairs)
 
 
 def _period_attempts(fiscal_period: str | None) -> list[str | None]:

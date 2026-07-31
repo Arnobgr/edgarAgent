@@ -123,7 +123,17 @@ def citation_accuracy(judgments: list[CitationJudgment]) -> float:
 
 # Inline citations in answers: bracketed chunk ids like
 # [0001628280-25-045968:table-0011]. Their digit runs are not figures.
-_CITATION_RE = re.compile(r"\[[^\[\]]*\]")
+CITATION_RE = re.compile(r"\[[^\[\]]*\]")
+
+
+def delivered_prose(answer: str) -> str:
+    """What the answer actually says: retracted-claims listing and citation
+    markup removed.
+
+    Every metric that reads figures out of an answer goes through here, so
+    none of them can credit a figure that only survives in the retraction
+    disclosure or inside a chunk id (ADR 0020)."""
+    return CITATION_RE.sub(" ", answer.split(RETRACTED_HEADER)[0])
 
 
 def numeric_fidelity(results: list[RunResult], fact_values: list[float]) -> float:
@@ -154,7 +164,7 @@ def numeric_fidelity(results: list[RunResult], fact_values: list[float]) -> floa
     total = 0
     matched = 0
     for result in results:
-        answer = _CITATION_RE.sub(" ", result.answer.split(RETRACTED_HEADER)[0])
+        answer = delivered_prose(result.answer)
         context_scale = _context_scale(answer)
         for number in parse_numbers(answer):
             if number.is_percent or not (number.raw.startswith("$") or number.explicit_scale):

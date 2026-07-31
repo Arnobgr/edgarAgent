@@ -250,6 +250,7 @@ class IngestStore:
         concept_terms: list[str] | None = None,
         fiscal_year: int | None = None,
         fiscal_period: str | None = None,
+        period_end: str | None = None,
         unit: str | None = None,
         include_dimensioned: bool = True,
         limit: int = 200,
@@ -263,6 +264,11 @@ class IngestStore:
         ungrounded in the 2026-07-27 re-baseline (ADR 0018). Non-dimensioned
         facts sort first — headline totals beat segment breakdowns when both
         match.
+
+        `period_end` pins one balance date. A fiscal year holds four of them
+        for a balance-sheet concept, so the year alone cannot name the figure
+        "at year end" means; the gold labels use this to resolve to exactly
+        one value (ADR 0020).
         """
         where: list[str] = []
         params: list[object] = []
@@ -284,6 +290,9 @@ class IngestStore:
         if fiscal_period is not None:
             where.append("fiscal_period = ?")
             params.append(fiscal_period)
+        if period_end is not None:
+            where.append("period_end = ?")
+            params.append(period_end)
         if unit is not None:
             where.append("LOWER(unit) = LOWER(?)")
             params.append(unit)

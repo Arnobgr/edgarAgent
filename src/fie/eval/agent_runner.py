@@ -12,8 +12,9 @@ import datetime as dt
 import json
 import logging
 from collections.abc import Mapping
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import typer
 
@@ -32,10 +33,12 @@ from fie.eval.metrics import (
     numeric_fidelity,
 )
 from fie.eval.verifier_eval import run_verifier_eval
+from fie.ingest.store import Fact
 from fie.llm import bind_structured, get_model
 from fie.observability import new_run_id
 from fie.runner import answer_question, build_production_reconciler
 from fie.state import JudgeOutput, RunResult
+from fie.tools.reconcile import ParsedNumber, matches_at_stated_precision
 
 logger = logging.getLogger(__name__)
 
@@ -102,40 +105,117 @@ def judge_citations(
     return judgments, failures
 
 
+CoverageBucket = Literal["filed", "derived", "absent", "unresolved"]
+
+
+@dataclass(frozen=True)
+class FactCoverage:
+    """How one expected fact fared in the answer to its question."""
+
+    question_id: str
+    description: str
+    value: float | None
+    bucket: CoverageBucket
+
+
+def _coverage_bucket(
+    value: float, numbers: list[ParsedNumber], context_scale: float | None
+) -> CoverageBucket:
+    """Which of the three ways an answer can relate to a filed figure.
+
+    `filed` reuses the reconciler's own grounding predicate, so "the same
+    figure" means one thing across the system: $416 billion against a filed
+    416,161 is the filed figure at coarser precision and counts, exactly as
+    ADR 0012 admits it elsewhere. `derived` is a *different* number that
+    lands near the filed one — g-003 computed $18,571M from "8.6% of
+    revenue" against a filed 18,497 — and is recorded but never credited,
+    because a metric that credits arithmetic goes blind to the one thing it
+    exists to detect: the figure was in the corpus and we failed to surface
+    it (ADR 0020)."""
+    for number in numbers:
+        for form in _scale_forms(number, context_scale):
+            if matches_at_stated_precision(form, value):
+                return "filed"
+    for number in numbers:
+        for form in _scale_forms(number, context_scale):
+            if abs(form.value - value) <= abs(value) * 0.005 + 0.5:
+                return "derived"
+    return "absent"
+
+
+def _scale_forms(number: ParsedNumber, context_scale: float | None) -> list[ParsedNumber]:
+    """A figure as printed, plus its reading under the answer's own "(in
+    millions)" header — the same context-scale rule the reconciler applies
+    to source chunks, tolerance scaled alongside (ADR 0019)."""
+    if context_scale is None or number.explicit_scale:
+        return [number]
+    return [
+        number,
+        replace(
+            number,
+            value=number.value * context_scale,
+            tolerance=number.tolerance * context_scale,
+        ),
+    ]
+
+
+def _resolve(facts: list[Fact], concept_terms: list[str]) -> Fact:
+    """The one fact a label names.
+
+    Concept terms match as substrings, so `us-gaap:Assets` also reaches
+    `us-gaap:AssetsCurrent` — 4 of the 28 gold labels resolve correctly only
+    because the store orders by concept and a headline total is a prefix of
+    its own refinements. An exact concept match wins outright rather than
+    leaving the right value to alphabetical luck."""
+    wanted = {term.lower() for term in concept_terms}
+    return next((fact for fact in facts if fact.concept.lower() in wanted), facts[0])
+
+
 def expected_fact_coverage(
     results: dict[str, RunResult], questions: list[GoldQuestion], settings: Settings
-) -> float:
-    """Informational: fraction of expected XBRL facts (values pulled from
-    the facts store) whose figure appears in the answer to their question.
+) -> tuple[float, list[FactCoverage]]:
+    """Recall: fraction of expected XBRL facts whose *filed* figure the
+    answer delivered, plus the per-label breakdown.
+
+    This is the only instrument that detects "the fact was in the corpus and
+    the system failed to surface it", which is why it counts `filed` alone —
+    the alternative reading ("the analyst got a correct number") is already
+    measured by `numeric_fidelity` and the reconciler, and adopting it here
+    would let a system that retrieves nothing score well by deriving figures
+    from percentages it read in prose (ADR 0020).
 
     Every expected fact of an answerable question stays in the denominator:
     a fact that fails to resolve in the store, or whose question produced no
     result, scores as a miss instead of silently shrinking the metric — the
-    2026-07-27 run dropped 5 of its 15 labels that way (ADR 0015). Matching
-    accepts any resolved candidate value because instant (balance-sheet)
-    facts store several balance dates per fiscal year with no period to
-    disambiguate them."""
+    2026-07-27 run dropped 5 of its 15 labels that way (ADR 0015). Each
+    label now resolves to exactly one value: instants carry their balance
+    date, so the metric no longer scores against an arbitrary 5-row sample
+    that for NVDA's total assets never contained the year-end figure."""
+    from fie.eval.metrics import delivered_prose
     from fie.ingest.store import IngestStore
-    from fie.tools.reconcile import parse_numbers
+    from fie.tools.reconcile import _context_scale, parse_numbers
 
     store = IngestStore(settings.ingest_db_path)
+    rows: list[FactCoverage] = []
     try:
-        total = 0
-        covered = 0
         for question in questions:
             if not question.answerable:
                 continue
             result = results.get(question.id)
-            answer_values = [n.value for n in parse_numbers(result.answer)] if result else []
+            prose = delivered_prose(result.answer) if result else ""
+            # Percent figures are excluded for the same reason
+            # `numeric_fidelity` excludes them: they are derived, not filed.
+            numbers = [n for n in parse_numbers(prose) if not n.is_percent]
+            context_scale = _context_scale(prose)
             for expected in question.expected_facts:
                 if expected.kind != "xbrl":
                     continue
-                total += 1
                 facts = store.query_facts(
                     tickers=[expected.ticker] if expected.ticker else None,
                     concept_terms=expected.concept_terms or None,
                     fiscal_year=expected.fiscal_year,
                     fiscal_period=expected.fiscal_period,
+                    period_end=expected.period_end,
                     unit=expected.unit,
                     include_dimensioned=False,
                     limit=5,
@@ -146,16 +226,21 @@ def expected_fact_coverage(
                         question.id,
                         expected,
                     )
+                    rows.append(FactCoverage(question.id, expected.description, None, "unresolved"))
                     continue
-                if any(
-                    abs(v - fact.value) <= abs(fact.value) * 0.005 + 0.5
-                    for fact in facts
-                    for v in answer_values
-                ):
-                    covered += 1
-        return covered / total if total else 0.0
+                value = _resolve(facts, expected.concept_terms).value
+                rows.append(
+                    FactCoverage(
+                        question.id,
+                        expected.description,
+                        value,
+                        _coverage_bucket(value, numbers, context_scale),
+                    )
+                )
     finally:
         store.close()
+    filed = sum(1 for row in rows if row.bucket == "filed")
+    return (filed / len(rows) if rows else 0.0), rows
 
 
 def declined_unanswerables(results: dict[str, RunResult], questions: list[GoldQuestion]) -> float:
@@ -277,13 +362,29 @@ def run(
     results, run_ids = asyncio.run(_run_gold(questions, settings))
     result_list = list(results.values())
 
+    coverage, coverage_rows = expected_fact_coverage(results, questions, settings)
     metrics: dict[str, Any] = {
         "n_questions": len(questions),
         "n_completed": len(result_list),
         "grounding_rate": grounding_rate(result_list),
         "hallucination_rate": hallucination_rate(result_list),
         "unanswerable_declined": declined_unanswerables(results, questions),
-        "expected_fact_coverage": expected_fact_coverage(results, questions, settings),
+        "expected_fact_coverage": coverage,
+        # The gate counts `filed` only; the split is what keeps the
+        # diagnostic a lenient metric would destroy (ADR 0020).
+        "expected_fact_buckets": {
+            bucket: sum(1 for row in coverage_rows if row.bucket == bucket)
+            for bucket in ("filed", "derived", "absent", "unresolved")
+        },
+        "expected_fact_labels": [
+            {
+                "question": row.question_id,
+                "label": row.description,
+                "value": row.value,
+                "bucket": row.bucket,
+            }
+            for row in coverage_rows
+        ],
     }
 
     from fie.ingest.store import IngestStore
@@ -321,9 +422,11 @@ def run(
 
     typer.echo("\n=== eval-agent metrics ===")
     for key, value in metrics.items():
-        if isinstance(value, dict):
+        if isinstance(value, dict | list):
             continue
         typer.echo(f"{key}: {value:.3f}" if isinstance(value, float) else f"{key}: {value}")
+    buckets = metrics["expected_fact_buckets"]
+    typer.echo("expected facts: " + ", ".join(f"{k} {v}" for k, v in buckets.items()))
     typer.echo(f"Report: {report_path}")
 
     # A dropped question silently shrinks every metric's denominator — the

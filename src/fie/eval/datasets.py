@@ -53,6 +53,10 @@ class ExpectedFact(BaseModel):
     concept_terms: list[str] = Field(default_factory=list)
     fiscal_year: int | None = None
     fiscal_period: str | None = None
+    # Balance date for an instant (balance-sheet) fact. A fiscal year holds
+    # four of them per concept, so year alone names no single figure — the
+    # label pins the one an analyst means by "at year end" (ADR 0020).
+    period_end: str | None = None
     unit: str | None = None
     description: str = ""
 

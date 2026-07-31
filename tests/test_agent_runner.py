@@ -43,8 +43,9 @@ def eval_settings(tmp_path: Path) -> Settings:
                 accession_no="acc-1",
                 form_type="10-K",
             ),
-            # Instant facts carry no fiscal_period: the same fiscal year
-            # holds several balance dates (year-end + comparatives).
+            # Instant facts carry no fiscal_period and one date each: a
+            # fiscal year holds four balance dates for a concept, so only
+            # the date names the year-end figure (ADR 0020).
             Fact(
                 ticker="TSLA",
                 concept="us-gaap:Assets",
@@ -53,7 +54,7 @@ def eval_settings(tmp_path: Path) -> Settings:
                 unit="usd",
                 decimals=-6,
                 period_start=None,
-                period_end=None,
+                period_end="2025-12-31",
                 fiscal_period=None,
                 fiscal_year=2025,
                 accession_no="acc-1",
@@ -67,10 +68,38 @@ def eval_settings(tmp_path: Path) -> Settings:
                 unit="usd",
                 decimals=-6,
                 period_start=None,
-                period_end=None,
+                period_end="2025-09-30",
                 fiscal_period=None,
                 fiscal_year=2025,
                 accession_no="acc-1",
+                form_type="10-K",
+            ),
+            Fact(
+                ticker="AAPL",
+                concept="us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+                label="Total net sales",
+                value=416_161_000_000.0,
+                unit="usd",
+                decimals=-6,
+                period_start="2024-09-29",
+                period_end="2025-09-27",
+                fiscal_period="FY",
+                fiscal_year=2025,
+                accession_no="acc-2",
+                form_type="10-K",
+            ),
+            Fact(
+                ticker="NVDA",
+                concept="us-gaap:ResearchAndDevelopmentExpense",
+                label="Research and development",
+                value=18_497_000_000.0,
+                unit="usd",
+                decimals=-6,
+                period_start="2025-01-27",
+                period_end="2026-01-25",
+                fiscal_period="FY",
+                fiscal_year=2026,
+                accession_no="acc-3",
                 form_type="10-K",
             ),
         ],
@@ -99,22 +128,81 @@ def test_unresolvable_expected_fact_counts_as_miss(eval_settings: Settings) -> N
     )
     results = {"g-x": run_result("Revenue was $96,773 million.")}
     # The unresolvable fact stays in the denominator: 1 of 2, not 1 of 1.
-    assert expected_fact_coverage(results, [question], eval_settings) == 0.5
+    coverage, rows = expected_fact_coverage(results, [question], eval_settings)
+    assert coverage == 0.5
+    assert [row.bucket for row in rows] == ["filed", "unresolved"]
 
 
 def test_missing_result_counts_facts_as_misses(eval_settings: Settings) -> None:
     question = gold(
         "g-x", [ExpectedFact(ticker="TSLA", concept_terms=["us-gaap:Revenues"], fiscal_year=2025)]
     )
-    assert expected_fact_coverage({}, [question], eval_settings) == 0.0
+    assert expected_fact_coverage({}, [question], eval_settings)[0] == 0.0
 
 
-def test_instant_fact_matches_any_candidate_balance(eval_settings: Settings) -> None:
+def test_instant_label_resolves_to_one_balance_date(eval_settings: Settings) -> None:
+    """A fiscal year holds several balance dates for one concept. The old
+    metric accepted any of them, so NVDA's total assets could not be scored
+    at all — the 5 candidates it sampled never included the year-end value
+    (ADR 0020). The label's date now names exactly one figure."""
     question = gold(
-        "g-x", [ExpectedFact(ticker="TSLA", concept_terms=["us-gaap:Assets"], fiscal_year=2025)]
+        "g-x",
+        [
+            ExpectedFact(
+                ticker="TSLA",
+                concept_terms=["us-gaap:Assets"],
+                fiscal_year=2025,
+                period_end="2025-12-31",
+            )
+        ],
     )
-    results = {"g-x": run_result("Total assets were $106,618 million at year end.")}
-    assert expected_fact_coverage(results, [question], eval_settings) == 1.0
+    quarter_end = {"g-x": run_result("Total assets were $106,618 million at year end.")}
+    year_end = {"g-x": run_result("Total assets were $122,070 million at year end.")}
+    assert expected_fact_coverage(quarter_end, [question], eval_settings)[0] == 0.0
+    assert expected_fact_coverage(year_end, [question], eval_settings)[0] == 1.0
+
+
+def test_filed_figure_at_coarser_precision_is_covered(eval_settings: Settings) -> None:
+    """g-015 said "$416 billion" against a filed 416,161. That *is* the
+    filed figure, stated less precisely — which ADR 0012's stated-precision
+    rule already admits everywhere else in the system, so coverage admits it
+    too rather than inventing a second definition of the same number."""
+    question = gold(
+        "g-x",
+        [
+            ExpectedFact(
+                ticker="AAPL",
+                concept_terms=["us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"],
+                fiscal_year=2025,
+                fiscal_period="FY",
+            )
+        ],
+    )
+    results = {"g-x": run_result("Apple's full-year FY2025 revenue was $416 billion.")}
+    coverage, rows = expected_fact_coverage(results, [question], eval_settings)
+    assert (coverage, rows[0].bucket) == (1.0, "filed")
+
+
+def test_derived_figure_near_the_filed_one_is_not_covered(eval_settings: Settings) -> None:
+    """g-003 computed "$18,571 million" from 8.6% of revenue against a filed
+    18,497 — a different number that lands inside a flat 0.5% band. Crediting
+    it would blind the only instrument that detects "the fact was in the
+    corpus and we failed to surface it", so it is recorded as `derived` and
+    never counted."""
+    question = gold(
+        "g-x",
+        [
+            ExpectedFact(
+                ticker="NVDA",
+                concept_terms=["us-gaap:ResearchAndDevelopmentExpense"],
+                fiscal_year=2026,
+                fiscal_period="FY",
+            )
+        ],
+    )
+    results = {"g-x": run_result("This implies R&D spending of about $18,571 million.")}
+    coverage, rows = expected_fact_coverage(results, [question], eval_settings)
+    assert (coverage, rows[0].bucket) == (0.0, "derived")
 
 
 def unanswerable(qid: str) -> GoldQuestion:
