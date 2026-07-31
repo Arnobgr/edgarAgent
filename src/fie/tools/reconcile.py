@@ -650,16 +650,20 @@ def _year_end_only(facts: list[Fact], candidate: FactCandidate) -> list[Fact]:
     that shape were accepted when the class was first measured, taking
     verifier precision to 0.889 (ADR 0021).
 
-    Durations pass through untouched, and a claim that names its quarter
-    still reaches it through the stated-period query — the narrowing only
-    applies when the mapping gives a year and no period, which is what the
-    mapper emits for an "as of" figure. The cost is a claim about a *quarterly*
-    balance that does not name its quarter; it falls through to the cited
-    table-chunk match. The ratio and difference paths keep admitting any
-    same-year instant: their operand pairs are gated on matching accession and
-    period, and no claim of that shape is labeled, so the class stays
-    unmeasured rather than assumed safe."""
-    if candidate.fiscal_period is not None or candidate.fiscal_year is None:
+    Durations pass through untouched, and a claim that names a *quarter*
+    still reaches it through the stated-period query. The narrowing applies
+    whenever the mapping is year-scoped without naming a quarter — period
+    `None` or `FY`, both of which the mapper emits for "at the end of FY
+    2024". Gating on `None` alone left 3 of the 8 accepted: the relaxed
+    instant pass after a stated `FY` re-admits every balance of the year.
+
+    The cost is a claim about a *quarterly* balance that does not name its
+    quarter; it falls through to the cited table-chunk match. The ratio and
+    difference paths keep admitting any same-year instant: their operand
+    pairs are gated on matching accession and period, and no claim of that
+    shape is labeled, so the class stays unmeasured rather than assumed
+    safe."""
+    if candidate.fiscal_year is None or (candidate.fiscal_period or "FY") != "FY":
         return facts
     latest: dict[tuple[str, str, int | None], str] = {}
     for fact in facts:
@@ -697,16 +701,44 @@ def _derive_percent(number: ParsedNumber, operands: list[float]) -> str | None:
     return None
 
 
+def _amount(value: float, unit: str | None = None) -> str:
+    """A filed value as a filing would print it.
+
+    `f"{value:g}"` renders 18,497,000,000 as `1.8497e+10`. A careful reader
+    cannot match that against "$18,497 million" without doing arithmetic, and
+    the citation judge — correctly — would not: 17 of 27 judged spans were
+    rejected on this formatting alone, taking `citation_accuracy` to 0.370.
+    The grounding was exact the whole time; only the evidence shown for it
+    was unreadable (ADR 0022)."""
+    suffix = f" {unit}" if unit else ""
+    if abs(value) < 1e6:
+        return f"{value:,.4f}".rstrip("0").rstrip(".") + suffix
+    if (unit or "").lower() == "usd":
+        return f"{value:,.0f}{suffix} (${value / 1e6:,.0f} million)"
+    return f"{value:,.0f}{suffix}"
+
+
 def _fact_span(fact: Fact) -> str:
+    """The evidence shown for a grounded numeric claim.
+
+    It must state everything the store knows about the fact, because the
+    claim was drawn from a chunk that stated all of it. The span used to omit
+    the period end while the injected chunk carried it, so claims quoting
+    "which ended January 25, 2026" cited evidence that did not mention the
+    date — and the citation judge, told to require support for *every* part
+    of a claim, correctly refused them (ADR 0022)."""
     period = fact.fiscal_period or ""
     year = str(fact.fiscal_year or "")
     when = " ".join(x for x in (period, year) if x) or (fact.period_end or "?")
+    if fact.period_end and fact.period_end not in when:
+        when = f"{when}, period ending {fact.period_end}"
     dims = ""
     if fact.dimensions:
         dims = f" [{', '.join(f'{k}={v}' for k, v in sorted(fact.dimensions.items()))}]"
     return (
-        f"XBRL {fact.concept} ({fact.label or 'no label'}){dims} = {fact.value:g} "
-        f"{fact.unit or ''} for {when}, {fact.form_type or '?'} acc {fact.accession_no}"
+        f"XBRL {fact.concept} ({fact.label or 'no label'}){dims} = "
+        f"{_amount(fact.value, fact.unit)} for {when}, "
+        f"{fact.form_type or '?'} acc {fact.accession_no}"
     )
 
 
@@ -716,8 +748,8 @@ def _difference_span(a: Fact, b: Fact) -> str:
 
     return (
         f"XBRL difference {a.concept} ({a.label or 'no label'}): "
-        f"|{a.value:g} ({_when(a)}) - {b.value:g} ({_when(b)})| = "
-        f"{abs(abs(a.value) - abs(b.value)):g}, acc {a.accession_no}"
+        f"|{_amount(a.value)} ({_when(a)}) - {_amount(b.value)} ({_when(b)})| = "
+        f"{_amount(abs(abs(a.value) - abs(b.value)), a.unit)}, acc {a.accession_no}"
     )
 
 
@@ -726,8 +758,9 @@ def _growth_span(num: Fact, den: Fact) -> str:
     growth = abs(num.value) / abs(den.value) - 1.0
     return (
         f"XBRL change {num.concept} ({num.label or 'no label'}): "
-        f"{num.value:g} ({period} {num.fiscal_year}) vs {den.value:g} "
-        f"({period} {den.fiscal_year}) = {growth * 100.0:+.2f}%, acc {num.accession_no}"
+        f"{_amount(num.value, num.unit)} ({period} {num.fiscal_year}) vs "
+        f"{_amount(den.value, den.unit)} ({period} {den.fiscal_year}) = "
+        f"{growth * 100.0:+.2f}%, acc {num.accession_no}"
     )
 
 
@@ -737,6 +770,6 @@ def _ratio_span(num: Fact, den: Fact) -> str:
     when = " ".join(x for x in (period, year) if x) or (num.period_end or "?")
     return (
         f"XBRL ratio {num.concept} ({num.label or 'no label'}) / {den.concept} "
-        f"({den.label or 'no label'}) = {num.value:g} / {den.value:g} = "
+        f"({den.label or 'no label'}) = {_amount(num.value)} / {_amount(den.value)} = "
         f"{num.value / den.value:.4f} for {when}, acc {num.accession_no}"
     )
