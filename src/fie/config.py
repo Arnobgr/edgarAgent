@@ -73,22 +73,26 @@ class Settings(BaseSettings):
             # Citation-accuracy LLM judge (eval only, blueprint §6). Kept on a
             # strong, stable model — it is the measuring stick for the exit gate.
             "eval_judge": ModelSpec(provider="anthropic", model="claude-sonnet-5"),
-            "decompose": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
-            "claim_extract": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
-            "verify_qualitative": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
-            "verify_forward": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "decompose": ModelSpec(provider="openrouter", model="google/gemini-3.5-flash-lite"),
+            "claim_extract": ModelSpec(provider="openrouter", model="google/gemini-3.5-flash-lite"),
+            "verify_qualitative": ModelSpec(
+                provider="openrouter", model="google/gemini-3.5-flash-lite"
+            ),
+            "verify_forward": ModelSpec(
+                provider="openrouter", model="google/gemini-3.5-flash-lite"
+            ),
             # Claim text → candidate XBRL (concept, period, unit) triples.
-            "fact_mapping": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "fact_mapping": ModelSpec(provider="openrouter", model="google/gemini-3.5-flash-lite"),
             # Question → the filed figures to look up on the research path.
             # Its own role, not `fact_mapping`'s, so a Langfuse trace separates
             # what research looked up from what verify checked (ADR 0022).
-            "fact_lookup": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "fact_lookup": ModelSpec(provider="openrouter", model="google/gemini-3.5-flash-lite"),
             # Analyst phrasing → filing vocabulary, per research branch. Cheap
             # by necessity: the call multiplies across the parallel fan-out and
             # again on every verify loop-back (ADR 0022).
-            "query_rewrite": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "query_rewrite": ModelSpec(provider="openrouter", model="google/gemini-3.5-flash-lite"),
             # Retrieval-eval query seeding (candidates for hand-verification).
-            "eval_seed": ModelSpec(provider="openrouter", model="google/gemini-2.5-flash"),
+            "eval_seed": ModelSpec(provider="openrouter", model="google/gemini-3.5-flash-lite"),
         }
     )
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
@@ -167,6 +171,11 @@ class Settings(BaseSettings):
             # List price. Sonnet 5 is on introductory pricing (2.0/10.0)
             # through 2026-08-31, so this over-reports cost until then.
             "claude-sonnet-5": (3.0, 15.0),
+            # Priced identically to the 2.5-flash it replaced, so the
+            # generation jump costs nothing. 2.5 stays listed: substring
+            # matching means the newer id does not cover the older one, and
+            # checkpoints from earlier runs still resolve.
+            "gemini-3.5-flash-lite": (0.30, 2.50),
             "gemini-2.5-flash": (0.30, 2.50),
             # OpenRouter challengers for the synthesis/critic A/B (ADR 0014).
             # Substring-matched against the id in callbacks, e.g.
