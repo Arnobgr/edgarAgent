@@ -9,6 +9,7 @@ from pydantic import SecretStr
 
 from fie.config import Settings
 from fie.eval.agent_runner import (
+    _run_gold,
     declined_unanswerables,
     expected_fact_coverage,
     judge_citations,
@@ -293,3 +294,49 @@ def test_judge_failures_are_counted_not_scored(eval_settings: Settings) -> None:
         ("run-1:claim-1-0", True),
         ("run-1:claim-1-2", False),
     ]
+
+
+def queue_answers(monkeypatch: pytest.MonkeyPatch, results: list[RunResult | Exception]) -> None:
+    """Serve `answer_question` from a queue, one entry per attempt."""
+
+    async def fake(**kwargs: object) -> RunResult:
+        outcome = results.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr("fie.eval.agent_runner.answer_question", fake)
+
+
+async def test_guardrail_abort_costs_an_attempt_not_the_baseline(
+    eval_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A node timeout returns rather than raises, so only an `error` check
+    catches it. Two synthesize stalls decided the 2026-07-31 run this way."""
+    queue_answers(
+        monkeypatch,
+        [
+            RunResult(run_id="r1", question="q", answer="stale", error="node 'synthesize' timed"),
+            RunResult(run_id="r2", question="q", answer="clean"),
+        ],
+    )
+    results, _run_ids, degraded = await _run_gold([gold("g-1", [])], eval_settings)
+    assert results["g-1"].answer == "clean"
+    assert degraded == 1
+
+
+async def test_a_question_that_degrades_twice_is_still_counted(
+    eval_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Keeping the last degraded result is deliberate: dropping the question
+    would shrink every denominator instead of showing the bad number."""
+    queue_answers(
+        monkeypatch,
+        [
+            RunResult(run_id="r1", question="q", answer="a", error="budget exceeded"),
+            RunResult(run_id="r2", question="q", answer="b", error="budget exceeded"),
+        ],
+    )
+    results, _run_ids, degraded = await _run_gold([gold("g-1", [])], eval_settings)
+    assert results["g-1"].error == "budget exceeded"
+    assert degraded == 2

@@ -294,30 +294,54 @@ def declined_unanswerables(results: dict[str, RunResult], questions: list[GoldQu
 
 async def _run_gold(
     questions: list[GoldQuestion], settings: Settings
-) -> tuple[dict[str, RunResult], dict[str, str]]:
+) -> tuple[dict[str, RunResult], dict[str, str], int]:
     results: dict[str, RunResult] = {}
     run_ids: dict[str, str] = {}
+    degraded_attempts = 0
     for question in questions:
         # One retry with a fresh run id: an infra death (the recurring,
         # still-unreproduced SQLITE_MISUSE killed one question in each of
         # the last two 30-Q runs) must not cost the run its baseline when
         # the guard demands 30/30. A question that fails twice still drops
         # loudly.
+        #
+        # A guardrail abort is the same class of infra failure but arrives
+        # as a *return*: `guarded` turns a node timeout into `error` on the
+        # state, the graph routes to END, and `answer_question` hands back a
+        # degraded RunResult that no exception marks. Its claims then score.
+        # Two synthesize calls stalled at the 600s cap on 2026-07-31 and that
+        # alone decided the run — hallucination_rate 0.049 (8/163, target
+        # 0.02) and expected_fact_coverage 0.750; without them 0.000 and
+        # 0.857. Measured across the six 30-Q runs a synthesize call stalls
+        # ~1.5% of the time, so a clean 30/30 is a ~1-in-3 event unretried.
+        # Keep the result either way: dropping the question would trade a
+        # visible bad number for an invisible one.
         for attempt in (1, 2):
             run_id = new_run_id()
             run_ids[question.id] = run_id
             typer.echo(f"[{question.id}] {question.question}")
             try:
-                results[question.id] = await answer_question(
+                result = await answer_question(
                     question=question.question,
                     run_id=run_id,
                     settings=settings,
                     run_name="fie-eval-agent",
                 )
-                break
             except Exception as exc:
                 logger.error("gold run %s failed (attempt %d): %s", question.id, attempt, exc)
-    return results, run_ids
+                continue
+            results[question.id] = result
+            if result.error is None:
+                break
+            degraded_attempts += 1
+            logger.error(
+                "gold run %s degraded (attempt %d, run %s): %s",
+                question.id,
+                attempt,
+                run_id,
+                result.error,
+            )
+    return results, run_ids, degraded_attempts
 
 
 def _verifier_metrics(settings: Settings, metrics: dict[str, Any]) -> None:
@@ -380,13 +404,17 @@ def run(
     if limit:
         questions = questions[:limit]
 
-    results, run_ids = asyncio.run(_run_gold(questions, settings))
+    results, run_ids, degraded_attempts = asyncio.run(_run_gold(questions, settings))
     result_list = list(results.values())
 
     coverage, coverage_rows = expected_fact_coverage(results, questions, settings)
     metrics: dict[str, Any] = {
         "n_questions": len(questions),
         "n_completed": len(result_list),
+        # Guardrail aborts that cost an attempt. Reported, not gated: the
+        # retry keeps them out of the metrics, so this is the only place the
+        # run's real infra cost stays visible.
+        "degraded_attempts": degraded_attempts,
         "grounding_rate": grounding_rate(result_list),
         "hallucination_rate": hallucination_rate(result_list),
         "unanswerable_declined": declined_unanswerables(results, questions),

@@ -509,3 +509,31 @@ wrong and what it left open.
    0.714 and the unmeasured half is the harder cross-company work.
 4. **`main` is 49 commits behind `dev`** (33 when this plan was written).
    Phase 4 §5's CI work assumes a sane default branch; merge first.
+5. **A node abort after synthesis bypasses retraction — a product defect, not
+   an eval one.** `guarded` converts a timeout into `error` on the state and
+   the graph routes to END, so `retract` never runs. Whatever the last
+   synthesize produced is returned as the answer with its unsupported claims
+   intact. On 2026-07-31 g-010 came back as a 1158-character draft carrying 8
+   unsupported claims; `fie ask` would have shown a user exactly that. This is
+   the same class of surviving-hallucinated-text that ADR 0021 closed for
+   excision failures, reached by a different route, and it means "retraction
+   is load-bearing" holds only on the paths that reach `retract`.
+
+   The eval side is now covered — `_run_gold` retries a question whose
+   `RunResult.error` is set, so a stall costs an attempt instead of the
+   baseline, and `degraded_attempts` keeps the infra cost visible in the
+   report. That is deliberately **not** a fix for this: it stops the abort
+   reaching the metrics, not the user.
+
+   Measured for whoever picks this up: a synthesize call stalls ~1.5% of the
+   time at the 600s cap (3 in 198 calls across the three 600s-era 30-Q runs;
+   8 in 223 at the old 300s cap). Stalls land *exactly* on the cap while clean
+   calls run 21s median, 206s max — bimodal, so these are hangs, not slow
+   work. Every run so far has had GLM on synthesis, so whether the model
+   causes it is untested, not disproven.
+
+   Options, none chosen: route an errored post-synthesis state through
+   `retract` before END; or have `build_run_result` refuse to publish prose
+   whose claims were never verified, and return the error instead. The second
+   is closer to the blueprint's contract — an unverified answer is not an
+   answer — but it changes what a partial result means, so it needs an ADR.
