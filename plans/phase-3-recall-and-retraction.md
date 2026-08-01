@@ -1,9 +1,9 @@
 # Phase 3 — Post-gate remediation: answer recall and retraction integrity
 
-**Status:** ✅ **Stages A-D COMPLETE (2026-07-31, ADRs 0020-0024). Stage E —
-the one paid re-baseline — is outstanding and is the only thing left.**
-Results, deviations and the two open decisions are at the end under
-"Outcome". · **Created:** 2026-07-30 ·
+**Status:** ✅ **COMPLETE. Stages A-D landed 2026-07-31 (ADRs 0020-0024) and
+Stage E passed 30/30 on 2026-08-01 (ADR 0025), replacing the baseline.**
+Phase 4 is unblocked. Results, deviations and what stays open are at the end
+under "Outcome". · **Created:** 2026-07-30 ·
 **Blocks:** `plans/phase-4-backend-and-deploy.md` (see "Relationship to Phase
 4") · **Evidence:**
 `docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md`
@@ -410,6 +410,9 @@ re-scored on the accepted run's artifacts for free before spending on Stage E.
 4. **Claim spans and retraction semantics** — span capture, the repair loop,
    why collateral loss is dropped-and-logged rather than given a
    `ClaimStatus` member, and the retirement of token-overlap excision.
+5. **Guardrail aborts in the eval harness** (unplanned, written at Stage E) —
+   why a node abort returns rather than raises, the measured stall rate, and
+   why the result is kept rather than dropped. Extends ADR 0015.
 
 ## Relationship to Phase 4
 
@@ -457,12 +460,41 @@ wrong and what it left open.
 
 | | before | after |
 |---|---|---|
-| `expected_fact_coverage`, strict | 0.357 | **1.000** on the 10-question subset (floor 0.714 full-set) |
+| `expected_fact_coverage`, strict | 0.357 | **1.000** — all 28 labels on the full set |
 | figure delivery, recall@8 | 0.354 | **0.451** |
 | verifier P/R incl. the new balance-date class | 0.889 | **1.000 / 1.000** |
 | dateless facts / wrong fiscal year | 15,211 / 5,838 | **0 / 0** |
 | `citation_accuracy`, same 10 questions | 0.623 | **0.741** (0.370 as first measured; ADRs 0022, 0024) |
 | cost per run, same 10 questions | $0.041 | **$0.014** — C2's extra call is repaid by the loop-backs it prevents |
+
+### Stage E — the accepted baseline (`agent-20260801-122527`, 30/30)
+
+| | 2026-07-28 | **2026-08-01** | target |
+|---|---|---|---|
+| `grounding_rate` | 0.935 | **0.972** | ≥ 0.90 |
+| `hallucination_rate` | 0.015 | **0.000** | ≤ 0.02 |
+| `numeric_fidelity` | 0.926 | **0.963** | ≥ 0.85 |
+| `expected_fact_coverage` | 0.357 (re-scored) | **1.000** | ≥ 0.65 |
+| `citation_accuracy` | 0.685 | **0.851** | not gated |
+| verifier P/R | 1.000 | 1.000 | — |
+
+`unanswerable_declined` 1.000, 208 citations judged with 0 judge failures,
+`degraded_attempts` 0.
+
+**The 0.000 was verified before it was accepted**, as this plan's Stage E
+demanded: 8 claims retracted, every one carrying an `answer_span`, **0** of
+those spans still present in the delivered prose, and no scored row with
+verdict `unsupported` or `None` in 217. This is the real reading, not the
+pre-2026-07-26 artifact.
+
+Two attempts preceded it. The first was killed by the harness and recovered
+free from checkpoints (24/30, all targets passed). The second was **refused
+by the guard** at 29/30 with `hallucination_rate` 0.049 — two synthesize
+calls had stalled at the 600s cap and scored directly, because a guardrail
+abort returns a degraded `RunResult` rather than raising and `_run_gold`
+retried only on exceptions. ADR 0025 fixes that. It is worth being plain
+that the accepted run had `degraded_attempts: 0`, so the retry never fired
+and is proven by its tests, not by this baseline.
 
 ### Where the plan was wrong
 
@@ -494,8 +526,7 @@ wrong and what it left open.
 
 ### Open
 
-1. **Stage E.** One `eval-agent --write-baseline`. `eval/baselines.json` still
-   holds the pre-remediation numbers until it runs.
+1. ~~**Stage E.**~~ Done 2026-08-01, 30/30 — see "Stage E" above.
 2. **`citation_accuracy` fell to 0.370 and was recovered to 0.741**, above the
    0.623 baseline on those questions, by two rendering fixes (ADR 0022
    formatting, ADR 0024 cite-every-figure). The drop was never mainly a
@@ -503,10 +534,12 @@ wrong and what it left open.
    0.857 disappeared. It is **not in `TARGETS`** and never gated. The residual
    6 of 23 — claims naming a document location, or a different filing than the
    citation — needs synthesis constrained, which stays the operator's call.
-3. **The recall threshold is 0.65, set from a subset.** A subset gives a
-   floor, not a ceiling; raise it once a full baseline has measured all 28.
-   This is the **tightest gate** going into Stage E: the full-set floor is
-   0.714 and the unmeasured half is the harder cross-company work.
+3. **The recall threshold is 0.65 and the full set now measures 1.000.** It
+   was set from a subset, which gives a floor and not a ceiling; the full set
+   has since scored 28 of 28, so the gate has 0.35 of slack and no longer
+   costs a declining system anything. Raising it is now a decision with a
+   measurement behind it — but one reading is one reading, and this metric
+   swung ~0.14 between runs, so pick the new floor from more than this run.
 4. **`main` is 49 commits behind `dev`** (33 when this plan was written).
    Phase 4 §5's CI work assumes a sane default branch; merge first.
 5. **A node abort after synthesis bypasses retraction — a product defect, not

@@ -73,6 +73,16 @@ the `RunResult` contract and every metric denominator, for a state affecting
 3 claims in 275 — below the noise floor of everything it would touch — and
 ADR 0023 makes the state extinct.
 
+> **Correction (2026-08-01): ADR 0023 does not make the state extinct, and
+> point 3 is not a vestigial guard.** It fired twice in the 2026-07-31 run
+> and once in the accepted 2026-08-01 baseline. Exact spans removed the
+> *wrong* cause — excision taking a sentence a claim never quoted — but not
+> the real one: when one sentence carries both a retracted and a grounded
+> claim, deleting it is correct and the grounded claim genuinely goes with
+> it. That is a property of the prose, not of the matching, so no span
+> mechanism can retire the guard. The decision to add no `ClaimStatus`
+> member still holds on its own argument; only the prediction was wrong.
+
 *Detect and correct in the graph; assert in the test.* A hard assertion in
 the graph would have killed the accepted run over those three claims. The
 invariant is stated absolutely in `tests/test_graph.py`: every surviving

@@ -1,12 +1,13 @@
 {
-  "accepted": "20260728-212914",
+  "accepted": "20260801-122527",
   "n_questions": 30,
   "n_completed": 30,
   "metrics": {
-    "grounding_rate": 0.9345454545454546,
-    "hallucination_rate": 0.014545454545454545,
-    "numeric_fidelity": 0.9256198347107438,
-    "citation_accuracy": 0.6848249027237354,
+    "grounding_rate": 0.9723502304147466,
+    "hallucination_rate": 0.0,
+    "expected_fact_coverage": 1.0,
+    "numeric_fidelity": 0.9626168224299065,
+    "citation_accuracy": 0.8509615384615384,
     "verifier_precision_all": 1.0,
     "verifier_recall_all": 1.0,
     "verifier_precision_numeric": 1.0,

@@ -10,28 +10,51 @@ every factual claim is verified against a source or explicitly retracted.
 
 The design spec is `financial-intelligence-engine-blueprint.md` (gitignored,
 local-only). `plans/00-overview.md` resolves its open decisions and defines
-conventions; each phase has a self-contained plan in `plans/`. **Current
-phase: 3 → 4 transition.** The Phase 3 exit gate **PASSED on 2026-07-28**
-(30/30, grounding_rate 0.935, hallucination_rate 0.015, numeric_fidelity
-0.926, verifier P/R 1.000) and `eval/baselines.json` holds the accepted
-baseline (run `agent-20260728-212914`). Getting there took four run attempts,
-each failure diagnosed free from checkpoints: ADR 0018 (derived-percent /
-change grounding, mapper label vocabulary), ADR 0019 (the facts UNIQUE key
-was silently deleting disaggregation facts — Apple Services/iPhone and NVDA
-Data Center revenue were filed all along; difference-form grounding; metric
-context scale; and the run-killer was a close/query race on the shared
-SQLite connection, fixed with a lock). `plans/phase-3-recall-and-retraction.md` fixed the three post-gate issues
-(ADRs 0020-0024, all landed 2026-07-31). **Only its Stage E — one
-`eval-agent --write-baseline` re-baseline — is outstanding**, and until it
-runs `eval/baselines.json` still holds the pre-remediation numbers.
-`plans/phase-4-backend-and-deploy.md` starts after it. Retrieval, prompts
-and models remain cleared — do not tune them for gate metrics.
+conventions; each phase has a self-contained plan in `plans/`. **Phase 3 is
+complete; Phase 4 is next.** The exit gate first passed on 2026-07-28, and
+`plans/phase-3-recall-and-retraction.md` then fixed the three post-gate
+issues (ADRs 0020-0025). Its Stage E re-baseline **ran on 2026-08-01 and
+passed 30/30**, so `eval/baselines.json` now holds run `agent-20260801-122527`:
+
+| | 2026-07-28 | **2026-08-01** | target |
+|---|---|---|---|
+| `grounding_rate` | 0.935 | **0.972** | ≥ 0.90 |
+| `hallucination_rate` | 0.015 | **0.000** | ≤ 0.02 |
+| `numeric_fidelity` | 0.926 | **0.963** | ≥ 0.85 |
+| `expected_fact_coverage` | 0.357 (re-scored) | **1.000** | ≥ 0.65 |
+| `citation_accuracy` | 0.685 | **0.851** | not gated |
+
+Getting to the first pass took four run attempts, each failure diagnosed free
+from checkpoints: ADR 0018 (derived-percent / change grounding, mapper label
+vocabulary), ADR 0019 (the facts UNIQUE key was silently deleting
+disaggregation facts — Apple Services/iPhone and NVDA Data Center revenue
+were filed all along; difference-form grounding; metric context scale; and
+the run-killer was a close/query race on the shared SQLite connection, fixed
+with a lock). `plans/phase-4-backend-and-deploy.md` starts now. Retrieval,
+prompts and models remain cleared — do not tune them for gate metrics.
+
+**A guardrail abort decided a run once, and the cure is a retry, not a
+tolerance.** `guarded` turns a node timeout into `error` on the state and the
+graph routes to END, so `answer_question` *returns* a degraded `RunResult`
+that no exception marks. `_run_gold` retried only on exceptions, so on
+2026-07-31 two stalled synthesize calls scored directly: `hallucination_rate`
+0.049 against a 0.02 target, `expected_fact_coverage` 0.750. Without them the
+same run reads 0.000 and 0.857. It now retries on `error` too, keeps the
+result either way (a dropped question shrinks every denominator), and reports
+`degraded_attempts`. Measured from checkpoint timestamps: a synthesize call
+stalls ~1.5% of the time at the 600s cap (3 of 198 calls; 8 of 223 at the old
+300s cap), and stalls land *exactly* on the cap while clean calls run 21s
+median / 206s max — hangs, not slow work. At ~70 calls a run, an unretried
+clean 30/30 was a ~1-in-3 event. Every run so far has had GLM on synthesis,
+so whether the model causes it is untested, not disproven. The accepted
+baseline had `degraded_attempts: 0`, so the retry is proven by its tests, not
+by that run.
 
 What the remediation changed, measured:
 
 | | before | after |
 |---|---|---|
-| `expected_fact_coverage` (strict, ADR 0020) | 0.357 | **1.000** on the 10-question subset; floor 0.714 full-set |
+| `expected_fact_coverage` (strict, ADR 0020) | 0.357 | **1.000** — all 28 labels, full set |
 | figure delivery, recall@8 | 0.354 | **0.451** (query rewrite) |
 | verifier P/R, incl. new balance-date class | 0.889 | **1.000 / 1.000** |
 | store facts with no date | 15,211 | **0** |
@@ -41,9 +64,10 @@ Two things a future session must not re-derive. **`hallucination_rate: 0.000`
 now has two possible meanings** — see "Retraction is load-bearing". And
 **`citation_accuracy` fell and was recovered by two rendering fixes**:
 0.623 baseline → 0.370 as measured → 0.556 (span formatting, ADR 0022) →
-**0.741** (cite every figure, ADR 0024), all on the same 10 questions. It
-**does not gate** — it is written to `baselines.json` but is absent from
-`TARGETS`. Do not re-derive the diagnosis: the drop was a change in the
+**0.741** (cite every figure, ADR 0024), all on the same 10 questions; the
+full set then read **0.851** on 2026-08-01, against 0.685 on the 07-28
+baseline. It **does not gate** — it is written to `baselines.json` but is
+absent from `TARGETS`. Do not re-derive the diagnosis: the drop was a change in the
 *claims*, not the citations. Plain claims — entity, metric, period, value —
 were 28 of 47 and scored 0.857; post-remediation there are none, because ADR
 0023 tells synthesis a claim "must stand on its own" and ADR 0020 gave every
@@ -127,11 +151,11 @@ never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
 
 `--write-baseline` is gated since 2026-07-27 (ADR 0016): it refuses a run
 that misses the §13 `TARGETS` or dropped questions unless `--force`, and
-records `n_questions`/`n_completed` in `eval/baselines.json`. That file now
-holds the accepted 2026-07-28 run (30/30) and Stage E replaces it. `TARGETS`
-is settled — `numeric_fidelity` 0.85 (ADR 0015), `expected_fact_coverage`
-0.65 (ADR 0020). **`citation_accuracy` is recorded there but is not in
-`TARGETS`, so it never refuses a run.**
+records `n_questions`/`n_completed` in `eval/baselines.json`. That file holds
+the accepted 2026-08-01 run (30/30). `TARGETS` is settled —
+`numeric_fidelity` 0.85 (ADR 0015), `expected_fact_coverage` 0.65 (ADR 0020),
+now a floor well under the measured 1.000 and worth raising. **`citation_accuracy`
+is recorded there but is not in `TARGETS`, so it never refuses a run.**
 
 ## Architecture
 
@@ -207,7 +231,16 @@ things.** The pre-2026-07-26 one hid surviving hallucinated text. The
 post-ADR-0021 one is real — the four claims it used to count were already
 gone from the prose. The distinguishing evidence is the pre/post-retract diff
 and the invariant test in `tests/test_graph.py`; a 0.000 with no invariant
-asserted is suspect.
+asserted is suspect. The accepted 2026-08-01 baseline was checked that way
+before it was accepted: 8 claims retracted, every one carrying an
+`answer_span`, **0** of those spans still in the delivered prose, and no
+scored row with verdict `unsupported` or `None` in 217. Re-check any future
+0.000 the same way rather than trusting it.
+
+Point 3 of ADR 0021 — dropping a `grounded` claim whose sentence another
+claim's excision removed — was predicted to go extinct under ADR 0023 and
+**did not**. It fires when one sentence carries both a retracted and a
+grounded claim, which spans cannot prevent. See the correction in that ADR.
 
 ### The facts store on both sides of the graph
 
