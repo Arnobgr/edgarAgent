@@ -16,6 +16,7 @@ from fie.eval.metrics import (
     ndcg_at_10,
     numeric_fidelity,
     recall_at_k,
+    runs_with_no_claims,
     verifier_scores,
 )
 from fie.ingest.store import Fact, IngestStore
@@ -180,6 +181,25 @@ def test_hallucination_rate_counts_unsupported_survivors_not_retractions() -> No
     retracted = [row("unsupported")]
     results = [result(surviving, retracted=retracted)]
     assert hallucination_rate(results) == 1 / 2  # the retracted one doesn't count
+
+
+def test_a_claimless_run_is_counted_because_no_rate_can_see_it() -> None:
+    """The finding of ADR 0038, frozen. A run that delivered prose and claimed
+    nothing adds zero to the numerator *and* zero to the denominator of both
+    rates, so it does not score badly — it does not score, and the gate reads
+    clean over an unverified figure. `runs_with_no_claims` is the only place
+    the run is visible at all."""
+    claimless = result([], answer="Nvidia spent $18,497,000,000 on research and development.")
+    scored = result([row("grounded")])
+    assert grounding_rate([scored]) == grounding_rate([scored, claimless]) == 1.0
+    assert hallucination_rate([scored]) == hallucination_rate([scored, claimless]) == 0.0
+    assert runs_with_no_claims([scored, claimless]) == 1
+
+    # A run whose every claim was retracted made claims and had them checked.
+    # That is the system working, not the hole being counted here.
+    assert runs_with_no_claims([result([], retracted=[row("unsupported")], answer="a")]) == 0
+    # A run that died before synthesis has no prose to be unverified.
+    assert runs_with_no_claims([result([])]) == 0
 
 
 def test_citation_accuracy() -> None:

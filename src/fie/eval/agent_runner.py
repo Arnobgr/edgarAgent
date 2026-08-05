@@ -31,6 +31,7 @@ from fie.eval.metrics import (
     grounding_rate,
     hallucination_rate,
     numeric_fidelity,
+    runs_with_no_claims,
 )
 from fie.eval.verifier_eval import run_verifier_eval
 from fie.ingest.store import Fact
@@ -415,6 +416,12 @@ def run(
         # retry keeps them out of the metrics, so this is the only place the
         # run's real infra cost stays visible.
         "degraded_attempts": degraded_attempts,
+        # Runs whose answer carried no claims — the one failure mode the two
+        # rates below are structurally blind to. Reported, never gated
+        # (ADR 0038): with §1 in place a run only reaches here after the
+        # retry failed too, so a non-zero count also means the retry did not
+        # hold.
+        "runs_with_no_claims": runs_with_no_claims(result_list),
         "grounding_rate": grounding_rate(result_list),
         "hallucination_rate": hallucination_rate(result_list),
         "unanswerable_declined": declined_unanswerables(results, questions),
@@ -520,6 +527,13 @@ def run(
                     "accepted": stamp,
                     "n_questions": metrics["n_questions"],
                     "n_completed": metrics["n_completed"],
+                    # Beside the counts, not inside `metrics` — everything in
+                    # there becomes a gate on the next run via `_gate`, and
+                    # ADR 0038 is explicit that this one must not. A count of
+                    # 3 recorded here is a baseline the reader can distrust;
+                    # a count of 3 inside `metrics` would fail the next run
+                    # for improving on it.
+                    "runs_with_no_claims": metrics["runs_with_no_claims"],
                     "metrics": gated,
                 },
                 indent=2,

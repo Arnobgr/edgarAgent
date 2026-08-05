@@ -61,11 +61,18 @@ spans, so a single reading carries ±0.037.
 **`hallucination_rate: 0.000` has two possible meanings** — see "Retraction is
 load-bearing".
 
-**An answer with no claims passes every gate** (ADR 0038, *proposed, not
-implemented*). Run `2b11fa1d4f9e` of the accepted baseline states
+**An answer with no claims used to pass every gate** (ADR 0038 §1/§2, closed
+2026-08-05). Run `2b11fa1d4f9e` of the accepted baseline states
 `$18,497,000,000` in a 434-character draft carrying **zero** claims in every
 checkpoint it ever wrote — nothing to ground, so nothing to fail, and
-`n_completed` counted it. That is a hole in the instrument, not a bad answer.
+`n_completed` counted it. That was a hole in the instrument, not a bad answer.
+`synthesize` now re-asks once and sets `error` if the second draft is also
+claimless, so such a run costs an attempt and lands in `degraded_attempts`;
+`eval-agent` reports `runs_with_no_claims` beside the metrics, ungated and
+recorded outside `metrics` in `baselines.json` so it cannot become a gate.
+**The accepted 2026-08-01 baseline is still 29 verifiable runs of 30** —
+`grounding_rate` 0.972 was measured over 29 runs' claims. §3 stands until the
+pre-public-deploy eval supersedes it.
 
 ## Working guidelines
 

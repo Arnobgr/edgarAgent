@@ -21,7 +21,15 @@ from fie.state import (
     SynthesisOutput,
     merge_evidence,
 )
-from tests.fakes import StructuredFakeModel, StubRetriever, fast_limits, make_chunks, make_graph
+from tests.fakes import (
+    StructuredFakeModel,
+    StubRetriever,
+    any_claim,
+    fast_limits,
+    grounded_judge,
+    make_chunks,
+    make_graph,
+)
 
 QUESTION = "How has the margin profile and capital allocation shifted, and what are the risks?"
 
@@ -86,9 +94,17 @@ async def test_trivial_question_passes_through_as_single_subquestion() -> None:
             )
         ]
     )
-    synthesis = StructuredFakeModel(outputs=[SynthesisOutput(answer="Answer.", claims=[])])
+    synthesis = StructuredFakeModel(
+        outputs=[SynthesisOutput(answer="Answer.", claims=[any_claim()])]
+    )
     critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
-    graph = make_graph(retriever=retriever, synthesis=synthesis, decompose=decompose, critic=critic)
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        decompose=decompose,
+        critic=critic,
+        qualitative=grounded_judge(),
+    )
 
     result = await graph.ainvoke(EngineState(question=QUESTION))
     state = EngineState.model_validate(result)
@@ -205,10 +221,16 @@ async def test_branch_failure_marks_subquestion_exhausted_and_run_survives() -> 
         ]
     )
     synthesis = StructuredFakeModel(
-        outputs=[SynthesisOutput(answer="Margins expanded [m1].", claims=[])]
+        outputs=[SynthesisOutput(answer="Margins expanded [m1].", claims=[any_claim("m1")])]
     )
     critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
-    graph = make_graph(retriever=retriever, synthesis=synthesis, decompose=decompose, critic=critic)
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        decompose=decompose,
+        critic=critic,
+        qualitative=grounded_judge(),
+    )
 
     result = await graph.ainvoke(EngineState(question=QUESTION))
     state = EngineState.model_validate(result)
@@ -313,7 +335,9 @@ async def test_critic_redecompose_replaces_split_with_feedback() -> None:
             DecomposeOutput(),  # re-split: single-part passthrough
         ]
     )
-    synthesis = StructuredFakeModel(default_output=SynthesisOutput(answer="Draft.", claims=[]))
+    synthesis = StructuredFakeModel(
+        default_output=SynthesisOutput(answer="Draft.", claims=[any_claim()])
+    )
     critic = StructuredFakeModel(
         outputs=[
             CriticOutput(
@@ -322,7 +346,13 @@ async def test_critic_redecompose_replaces_split_with_feedback() -> None:
             CriticOutput(passed=True),
         ]
     )
-    graph = make_graph(retriever=retriever, synthesis=synthesis, decompose=decompose, critic=critic)
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        decompose=decompose,
+        critic=critic,
+        qualitative=grounded_judge(),
+    )
 
     result = await graph.ainvoke(EngineState(question=QUESTION))
     state = EngineState.model_validate(result)
@@ -340,7 +370,9 @@ async def test_critic_redecompose_replaces_split_with_feedback() -> None:
 async def test_redecomposition_is_bounded_to_one_per_run() -> None:
     retriever = StubRetriever(make_chunks())
     decompose = StructuredFakeModel(default_output=DecomposeOutput())
-    synthesis = StructuredFakeModel(default_output=SynthesisOutput(answer="Draft.", claims=[]))
+    synthesis = StructuredFakeModel(
+        default_output=SynthesisOutput(answer="Draft.", claims=[any_claim()])
+    )
     # The critic always demands a re-decomposition.
     critic = StructuredFakeModel(
         default_output=CriticOutput(passed=False, feedback="still mis-split", re_decompose=True)
@@ -350,6 +382,7 @@ async def test_redecomposition_is_bounded_to_one_per_run() -> None:
         synthesis=synthesis,
         decompose=decompose,
         critic=critic,
+        qualitative=grounded_judge(),
         limits=fast_limits(max_critic_iterations=3),
     )
 

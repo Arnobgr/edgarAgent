@@ -9,6 +9,8 @@ from pydantic import SecretStr
 
 from fie.config import Settings
 from fie.eval.agent_runner import (
+    TARGETS,
+    _gate,
     _run_gold,
     declined_unanswerables,
     expected_fact_coverage,
@@ -340,3 +342,17 @@ async def test_a_question_that_degrades_twice_is_still_counted(
     results, _run_ids, degraded = await _run_gold([gold("g-1", [])], eval_settings)
     assert results["g-1"].error == "budget exceeded"
     assert degraded == 2
+
+
+def test_the_claimless_count_is_reported_and_never_gates() -> None:
+    """ADR 0038 is explicit that the point is the number ceasing to be
+    invisible, not the number starting to fail runs. Two things hold that:
+    it is absent from `TARGETS`, and `--write-baseline` records it beside
+    `n_completed` rather than inside `metrics` — the only dict `_gate` reads
+    on the next run. The second assertion is what would happen if it moved
+    there: an improvement from 3 claimless runs to 0 reported as a
+    regression, because nothing tells `_gate` which direction is better."""
+    assert "runs_with_no_claims" not in TARGETS
+    assert _gate({"runs_with_no_claims": 0}, {"runs_with_no_claims": 3}) == [
+        "runs_with_no_claims: 0.000 below baseline 3.000"
+    ]

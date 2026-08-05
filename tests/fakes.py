@@ -21,9 +21,11 @@ from fie.graph import GraphLimits, build_graph
 from fie.guardrails import BudgetTracker
 from fie.state import (
     DecomposeOutput,
+    DraftClaim,
     EngineState,
     EvidenceChunk,
     GroundingRow,
+    JudgeOutput,
     ReviewDecision,
     ReviewMode,
     RunResult,
@@ -115,6 +117,29 @@ def make_chunks(texts: dict[str, str] | None = None) -> list[EvidenceChunk]:
         )
         for chunk_id, text in texts.items()
     ]
+
+
+def any_claim(chunk_id: str = "c1") -> DraftClaim:
+    """One claim citing one chunk, for a synthesis fake whose claims are not
+    what the test is about.
+
+    A draft carrying no claims fails the run since ADR 0038, so a test about
+    decomposition or the critic cycle still has to make *a* claim. Cite a
+    chunk the test's retriever actually returns, and pair it with
+    `grounded_judge()`: an unsupported claim loops back to research and moves
+    the call counts those tests assert on."""
+    return DraftClaim(
+        text="a claim this test does not care about",
+        claim_type="qualitative",
+        source_chunk_ids=[chunk_id],
+    )
+
+
+def grounded_judge() -> StructuredFakeModel:
+    """An entailment judge that grounds whatever it is shown."""
+    return StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span")
+    )
 
 
 def fast_limits(**overrides: Any) -> GraphLimits:

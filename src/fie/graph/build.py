@@ -305,6 +305,47 @@ def build_graph(
         logger.warning("span repair did not improve quoting; keeping the original draft")
         return output
 
+    async def repair_empty_claims(
+        output: SynthesisOutput, messages: list[Any], config: RunnableConfig
+    ) -> SynthesisOutput:
+        """Re-ask once for a draft that carries no claims at all.
+
+        The same shape and the same bound as `repair_spans`, because it is the
+        same class of defect: a structured output that is internally broken,
+        re-asked on the same messages, the original kept when the retry is no
+        better. What makes it worth its own repair is that nothing downstream
+        objects — `verify` gathers over an empty list, `retract` has no span
+        to excise, the critic judges the prose and passes, and both gate rates
+        pool claims across runs, so zero claims adds zero to the numerator and
+        zero to the denominator. The run is not scored badly; it is not scored
+        (ADR 0038)."""
+        if output.claims:
+            return output
+        logger.warning("synthesis returned no claims; re-asking once")
+        repair = [
+            *messages,
+            HumanMessage(
+                content=(
+                    "The draft you emitted carries no claims. Every factual "
+                    "statement in 'answer' must appear in 'claims' with the "
+                    "chunk ids it rests on — that list is what gets verified, "
+                    "and an answer with no claims is verified by nothing. "
+                    "Re-emit the answer with one claim per factual statement."
+                )
+            ),
+        ]
+        try:
+            retried = cast(SynthesisOutput, await _call(synthesis_llm, repair, config))
+        except (BudgetExceededError, asyncio.CancelledError):
+            raise
+        except Exception as exc:
+            logger.warning("empty-claim repair failed (%s); keeping the original draft", exc)
+            return output
+        if not retried.claims:
+            logger.warning("empty-claim repair returned no claims either")
+            return output
+        return retried
+
     async def synthesize(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
         """Fan-in: draft (or revise) the answer over evidence merged across
         all sub-questions, as structured output — the prose answer plus the
@@ -321,6 +362,10 @@ def build_graph(
             critic_feedback=state.critic_feedback,
         )
         output = cast(SynthesisOutput, await _call(synthesis_llm, messages, config))
+        # Before the span repair, not after: an empty claim list has no spans
+        # to fix, and a retry that recovers claims produces spans that then
+        # need checking.
+        output = await repair_empty_claims(output, messages, config)
         output = await repair_spans(output, messages, config)
         chunk_owner = {c.chunk_id: c.sub_question_id for c in state.evidence}
         draft_no = state.verify_iteration + state.critic_iteration + 1
@@ -344,12 +389,24 @@ def build_graph(
             )
             for i, draft in enumerate(output.claims)
         ]
-        return {
+        update: dict[str, Any] = {
             "draft_answer": output.answer,
             "claims": claims,
             "critic_feedback": None,
             "sub_questions": sub_questions,
         }
+        if not claims:
+            # The retry did not recover any. Fail the run rather than deliver
+            # prose that nothing verified: `guarded` short-circuits every node
+            # after this one, `after_verify` routes to END, and `_run_gold`
+            # spends an attempt — so an empty synthesis lands in
+            # `degraded_attempts` instead of scoring clean (ADR 0038, reusing
+            # the ADR 0025 path rather than adding a parallel one). The draft
+            # stays on the state because it is the only evidence of what
+            # happened: checkpoints store the mapped claims, never the raw
+            # structured output.
+            update["error"] = "synthesis produced no claims — the answer would be unverified"
+        return update
 
     async def verify_claim(
         claim: Claim, chunk_map: dict[str, EvidenceChunk], config: RunnableConfig

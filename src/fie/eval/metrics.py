@@ -122,6 +122,21 @@ def hallucination_rate(results: list[RunResult]) -> float:
     return unsupported_survivors / total if total else 0.0
 
 
+def runs_with_no_claims(results: list[RunResult]) -> int:
+    """Runs that delivered prose carrying no claims at all.
+
+    A count, not a rate, and deliberately not in `TARGETS`: the point is that
+    the number stops being invisible, not that it starts failing runs. Both
+    rates above pool claims across runs, so such a run moves neither of them —
+    it is not scored badly, it is not scored, and the baseline reads clean
+    over a question the system answered with an unverified figure (ADR 0038).
+
+    `retracted` counts as claims: a run whose every claim was pulled out of
+    the answer made claims and had them checked, which is this system working
+    rather than the hole being counted here."""
+    return sum(1 for r in results if r.answer and not r.grounding and not r.retracted)
+
+
 @dataclass(frozen=True)
 class CitationJudgment:
     """One LLM-judge ruling: does the cited span support the claim?"""

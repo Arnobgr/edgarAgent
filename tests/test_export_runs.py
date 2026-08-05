@@ -13,11 +13,12 @@ from typing import Any
 
 import pytest
 from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.base import CheckpointTuple
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph.state import CompiledStateGraph
 
 from fie.api.models import RunPayload
-from fie.export import RecordedIndex, accepted_run_ids, export_runs
+from fie.export import RecordedIndex, accepted_run_ids, export_runs, read_run
 from fie.graph import GraphLimits
 from fie.state import (
     CriticOutput,
@@ -119,31 +120,35 @@ async def test_a_run_parked_at_the_review_gate_is_not_exported(tmp_path: Path) -
     assert report.skipped == [("run-parked", "run is unfinished (pending tasks in the checkpoint)")]
 
 
-async def test_a_run_with_no_claims_is_not_exported(tmp_path: Path) -> None:
+class StoredRun:
+    """A checkpoint handed straight to `read_run`, which takes its saver as an
+    argument. Every other run here is written by the real graph; this one
+    cannot be, because ADR 0038 §1 now fails a claimless synthesis at the node
+    — and that is exactly why the export still has to refuse one. The 30 runs
+    of the accepted baseline were checkpointed before §1 existed, `recorded/`
+    is regenerated from them, and one of them claims nothing."""
+
+    def __init__(self, state: EngineState) -> None:
+        self.state = state
+
+    def get_tuple(self, config: RunnableConfig) -> CheckpointTuple:
+        return CheckpointTuple(
+            config=config,
+            checkpoint={"channel_values": self.state.model_dump(), "ts": "2026-08-01T12:25:27"},  # type: ignore[typeddict-item]
+            metadata=None,
+        )
+
+
+def test_a_run_with_no_claims_is_not_exported() -> None:
     """A claimless answer passes every gate the eval has — zero claims adds
     nothing to either side of `grounding_rate`'s ratio, so the run is not
     scored badly, it is not scored at all (ADR 0038). On the demo surface it
     renders as a stated figure above an empty grounding table, which inverts
     the thing being demonstrated, so it never becomes a file."""
-    checkpoint = tmp_path / "checkpoints.db"
-    async with AsyncSqliteSaver.from_conn_string(str(checkpoint)) as saver:
-        graph = make_graph(
-            retriever=StubRetriever(make_chunks({"c1": SOURCE})),
-            synthesis=StructuredFakeModel(outputs=[SynthesisOutput(answer=SPAN, claims=[])]),
-            critic=StructuredFakeModel(default_output=CriticOutput(passed=True)),
-            limits=GraphLimits(
-                max_verify_iterations=1, retry_attempts=1, retry_base_delay_seconds=0.01
-            ),
-            checkpointer=saver,
-        )
-        config: RunnableConfig = {"configurable": {"thread_id": "run-empty"}}
-        await graph.ainvoke(EngineState(question=QUESTION), config)
-
-    report = export_runs(
-        checkpoint_path=checkpoint, out_dir=tmp_path / "out", run_ids=["run-empty"]
-    )
-    assert report.written == []
-    assert report.skipped == [("run-empty", "no claims (nothing to ground — ADR 0038)")]
+    stored = StoredRun(EngineState(question=QUESTION, draft_answer=SPAN))
+    payload, why = read_run(stored, "2b11fa1d4f9e")  # type: ignore[arg-type]
+    assert payload is None
+    assert why == "no claims (nothing to ground — ADR 0038)"
 
 
 def test_a_run_with_no_checkpoint_is_reported_not_guessed_at(tmp_path: Path) -> None:

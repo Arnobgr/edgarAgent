@@ -26,6 +26,8 @@ from tests.fakes import (
     SpyReconciler,
     StructuredFakeModel,
     StubRetriever,
+    any_claim,
+    grounded_judge,
     make_chunks,
     make_graph,
 )
@@ -319,8 +321,8 @@ async def test_critic_failure_loops_back_to_synthesize_once() -> None:
     retriever = StubRetriever(make_chunks())
     synthesis = StructuredFakeModel(
         outputs=[
-            SynthesisOutput(answer="First draft.", claims=[]),
-            SynthesisOutput(answer="Second draft.", claims=[]),
+            SynthesisOutput(answer="First draft.", claims=[any_claim()]),
+            SynthesisOutput(answer="Second draft.", claims=[any_claim()]),
         ]
     )
     critic = StructuredFakeModel(
@@ -329,7 +331,9 @@ async def test_critic_failure_loops_back_to_synthesize_once() -> None:
             CriticOutput(passed=True),
         ]
     )
-    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic)
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, critic=critic, qualitative=grounded_judge()
+    )
 
     result = await graph.ainvoke(EngineState(question=QUESTION))
     state = EngineState.model_validate(result)
@@ -343,11 +347,15 @@ async def test_critic_failure_loops_back_to_synthesize_once() -> None:
 
 async def test_critic_cycle_is_bounded() -> None:
     retriever = StubRetriever(make_chunks())
-    synthesis = StructuredFakeModel(default_output=SynthesisOutput(answer="Draft.", claims=[]))
+    synthesis = StructuredFakeModel(
+        default_output=SynthesisOutput(answer="Draft.", claims=[any_claim()])
+    )
     critic = StructuredFakeModel(
         default_output=CriticOutput(passed=False, feedback="still not good")
     )
-    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic)
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, critic=critic, qualitative=grounded_judge()
+    )
 
     result = await graph.ainvoke(EngineState(question=QUESTION))
     state = EngineState.model_validate(result)
@@ -607,6 +615,68 @@ async def test_a_non_quoting_model_triggers_one_repair() -> None:
 
     assert "do not appear in 'answer'" in _human_text(synthesis.calls[1])
     assert all(c.answer_span for c in state.claims)
+
+
+def _claimless_output() -> SynthesisOutput:
+    """A draft that states a figure and claims nothing — run `2b11fa1d4f9e`
+    of the accepted baseline in miniature."""
+    return SynthesisOutput(answer=SPAN_ANSWER, claims=[])
+
+
+async def test_a_claimless_draft_is_re_asked_once() -> None:
+    """An empty claim list is the same class of defect as an unquoted span —
+    detectable, and one bounded re-ask on the same messages is the whole
+    repair. What makes it worth repairing is that nothing downstream objects:
+    verify gathers over nothing, retract has no span, the critic passes on the
+    prose, and both gate rates pool claims across runs, so the run scores
+    neither well nor badly — it does not score (ADR 0038)."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(
+        outputs=[
+            _claimless_output(),  # the draft, claiming nothing
+            _spanned_output(quote=True),  # the repair
+            _spanned_output(quote=True),  # the loop-back revision
+        ]
+    )
+    qualitative = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span")
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, qualitative=qualitative, critic=critic
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert "carries no claims" in _human_text(synthesis.calls[1])
+    assert state.claims, "the repair's claims never reached the state"
+    assert state.error is None
+
+
+async def test_a_draft_still_claimless_after_the_repair_fails_the_run() -> None:
+    """The retry is bounded at one, and what follows it is a failed run rather
+    than a delivered one. `guarded` short-circuits every node after synthesize
+    and the edge routes to END, so this arrives as a degraded `RunResult` that
+    `_run_gold` retries and counts in `degraded_attempts` (ADR 0025) instead
+    of a clean answer no verifier ever saw."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(outputs=[_claimless_output(), _claimless_output()])
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic)
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+    run_result = build_run_result("run-claimless", state)
+
+    assert len(synthesis.calls) == 2, "the re-ask is bounded at one"
+    assert state.error is not None and "no claims" in state.error
+    assert run_result.error is not None
+    assert not run_result.grounding and not run_result.retracted
+    # The draft survives on the state: the checkpoint stores mapped claims and
+    # never the raw structured output, so the prose is the only evidence of
+    # what the model actually did.
+    assert run_result.answer == SPAN_ANSWER
 
 
 STRANDED_CLAIM = "Apple's Vision Pro segment expanded substantially during the fiscal period"

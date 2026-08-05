@@ -1,7 +1,8 @@
 # ADR 0038 — An answer with no claims is a failed run, not a successful one
 
 **Date:** 2026-08-05 · **Phase:** 5 (found while checking a Phase 5
-dependency) · **Status:** proposed — **not implemented** · **Extends:**
+dependency) · **Status:** accepted — **§1 and §2 implemented 2026-08-05**;
+§3 is bookkeeping the pre-public-deploy eval run settles · **Extends:**
 ADR 0015 (the denominator never shrinks silently), ADR 0021/0023 (retraction
 and `answer_span`), ADR 0025 (a guardrail abort costs an attempt), ADR 0027
 (recorded runs are the demo surface)
@@ -59,7 +60,8 @@ delivered answer has claims. Nothing asserts it.
 
 ## Decision
 
-**Three changes, smallest first. None is implemented; this ADR is the spec.**
+**Three changes, smallest first.** §1 and §2 landed on 2026-08-05, in
+`synthesize` and the eval runner respectively; §3 stands.
 
 ### 1. `synthesize` retries once on an empty claim list
 
