@@ -541,6 +541,47 @@ async def test_quoted_spans_make_excision_exact() -> None:
     assert {row.text for row in run_result.grounding} == {TRUE_NUMERIC}
 
 
+async def test_the_payload_locates_every_delivered_claim_in_the_prose() -> None:
+    """`answer_span` reaching `GroundingRow` is what makes the Phase 5
+    grounding view possible: without it nothing in the payload says which
+    sentence a claim came from, and a renderer would have to re-guess the
+    mapping by token overlap — the guess ADR 0023 removed from `retract` for
+    deleting the wrong sentences.
+
+    The invariant is the renderer's contract: a delivered claim's span is
+    findable in the delivered prose, and a retracted claim's is not."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(
+        outputs=[_spanned_output(quote=True), _spanned_output(quote=True)]
+    )
+    qualitative = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span")
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever, synthesis=synthesis, qualitative=qualitative, critic=critic
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    run_result = build_run_result("run-payload-span", EngineState.model_validate(result))
+    body = run_result.answer.partition(RETRACTED_HEADER)[0]
+
+    assert run_result.grounding, "the run delivered no claims to locate"
+    for row in run_result.grounding:
+        assert row.answer_span, f"grounding row {row.claim_id} carries no span to colour"
+        assert row.answer_span in body, (
+            f"grounding row {row.claim_id} points at prose the reader never saw"
+        )
+    for row in run_result.retracted:
+        assert row.answer_span not in body
+
+    # The hover popover names the company and the form; both are chunk fields
+    # rather than `metadata` entries, so reading them the wrong way yields "".
+    sources = [src for row in run_result.grounding for src in row.sources]
+    assert sources
+    assert all(src.ticker == "AAPL" and src.form_type == "10-K" for src in sources)
+
+
 async def test_a_non_quoting_model_triggers_one_repair() -> None:
     """Models quote imperfectly, so the substring check is load-bearing —
     but unlike the guess it replaces, the failure is detectable and one

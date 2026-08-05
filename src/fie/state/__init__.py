@@ -275,10 +275,18 @@ class EngineState(BaseModel):
 
 
 class SourceRef(BaseModel):
-    """Citation metadata for one cited evidence chunk."""
+    """Citation metadata for one cited evidence chunk.
+
+    `ticker` and `form_type` are here for the Phase 5 hover popover, which
+    names the company and the form a claim rests on: "AAPL 10-K" is the
+    difference between a citation a reader can place and an accession number
+    they cannot.
+    """
 
     chunk_id: str
     doc_id: str = ""
+    ticker: str = ""
+    form_type: str = ""
     section: str = ""
     accession_no: str = ""
     filing_date: str = ""
@@ -294,6 +302,13 @@ class GroundingRow(BaseModel):
     verdict: VerdictLabel | None = None
     method: VerifyMethod | None = None
     supporting_span: str | None = None
+    # The sentence of the *answer* this claim was drawn from — not to be
+    # confused with `supporting_span` above, which quotes the *source*. Carried
+    # into the payload because nothing else locates a claim in the prose, and
+    # the Phase 5 grounding view is built on colouring the sentence a claim
+    # came from. A quoted span survives the retraction edits that character
+    # offsets would not (ADR 0023).
+    answer_span: str = ""
     feedback: str | None = None
     sources: list[SourceRef] = Field(default_factory=list)
 
@@ -341,6 +356,11 @@ def build_run_result(
                     SourceRef(
                         chunk_id=cid,
                         doc_id=chunk.doc_id,
+                        # Chunk fields, not `metadata` entries like the two
+                        # below them — the asymmetry is in `EvidenceChunk`,
+                        # not a mistake here.
+                        ticker=chunk.ticker,
+                        form_type=chunk.form_type,
                         section=chunk.section,
                         accession_no=chunk.metadata.get("accession_no", ""),
                         filing_date=chunk.metadata.get("filing_date", ""),
@@ -354,6 +374,7 @@ def build_run_result(
             verdict=verdict.verdict if verdict else None,
             method=verdict.method if verdict else None,
             supporting_span=verdict.supporting_span if verdict else None,
+            answer_span=claim.answer_span,
             feedback=verdict.feedback if verdict else None,
             sources=sources,
         )
