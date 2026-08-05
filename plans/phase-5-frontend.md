@@ -32,6 +32,7 @@ Do not work from the sketch below. **Generate or hand-write TypeScript types fro
 ## Decisions taken (2026-08-05)
 
 1. **A recorded run is the landing page. Live ask ships too, but is not what the visitor lands on.** This is what ADR 0027 bought: `recorded/` holds the accepted baseline's 30 runs plus an `index.json`, in the exact `RunPayload` shape, so the CDN answers the reader and the VPS never sees the request. "Ask your own" is a deliberate second action.
+   **Exclude run `2b11fa1d4f9e` from the landing rotation** — it delivers an answer with zero claims and renders as an empty grounding table, which inverts the thing being demonstrated. ADR 0038 is the finding and the fix; `recorded/` gets regenerated from the pre-public-deploy eval run.
 2. **The human-in-the-loop review view is cut.** `API_REVIEW_MODE` is `off` in production: on a page with no login the reviewer is any visitor, and an abandoned review holds one of two concurrency slots forever (ADR 0034). The endpoints, the graph interrupt and their tests all stay; only the mode is off, so turning it on later is one environment variable. **Do not render an `awaiting_review` UI.** A job cannot reach that state with the mode off; treat it as an error state, not a screen.
 3. **The hostname is `https://edgaragent.pages.dev`.** `API_CORS_ORIGINS` is set to it. **The same string is the hostname the Turnstile widget must be registered for.** A mismatch refuses every submission while CORS still passes, which reads as two unrelated faults.
 
