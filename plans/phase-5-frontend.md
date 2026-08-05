@@ -39,10 +39,11 @@ Do not work from the sketch below. **Generate or hand-write TypeScript types fro
 5. **ADR 0038 §1 lands in this phase, before the VPS eval** — see backend change 3. That run is what supersedes the 29-verifiable-runs-of-30 baseline, and it should not be able to reproduce the hole it is superseding. §2 goes in with it; §3 is bookkeeping the run itself settles.
 6. **A recorded run shows no trace id.** `GET /v1/jobs/{id}/trace` stays live-only and nothing is folded into `RunResult`. The 2026-08-01 baseline was produced on the developer's machine against the local Langfuse on port 3001, while production tracing is Langfuse Cloud (ADR 0032) — an exported `trace_id` would be an identifier no visitor can resolve. The stats strip says which it is looking at rather than showing a dead id. **Do not fetch the endpoint for a recorded run.**
 7. **No preview deploys.** A preview lands on `<hash>.edgaragent.pages.dev` — a different origin from the one decision 3 pins `API_CORS_ORIGINS` to, and a different hostname from the one the Turnstile widget is registered for, so it would fail both in exactly the two-unrelated-faults way decision 3 warns about. Widening the allowlist to `*.edgaragent.pages.dev` is the wrong trade on a surface whose entire threat model is a copied API key.
+8. **The full VPS eval moves to the end of the phase, and stays the gate.** It was going to lead, on the reasoning that it depends on none of the other steps — true, but it is also 75 minutes and $0.69 that buy nothing until the rest exists. ADR 0036 is untouched: it still runs *before* the public deploy, just as the last thing rather than the first. What it needed from this phase is already done — the image carrying ADR 0038 §1 is deployed on the private path (2026-08-05, revision `4084485`, verified with one uncached live question), so the run that supersedes the 29-verifiable-runs-of-30 baseline can no longer reproduce the hole it is superseding. **Nothing else in this plan waits on it.**
 
 ## Three backend changes this phase must make first
 
-**The headline view cannot be built until the first of these lands.**
+**All three landed on 2026-08-05** (`66634f7`, `3c72e04`, `4084485`) and are in the deployed image. They stay written out because they are why the payload carries the fields the views below assume, and because `recorded/` was regenerated against them.
 
 1. **Put `answer_span` on `GroundingRow`.** `Claim.answer_span` already holds the verbatim sentence the claim came from, validated at synthesis as a substring of the answer and repaired by a bounded retry when it is not (ADR 0023). `build_run_result()` drops it, so **nothing in the payload locates a claim in the prose**. This is one field plus a test — and it is better than the char offsets this plan originally asked for, because a span survives the retraction edits that offsets would not.
 2. **Add `ticker` and `form_type` to `SourceRef`.** The hover popover specifies company and form type. `SourceRef` carries neither. Both are already on the chunk — as **top-level fields on `EvidenceChunk`**, not entries in its `metadata` dict, which is where `build_run_result()` reads `accession_no` and `filing_date` from. Read them off the chunk directly: `chunk.metadata.get("ticker")` returns `""`.
@@ -93,13 +94,13 @@ Cloudflare Pages connected to the GitHub repo, building `frontend/` on push to `
 **The ordering is forced, because Turnstile cannot be configured before the hostname exists:**
 
 ```
-full eval-agent on the VPS, passing → Pages project → hostname confirmed
-→ Turnstile widget for that hostname → turnstile_secret_key into
-secrets.enc.yaml → nginx vhost + certbot + fail2ban
-→ FIE_TURNSTILE_REQUIRED back to its default (true) → deploy
+Pages project → hostname confirmed → Turnstile widget for that hostname
+→ turnstile_secret_key into secrets.enc.yaml → nginx vhost + certbot + fail2ban
+→ FIE_TURNSTILE_REQUIRED back to its default (true)
+→ full eval-agent on the VPS, passing → deploy
 ```
 
-The eval leads because ADR 0036 makes it the gate before the public deploy and it is the one step here that depends on none of the others — see below.
+The eval sits last rather than first (decision 8) and is still what the public deploy waits on, per ADR 0036. Everything before it is reversible; the deploy that follows it is the one that lets a stranger spend money.
 
 `deploy.sh` refuses Turnstile-off with a `fie` vhost present, so a wrong order fails loudly rather than shipping the service open. Reactivate the paused uptime monitor once the public hostname answers.
 
@@ -119,6 +120,6 @@ The eval leads because ADR 0036 makes it the gate before the public deploy and i
 ### Inherited from Phase 4
 
 - **`./scripts/burst-test.sh` against the live host.** Genuinely blocked on the vhost this phase installs. It proves nginx refuses a burst rather than the app (both return 429; the response body tells them apart), that polling stays fast, and that **the five other production services on the box keep serving throughout**. These limits live above the application, so `make test` can never see them.
-- **One full `eval-agent` on the VPS, passing against `eval/baselines.json`.** ADR 0036 makes this the gate before the public deploy. Run it with `./deploy/monthly-eval.sh` — there is no `uv` on that box and deliberately will not be. ~75 minutes, ~$0.69. **This one is not blocked on the vhost, and an earlier draft of this plan said it was.** `monthly-eval.sh` starts a one-off container on the `fie_default` network against the service's own volume and calls `answer_question()` directly; nginx is nowhere on that path. So it goes first, as the ordering above has it, and ADR 0038 §1 lands before it.
+- **One full `eval-agent` on the VPS, passing against `eval/baselines.json`.** ADR 0036 makes this the gate before the public deploy. Run it with `./deploy/monthly-eval.sh` — there is no `uv` on that box and deliberately will not be. ~75 minutes, ~$0.69. **This one is not blocked on the vhost, and an earlier draft of this plan said it was.** `monthly-eval.sh` starts a one-off container on the `fie_default` network against the service's own volume and calls `answer_question()` directly; nginx is nowhere on that path. It is blocked on nothing at all, which is why decision 8 puts it last: it can be run at any moment, so it should be run at the moment its result is worth the most — over the image that ships. ADR 0038 §1 is already in that image.
 
 Both were written as Phase 4 exit criteria and neither was doable in Phase 4. They are listed here so they are not forgotten.
