@@ -32,19 +32,25 @@ Do not work from the sketch below. **Generate or hand-write TypeScript types fro
 ## Decisions taken (2026-08-05)
 
 1. **A recorded run is the landing page. Live ask ships too, but is not what the visitor lands on.** This is what ADR 0027 bought: `recorded/` holds the accepted baseline's 30 runs plus an `index.json`, in the exact `RunPayload` shape, so the CDN answers the reader and the VPS never sees the request. "Ask your own" is a deliberate second action.
-   **Exclude run `2b11fa1d4f9e` from the landing rotation** — it delivers an answer with zero claims and renders as an empty grounding table, which inverts the thing being demonstrated. ADR 0038 is the finding and the fix; `recorded/` gets regenerated from the pre-public-deploy eval run.
+   **Exclude run `2b11fa1d4f9e` from the landing rotation** — it delivers an answer with zero claims and renders as an empty grounding table, which inverts the thing being demonstrated. ADR 0038 is the finding and the fix.
 2. **The human-in-the-loop review view is cut.** `API_REVIEW_MODE` is `off` in production: on a page with no login the reviewer is any visitor, and an abandoned review holds one of two concurrency slots forever (ADR 0034). The endpoints, the graph interrupt and their tests all stay; only the mode is off, so turning it on later is one environment variable. **Do not render an `awaiting_review` UI.** A job cannot reach that state with the mode off; treat it as an error state, not a screen.
-3. **The hostname is `https://edgaragent.pages.dev`.** `API_CORS_ORIGINS` is set to it. **The same string is the hostname the Turnstile widget must be registered for.** A mismatch refuses every submission while CORS still passes, which reads as two unrelated faults.
+3. **The hostname is `https://edgaragent.pages.dev`.** `API_CORS_ORIGINS` is set to it. **The same string is the hostname the Turnstile widget must be registered for.** A mismatch refuses every submission while CORS still passes, which reads as two unrelated faults. The name is only claimed when the Pages project is created; if `edgaragent` is taken, the string changes in both places at once.
+4. **`recorded/` is regenerated locally, from `data/checkpoints.db`, once backend changes 1 and 2 land** — not from the pre-public-deploy VPS run, as ADR 0038 assumed. **None of the 30 committed files carries an `answer_span`**: they were exported before the field reached `GroundingRow`, so the headline view cannot render against `recorded/` as it stands, and blocking that on a 75-minute run buys nothing. The local checkpoints and `eval/reports/agent-20260801-122527.json` (30 run ids) are both present, and `export-runs` derives the payload through the same `build_run_result()` the live path uses. Drop `2b11fa1d4f9e` at export. Re-export a second time only if the VPS run is accepted as a new baseline.
+5. **ADR 0038 §1 lands in this phase, before the VPS eval** — see backend change 3. That run is what supersedes the 29-verifiable-runs-of-30 baseline, and it should not be able to reproduce the hole it is superseding. §2 goes in with it; §3 is bookkeeping the run itself settles.
+6. **A recorded run shows no trace id.** `GET /v1/jobs/{id}/trace` stays live-only and nothing is folded into `RunResult`. The 2026-08-01 baseline was produced on the developer's machine against the local Langfuse on port 3001, while production tracing is Langfuse Cloud (ADR 0032) — an exported `trace_id` would be an identifier no visitor can resolve. The stats strip says which it is looking at rather than showing a dead id. **Do not fetch the endpoint for a recorded run.**
+7. **No preview deploys.** A preview lands on `<hash>.edgaragent.pages.dev` — a different origin from the one decision 3 pins `API_CORS_ORIGINS` to, and a different hostname from the one the Turnstile widget is registered for, so it would fail both in exactly the two-unrelated-faults way decision 3 warns about. Widening the allowlist to `*.edgaragent.pages.dev` is the wrong trade on a surface whose entire threat model is a copied API key.
 
 ## Three backend changes this phase must make first
 
 **The headline view cannot be built until the first of these lands.**
 
 1. **Put `answer_span` on `GroundingRow`.** `Claim.answer_span` already holds the verbatim sentence the claim came from, validated at synthesis as a substring of the answer and repaired by a bounded retry when it is not (ADR 0023). `build_run_result()` drops it, so **nothing in the payload locates a claim in the prose**. This is one field plus a test — and it is better than the char offsets this plan originally asked for, because a span survives the retraction edits that offsets would not.
-2. **Add `ticker` and `form_type` to `SourceRef`.** The hover popover specifies company and form type. `SourceRef` carries neither. Both are on the chunk metadata already.
-3. **Decide how a recorded run shows its trace id.** `GET /v1/jobs/{id}/trace` is a live-only endpoint; a static JSON file cannot call it. Either fold `trace_id` into `RunResult` at export time, or show it for live runs only and say so. Do not fetch and fail silently.
+2. **Add `ticker` and `form_type` to `SourceRef`.** The hover popover specifies company and form type. `SourceRef` carries neither. Both are already on the chunk — as **top-level fields on `EvidenceChunk`**, not entries in its `metadata` dict, which is where `build_run_result()` reads `accession_no` and `filing_date` from. Read them off the chunk directly: `chunk.metadata.get("ticker")` returns `""`.
+3. **Implement ADR 0038 §1 and §2.** `synthesize` retries once on an empty claim list and sets `error` when the retry is also empty; `eval-agent` reports `runs_with_no_claims` beside the metrics, ungated. The ADR is the spec and is unimplemented. It belongs here rather than in a later phase because the VPS eval below is what supersedes the current baseline, and a gating run that can still deliver an unverified figure invisibly is not a gate. Retrieval, prompts and models stay cleared — this adds a structural check, it tunes nothing.
 
-Each is small. Each needs `make check` green and a test, per the repo's normal rules.
+Each is small. Each needs `make check` green and a test, per the repo's normal rules. **Changes 1 and 2 must land before `recorded/` is regenerated** (decision 4), because the re-export is what puts the new fields into the static payloads.
+
+The trace id was a fourth item in an earlier draft. It is now decision 6 and needs no backend change.
 
 ## Turnstile (the work item this plan used to be missing)
 
@@ -68,7 +74,7 @@ Each is small. Each needs `make check` green and a test, per the repo's normal r
 4. **Result — the killer view (blueprint §8).**
    - The answer rendered as prose with each claim's span colour-coded, located by `answer_span`.
    - **Hover (click on touch) a claim → popover:** the exact supporting span quoted, source metadata (company, form type, filing date, section, accession number), verification method (XBRL reconciliation / semantic / attribution), and verdict.
-   - Below the prose: the full grounding table (sortable by verdict, type, company/source), a retracted-claims section (explicitly shown — retraction is the system working, sell it), and a stats strip: grounding rate for this run, cost, tokens, loop iterations, trace id.
+   - Below the prose: the full grounding table (sortable by verdict, type, company/source), a retracted-claims section (explicitly shown — retraction is the system working, sell it), and a stats strip: grounding rate for this run, cost, tokens, loop iterations, and the trace id **on live runs only** (decision 6).
 
 ### Three rendering traps, all confirmed in the data
 
@@ -82,15 +88,18 @@ Overlapping spans are real, not hypothetical: one sentence can carry both a retr
 
 ## Deployment, and the order it must happen in
 
-Cloudflare Pages connected to the GitHub repo, building `frontend/` on push to `main` (preview deploys on PRs for free). API calls go to the nginx vhost on the VPS.
+Cloudflare Pages connected to the GitHub repo, building `frontend/` on push to `main`, with no preview deploys (decision 7). API calls go to **`https://api.example.com`** — the vhost in `deploy/nginx/fie.conf`, written in Phase 4 and not yet installed.
 
 **The ordering is forced, because Turnstile cannot be configured before the hostname exists:**
 
 ```
-Pages project → hostname confirmed → Turnstile widget for that hostname
-→ turnstile_secret_key into secrets.enc.yaml → nginx vhost + certbot + fail2ban
+full eval-agent on the VPS, passing → Pages project → hostname confirmed
+→ Turnstile widget for that hostname → turnstile_secret_key into
+secrets.enc.yaml → nginx vhost + certbot + fail2ban
 → FIE_TURNSTILE_REQUIRED back to its default (true) → deploy
 ```
+
+The eval leads because ADR 0036 makes it the gate before the public deploy and it is the one step here that depends on none of the others — see below.
 
 `deploy.sh` refuses Turnstile-off with a `fie` vhost present, so a wrong order fails loudly rather than shipping the service open. Reactivate the paused uptime monitor once the public hostname answers.
 
@@ -107,9 +116,9 @@ Pages project → hostname confirmed → Turnstile widget for that hostname
 - Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile.
 - Screenshot/GIF of the grounding table saved under `docs/` (README + CV material).
 
-### Inherited from Phase 4 — both were blocked on the vhost this phase installs
+### Inherited from Phase 4
 
-- **`./scripts/burst-test.sh` against the live host.** It proves nginx refuses a burst rather than the app (both return 429; the response body tells them apart), that polling stays fast, and that **the five other production services on the box keep serving throughout**. These limits live above the application, so `make test` can never see them.
-- **One full `eval-agent` on the VPS, passing against `eval/baselines.json`.** ADR 0036 makes this the gate before the public deploy. Run it with `./deploy/monthly-eval.sh` — there is no `uv` on that box and deliberately will not be. ~75 minutes, ~$0.69.
+- **`./scripts/burst-test.sh` against the live host.** Genuinely blocked on the vhost this phase installs. It proves nginx refuses a burst rather than the app (both return 429; the response body tells them apart), that polling stays fast, and that **the five other production services on the box keep serving throughout**. These limits live above the application, so `make test` can never see them.
+- **One full `eval-agent` on the VPS, passing against `eval/baselines.json`.** ADR 0036 makes this the gate before the public deploy. Run it with `./deploy/monthly-eval.sh` — there is no `uv` on that box and deliberately will not be. ~75 minutes, ~$0.69. **This one is not blocked on the vhost, and an earlier draft of this plan said it was.** `monthly-eval.sh` starts a one-off container on the `fie_default` network against the service's own volume and calls `answer_question()` directly; nginx is nowhere on that path. So it goes first, as the ordering above has it, and ADR 0038 §1 lands before it.
 
-Both were written as Phase 4 exit criteria and neither is doable in Phase 4. They are listed here so they are not forgotten.
+Both were written as Phase 4 exit criteria and neither was doable in Phase 4. They are listed here so they are not forgotten.
