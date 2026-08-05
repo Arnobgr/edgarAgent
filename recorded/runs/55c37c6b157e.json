@@ -23,11 +23,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": null,
+        "answer_span": "The evidence provided does not contain any statement from Tesla's CFO regarding 2027 margin guidance.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-25-035806:table-0046",
             "doc_id": "TSLA-10-Q-0001628280-25-035806",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
             "section": "Item 6",
             "accession_no": "0001628280-25-035806",
             "filing_date": "2025-07-24"
@@ -35,6 +38,8 @@
           {
             "chunk_id": "0001628280-25-018911:table-0043",
             "doc_id": "TSLA-10-Q-0001628280-25-018911",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
             "section": "Item 6",
             "accession_no": "0001628280-25-018911",
             "filing_date": "2025-04-23"
@@ -42,6 +47,8 @@
           {
             "chunk_id": "0001628280-25-045968:table-0047",
             "doc_id": "TSLA-10-Q-0001628280-25-045968",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
             "section": "Item 6",
             "accession_no": "0001628280-25-045968",
             "filing_date": "2025-10-23"

@@ -119,6 +119,33 @@ async def test_a_run_parked_at_the_review_gate_is_not_exported(tmp_path: Path) -
     assert report.skipped == [("run-parked", "run is unfinished (pending tasks in the checkpoint)")]
 
 
+async def test_a_run_with_no_claims_is_not_exported(tmp_path: Path) -> None:
+    """A claimless answer passes every gate the eval has — zero claims adds
+    nothing to either side of `grounding_rate`'s ratio, so the run is not
+    scored badly, it is not scored at all (ADR 0038). On the demo surface it
+    renders as a stated figure above an empty grounding table, which inverts
+    the thing being demonstrated, so it never becomes a file."""
+    checkpoint = tmp_path / "checkpoints.db"
+    async with AsyncSqliteSaver.from_conn_string(str(checkpoint)) as saver:
+        graph = make_graph(
+            retriever=StubRetriever(make_chunks({"c1": SOURCE})),
+            synthesis=StructuredFakeModel(outputs=[SynthesisOutput(answer=SPAN, claims=[])]),
+            critic=StructuredFakeModel(default_output=CriticOutput(passed=True)),
+            limits=GraphLimits(
+                max_verify_iterations=1, retry_attempts=1, retry_base_delay_seconds=0.01
+            ),
+            checkpointer=saver,
+        )
+        config: RunnableConfig = {"configurable": {"thread_id": "run-empty"}}
+        await graph.ainvoke(EngineState(question=QUESTION), config)
+
+    report = export_runs(
+        checkpoint_path=checkpoint, out_dir=tmp_path / "out", run_ids=["run-empty"]
+    )
+    assert report.written == []
+    assert report.skipped == [("run-empty", "no claims (nothing to ground — ADR 0038)")]
+
+
 def test_a_run_with_no_checkpoint_is_reported_not_guessed_at(tmp_path: Path) -> None:
     checkpoint = tmp_path / "checkpoints.db"
     checkpoint.touch()

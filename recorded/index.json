@@ -17,14 +17,6 @@
       "retracted": 0
     },
     {
-      "job_id": "2b11fa1d4f9e",
-      "question": "How much did Nvidia spend on research and development in its latest fiscal year (FY2026)?",
-      "created_at": "2026-08-01T09:48:45.786238+00:00",
-      "path": "runs/2b11fa1d4f9e.json",
-      "claims": 0,
-      "retracted": 0
-    },
-    {
       "job_id": "11e697e34c32",
       "question": "What was Tesla's gross profit in fiscal year 2024?",
       "created_at": "2026-08-01T09:49:02.606942+00:00",

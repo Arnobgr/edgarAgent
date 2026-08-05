@@ -29,11 +29,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": null,
+        "answer_span": "The SEC filings provided do not contain Apple's current market capitalization or today's stock price, as these are real-time market data points not reported in periodic filings.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-25-000079:item-8-p002",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -41,6 +44,8 @@
           {
             "chunk_id": "0000320193-25-000079:item-5-p001",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 5",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -55,11 +60,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:CommonStockSharesIssued (Common stock, shares issued (in shares)) = 14,773,260,000 shares for 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "As of September 27, 2025, Apple had 14,773,260 thousand shares (approximately 14.77 billion shares) issued and outstanding [0000320193-25-000079:item-8-p002].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-25-000079:item-8-p002",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -76,11 +84,14 @@
         "verdict": "unsupported",
         "method": "numeric_reconciliation",
         "supporting_span": null,
+        "answer_span": "During the three months ended September 27, 2025, Apple repurchased a total of 89,498 thousand shares for approximately $99,779 million under its share repurchase programs [0000320193-25-000079:item-5-p001].",
         "feedback": "figure(s) 89,498 thousand, $99,779 million not found in the XBRL facts store — searched XBRL concepts: PaymentsForRepurchaseOfCommonStock, ShareRepurchaseProgramSharesAcquired, StockRepurchasedAndRetiredDuringPeriodValue, TreasuryStockSharesAcquiredUnderShareRepurchaseProgram; no table chunks cited. Re-check the figure against the filing or retract the claim.",
         "sources": [
           {
             "chunk_id": "0000320193-25-000079:item-5-p001",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 5",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -95,11 +106,14 @@
         "verdict": "unsupported",
         "method": "numeric_reconciliation",
         "supporting_span": null,
+        "answer_span": "As of that date, $221 million of the May 2025 $100 billion repurchase program had been utilized [0000320193-25-000079:item-5-p001].",
         "feedback": "figure(s) $221 million, $100 billion not found in the XBRL facts store — searched XBRL concepts: ShareRepurchaseProgramAmountAuthorizedToDate, StockRepurchaseProgramAuthorizedAmount, TreasuryStockValueAcquiredCostMethod; no table chunks cited. Re-check the figure against the filing or retract the claim.",
         "sources": [
           {
             "chunk_id": "0000320193-25-000079:item-5-p001",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 5",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -114,11 +128,14 @@
         "verdict": "unsupported",
         "method": "semantic",
         "supporting_span": null,
+        "answer_span": "The filings do not provide a specific market capitalization figure or a real-time stock price.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-25-000079:item-8-p002",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -126,6 +143,8 @@
           {
             "chunk_id": "0000320193-25-000079:item-5-p001",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 5",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"

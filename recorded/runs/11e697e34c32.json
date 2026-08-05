@@ -23,11 +23,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:GrossProfit (Gross profit) = 17,450,000,000 usd ($17,450 million) for FY 2024, period ending 2024-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "Tesla's gross profit in fiscal year 2024 was $17,450 million (approximately $17.45 billion), as reported in its Consolidated Statements of Operations for the year ended December 31, 2024 [0001628280-25-003063:item-8-p005].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-25-003063:item-8-p005",
             "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-25-003063",
             "filing_date": "2025-01-30"
@@ -35,6 +38,8 @@
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:GrossProfit:2024-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -49,11 +54,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:GrossProfit (Gross profit) = 17,450,000,000 usd ($17,450 million) for FY 2024, period ending 2024-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "This figure is also confirmed by the XBRL-tagged gross profit fact of $17,450,000,000 for the period ending December 31, 2024 [xbrl:0001628280-26-003952:us-gaap:GrossProfit:2024-12-31].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:GrossProfit:2024-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -68,11 +76,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:GrossProfit (Gross profit) = 17,660,000,000 usd ($17,660 million) for FY 2023, period ending 2023-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "For context, this represented a slight decline from the prior year's gross profit of $17,660 million in fiscal year 2023 [0001628280-25-003063:item-8-p005].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-25-003063:item-8-p005",
             "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-25-003063",
             "filing_date": "2025-01-30"

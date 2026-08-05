@@ -106,6 +106,16 @@ def read_run(saver: SqliteSaver, run_id: str) -> tuple[RunPayload | None, str]:
         return None, f"run ended in error: {result.error}"
     if not result.answer:
         return None, "no answer (run did not reach synthesis)"
+    if not result.grounding and not result.retracted:
+        # Run `2b11fa1d4f9e` of the accepted baseline states a specific dollar
+        # figure in a 434-character draft carrying zero claims, so it renders
+        # as an answer above an empty grounding table — the inverse of what
+        # this surface exists to demonstrate. ADR 0038 stops such a run being
+        # *created*; this stops one being *shown*, which is where the damage
+        # is visible. Skipped rather than filtered at the call site so the
+        # exclusion is announced on every export instead of living in a
+        # `--run-ids` invocation nobody kept.
+        return None, "no claims (nothing to ground — ADR 0038)"
     if tuple_.pending_writes or channels.get("__pregel_tasks"):
         # A thread parked mid-flight — a killed run, or one still waiting at
         # the review gate (whose interrupt is stored as a pending write). It

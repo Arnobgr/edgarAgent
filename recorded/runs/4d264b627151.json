@@ -29,11 +29,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:Assets (Total assets) = 359,241,000,000 usd ($359,241 million) for 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -48,11 +51,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:Assets (Total assets) = 206,803,000,000 usd ($206,803 million) for 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
             "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001045810-26-000021",
             "filing_date": "2026-02-25"
@@ -67,11 +73,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:Assets (Total assets) = 206,803,000,000 usd ($206,803 million) for 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-26-000051:table-0003",
             "doc_id": "NVDA-8-K-0001045810-26-000051",
+            "ticker": "NVDA",
+            "form_type": "8-K",
             "section": "Unattributed table",
             "accession_no": "0001045810-26-000051",
             "filing_date": "2026-05-20"
@@ -86,11 +95,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:Assets (Total assets) = 137,806,000,000 usd ($137,806 million) for 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -105,11 +117,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "AAPL: 359,241,000,000 USD; NVDA: 206,803,000,000 USD; TSLA: 137,806,000,000 USD",
+        "answer_span": "",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -117,6 +132,8 @@
           {
             "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
             "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001045810-26-000021",
             "filing_date": "2026-02-25"
@@ -124,6 +141,8 @@
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -138,11 +157,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "AAPL 359,241,000,000 USD; NVDA 206,803,000,000 USD; TSLA 137,806,000,000 USD",
+        "answer_span": "",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
             "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0000320193-25-000079",
             "filing_date": "2025-10-31"
@@ -150,6 +172,8 @@
           {
             "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
             "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001045810-26-000021",
             "filing_date": "2026-02-25"
@@ -157,6 +181,8 @@
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"

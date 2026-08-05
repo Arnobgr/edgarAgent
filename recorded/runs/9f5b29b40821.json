@@ -23,11 +23,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Generally, laws pertaining to self-driving vehicles are evolving globally, and in some cases may create restrictions on features or vehicle designs that we develop.",
+        "answer_span": "Laws pertaining to self-driving vehicles are evolving globally and may create restrictions on features or vehicle designs that Tesla develops.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-25-003063:item-1-p011",
             "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-25-003063",
             "filing_date": "2025-01-30"
@@ -42,11 +45,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "While there are currently no federal U.S. regulations pertaining specifically to self-driving vehicles or self-driving equipment, NHTSA has published recommended guidelines on self-driving vehicles, apart from the FMVSS and manufacturer reporting obligations, and retains the authority to investigate and/or take action on the safety or compliance of any vehicle, equipment or features operating on public roads.",
+        "answer_span": "While there are currently no federal U.S. regulations specifically for self-driving vehicles, NHTSA has published recommended guidelines and retains authority to investigate or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-25-003063:item-1-p011",
             "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-25-003063",
             "filing_date": "2025-01-30"
@@ -61,11 +67,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Certain U.S. states also have legal restrictions on the operation, registration or licensure of self-driving vehicles, and many other states are considering them. This regulatory patchwork increases the legal complexity with respect to self-driving vehicles in the U.S.",
+        "answer_span": "Certain U.S. states have legal restrictions on the operation, registration, or licensure of self-driving vehicles, and many other states are considering them, creating a regulatory patchwork that increases legal complexity [c1].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-25-003063:item-1-p011",
             "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-25-003063",
             "filing_date": "2025-01-30"
@@ -80,11 +89,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "In Europe and other countries that follow the regulations of the United Nations Economic Commission for Europe (“ECE countries”), some requirements restrict the design of both advanced driver-assistance and autonomous systems, which can compromise or prevent their use entirely.",
+        "answer_span": "In Europe and other countries following United Nations Economic Commission for Europe (ECE) regulations, some requirements restrict the design of both advanced driver-assistance and autonomous systems, which can compromise or prevent their use entirely.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -99,11 +111,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "On a European Union level, additional layers of regulatory frameworks may impose further obligations in areas such as risk management, data-governance, trainings, technical documentation.",
+        "answer_span": "Additional EU-level regulatory frameworks may impose further obligations in areas such as risk management, data governance, training, and technical documentation.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -118,11 +133,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Meanwhile, on a national level, the enforcement of certain applicable regulations may vary. Proposed national laws may further hinder or complicate the path of both advanced driver-assistance and autonomous vehicle systems, including the timeline for introducing autonomous vehicles for sale and use in ECE countries.",
+        "answer_span": "National-level enforcement may vary, and proposed national laws may further hinder or complicate the timeline for introducing autonomous vehicles.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -137,11 +155,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Additionally, certain national and city laws within each ECE country may impose legal restrictions on the marketing of advanced driver-assistance and autonomous vehicle systems, and may vary significantly on commercial ride-hailing with a fleet of autonomous vehicles, in areas such as licenses, permits, competition prohibitions, tariffs and other transport services obligations.",
+        "answer_span": "Certain national and city laws may also impose legal restrictions on marketing these systems and may vary significantly on commercial ride-hailing with autonomous vehicle fleets, including licenses, permits, competition prohibitions, tariffs, and other transport service obligations.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -156,11 +177,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "When coupled together, the layers of regulation as well as the fragmentation across each ECE country may hinder or complicate the path and timeline to introducing autonomous vehicles and an autonomous vehicle ride-hailing business in them.",
+        "answer_span": "The layers of regulation and fragmentation across ECE countries may hinder or complicate the path and timeline to introducing autonomous vehicles and an autonomous vehicle ride-hailing business [c4].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -175,11 +199,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Other key markets, including China, continue to develop and establish driver-assistance and autonomous vehicle regulations. Any implemented regulations may differ materially from U.S. and ECE countries.",
+        "answer_span": "Other key markets, including China, continue to develop and establish driver-assistance and autonomous vehicle regulations.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -194,11 +221,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "These differences may further increase the legal complexity of introducing, or availability to introduce, driver-assistance and autonomous vehicles for sale and use, including an autonomous vehicle ride-hailing business, and could result in additional delays, compliance costs, or restrictions on the deployment of certain capabilities in specific jurisdictions.",
+        "answer_span": "Any implemented regulations may differ materially from U.S. and ECE countries, which may further increase the legal complexity of introducing driver-assistance and autonomous vehicles for sale and use, including an autonomous vehicle ride-hailing business, and could result in additional delays, compliance costs, or restrictions on the deployment of certain capabilities in specific jurisdictions [c4].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -213,11 +243,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "There are a variety of international, federal and state regulations that may apply to, and may adversely inhibit, the design and capabilities, sale, marketing, registration and operation of driver assistance features, future autonomous capability on customer vehicles, as well as our Robotaxi business.",
+        "answer_span": "A variety of international, federal, and state regulations may apply to and adversely inhibit the design and capabilities, sale, marketing, registration, and operation of driver assistance features, future autonomous capability on customer vehicles, and Tesla's Robotaxi business.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p029",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -232,11 +265,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "This includes many existing vehicle standards that were drafted assuming the presence of a human driver.",
+        "answer_span": "This includes many existing vehicle standards that were drafted assuming the presence of a human driver.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p029",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -251,11 +287,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Such regulations, including their enforcement or the enforcement policy associated with the regulations, continue to rapidly change, which increases the likelihood of a patchwork of complex or conflicting regulations, or may delay, restrict or prohibit the availability of certain functionalities and vehicle designs, or affect the pace at which we expand our Robotaxi business, which could adversely affect our business, prospects, financial condition and operating results.",
+        "answer_span": "These regulations, including their enforcement or enforcement policy, continue to rapidly change, which increases the likelihood of a patchwork of complex or conflicting regulations, or may delay, restrict, or prohibit the availability of certain functionalities and vehicle designs, or affect the pace at which Tesla expands its Robotaxi business [c6].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p029",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -270,11 +309,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "We have experienced, and we expect to continue to face, claims and regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies that we are pioneering.",
+        "answer_span": "Tesla faces regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies it is pioneering.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -289,11 +331,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "...especially in light of NHTSA’s Standing General Order requiring reports regarding certain crashes involving vehicles with advanced driver assistance or autonomous driving systems.",
+        "answer_span": "NHTSA's Standing General Order requires reports regarding certain crashes involving vehicles with advanced driver assistance or autonomous driving systems.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -301,6 +346,8 @@
           {
             "chunk_id": "0001628280-25-003063:item-1-p011",
             "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001628280-25-003063",
             "filing_date": "2025-01-30"
@@ -315,11 +362,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Such collisions, whether involving Robotaxi vehicles or customer vehicles with driver assistance features engaged, are often subject of significant public attention, especially in light of NHTSA’s Standing General Order requiring reports regarding certain crashes involving vehicles with advanced driver assistance or autonomous driving systems.",
+        "answer_span": "Collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged are often the subject of significant public attention.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -334,11 +384,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period.",
+        "answer_span": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period [c3].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p013",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -353,11 +406,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "foreign regulatory agencies prior to market entry, as well as compliance with foreign reporting and recall management systems requirements.",
+        "answer_span": "Tesla must obtain approvals from foreign regulatory agencies prior to market entry, as well as comply with foreign reporting and recall management system requirements, adding further regulatory complexity to deploying driver-assistance and autonomous features internationally [c6].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p029",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -372,11 +428,14 @@
         "verdict": "grounded",
         "method": "attribution",
         "supporting_span": "In particular, our future business depends on development of our driver assistance systems and autonomous driving solutions and increasing the production of mass-market vehicles, including Cybercab, our purpose-built Robotaxi product.",
+        "answer_span": "Tesla's future business depends on the development of its driver assistance systems and autonomous driving solutions and increasing the production of mass-market vehicles, including Cybercab, its purpose-built Robotaxi product.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p001",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -391,11 +450,14 @@
         "verdict": "grounded",
         "method": "attribution",
         "supporting_span": "There is no guarantee we will be able to successfully develop or timely introduce and scale these new products, services and features, or that there will be widespread consumer adoption.",
+        "answer_span": "There is no guarantee Tesla will be able to successfully develop or timely introduce and scale these new products, services, and features, or that there will be widespread consumer adoption [c5].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-1a-p001",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"

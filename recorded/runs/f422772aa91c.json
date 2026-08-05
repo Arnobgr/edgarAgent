@@ -23,11 +23,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 94,827,000,000 usd ($94,827 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "Tesla's total revenue for fiscal year 2025 was $94,827 million (approximately $94.8 billion), as reported in the Consolidated Statements of Operations in its 10-K filing for the year ended December 31, 2025 [0001628280-26-003952:item-8-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-8-p007",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -35,6 +38,8 @@
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -49,11 +54,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "…ed Revenues (us-gaap:Revenues) for FY 2025, period ending 2025-12-31: 94,827,000,000 USD — as reported in 10-K 0001628280-26-003952.",
+        "answer_span": "This figure is also confirmed by the XBRL fact for us-gaap:Revenues for FY 2025, which reports 94,827,000,000 USD [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "XBRL facts",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -68,11 +76,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Automotive sales) [dimensioned=true] = 65,821,000,000 usd ($65,821 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "The total revenue was composed of automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-8-p007",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -87,11 +98,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Automotive regulatory credits) [dimensioned=true] = 1,993,000,000 usd ($1,993 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "The total revenue was composed of automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-8-p007",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -106,11 +120,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Automotive leasing) [dimensioned=true] = 1,712,000,000 usd ($1,712 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "The total revenue was composed of automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-8-p007",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -125,11 +142,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Energy generation and storage) [dimensioned=true] = 12,771,000,000 usd ($12,771 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "The total revenue was composed of automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-8-p007",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"
@@ -144,11 +164,14 @@
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services and other) [dimensioned=true] = 12,530,000,000 usd ($12,530 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "The total revenue was composed of automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001628280-26-003952:item-8-p007",
             "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
             "section": "Item 8",
             "accession_no": "0001628280-26-003952",
             "filing_date": "2026-01-29"

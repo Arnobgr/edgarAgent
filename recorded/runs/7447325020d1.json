@@ -35,11 +35,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Substantially all of the Company’s manufacturing is performed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam, and a significant concentration of this manufacturing is currently performed by a small number of outsourcing partners, often in single locations.",
+        "answer_span": "Apple discloses that substantially all of its manufacturing is performed by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan, and Vietnam, with a significant concentration performed by a small number of partners often in single locations [0000320193-23-000106:item-1a-p007].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-23-000106:item-1a-p007",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -54,11 +57,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Restrictions on international trade, such as tariffs and other controls on imports or exports of goods, technology or data, can materially adversely affect the Company’s operations and supply chain and limit the Company’s ability to offer and distribute its products and services to customers. ... For example, tensions between governments, including the U.S. and China, have in the past led to tariffs and other restrictions being imposed on the Company’s business.",
+        "answer_span": "Apple warns that restrictions on international trade, such as tariffs and export/import controls, can materially adversely affect its operations and supply chain, and specifically notes that tensions between the U.S. and China have in the past led to tariffs and other restrictions on its business [0000320193-23-000106:item-1a-p003].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-23-000106:item-1a-p003",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -73,11 +79,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Restrictive measures can require the Company to take various actions, including changing suppliers, restructuring business relationships, and ceasing to offer third-party applications on its platforms. Changing the Company’s operations in accordance with new or changed restrictions on international trade can be expensive, time-consuming and disruptive to the Company’s operations.",
+        "answer_span": "Apple also highlights that changing its supply chain in response to new trade restrictions is expensive, time-consuming, and disruptive, and that such restrictions may require it to change suppliers, restructure business relationships, or cease offering third-party applications on its platforms [0000320193-23-000106:item-1a-p003].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-23-000106:item-1a-p003",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -92,11 +101,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "For example, global supply chains can be highly concentrated and geopolitical tensions or conflict could result in significant disruptions.",
+        "answer_span": "Additionally, Apple notes that geopolitical tensions or conflict could result in significant disruptions to its highly concentrated global supply chains [0000320193-24-000123:item-1a-p004].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-24-000123:item-1a-p004",
             "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-24-000123",
             "filing_date": "2024-11-01"
@@ -111,11 +123,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "On January 15, 2025, the USG published the “AI Diffusion” IFR in the Federal Register. ... In the event of such change, we may be unable to sell our inventory of such products and may be unable to develop replacement products not subject to the licensing requirements, effectively excluding us from all or part of the China market, as well as other impacted markets, including the Middle East and countries designated “Tier 2” by the AI Diffusion IFR.",
+        "answer_span": "Nvidia discloses that U.S. government export controls on advanced GPUs and related products — including the \"AI Diffusion\" interim final rule published January 15, 2025 — impose worldwide licensing requirements on a wide range of its products (e.g., A100, H100, H200, B100, B200, GB200, and others), which could effectively exclude Nvidia from all or part of the China market, as well as other impacted markets such as the Middle East and \"Tier 2\" countries [0001045810-25-000023:item-7-p004].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-7-p004",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 7",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -130,11 +145,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Our competitive position has been harmed by the existing export controls, and our competitive position and future results may be further harmed, over the long term, if there are further changes in the USG’s export controls.",
+        "answer_span": "Nvidia states that its competitive position has already been harmed by existing export controls and may be further harmed if controls are expanded [0001045810-25-000023:item-1-p016].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-1-p016",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -149,11 +167,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Excessive or shifting export controls have already and may in the future encourage customers outside China and other impacted regions to “design-out” certain U.S. semiconductors from their products to reduce the compliance burden and risk, and to ensure that they are able to serve markets worldwide. Excessive or shifting export controls have already encouraged and may in the future encourage overseas governments to request that our customers purchase from our competitors rather than NVIDIA or other U.S. firms, harming our business, market position, and financial results. As a result, excessive or shifting export controls may negatively impact demand for our products and services not only in China, but also in other markets, such as Europe, Latin America, and Southeast Asia.",
+        "answer_span": "Nvidia also warns that excessive or shifting export controls may encourage customers outside China to \"design-out\" U.S. semiconductors and may lead overseas governments to request that customers purchase from competitors rather than Nvidia, negatively impacting demand not only in China but also in Europe, Latin America, and Southeast Asia [0001045810-24-000029:item-1a-p033].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-24-000029:item-1a-p033",
             "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001045810-24-000029",
             "filing_date": "2024-02-21"
@@ -168,11 +189,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Export controls may disrupt our supply and distribution chain for a substantial portion of our products, which are warehoused in and distributed from Hong Kong.",
+        "answer_span": "Nvidia further notes that export controls may disrupt its supply and distribution chain for products warehoused in and distributed from Hong Kong [0001045810-24-000029:item-1a-p033].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-24-000029:item-1a-p033",
             "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001045810-24-000029",
             "filing_date": "2024-02-21"
@@ -187,11 +211,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "In addition to export controls, the USG may impose restrictions on the import and sale of products that incorporate technologies developed or manufactured in whole or in part in China. For example, the USG is considering restrictions on the import and sale of certain automotive products in the United States, which if adopted and interpreted broadly, could impact our ability to develop and supply solutions for our automotive customers.",
+        "answer_span": "Nvidia also discloses that the U.S. government may impose restrictions on the import and sale of products incorporating technologies developed or manufactured in China, potentially impacting its automotive business [0001045810-25-000023:item-7-p004].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-7-p004",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 7",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -206,11 +233,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in the Asia-Pacific region, new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business.",
+        "answer_span": "Nvidia also acknowledges supply-side exposure, noting that its supply chain is currently concentrated in the Asia-Pacific region and that export controls could limit alternative manufacturing locations and negatively impact its business [0001045810-25-000023:item-1-p017].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-1-p017",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -225,11 +255,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Substantially all of the Company’s manufacturing is performed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam, and a significant concentration of this manufacturing is currently performed by a small number of outsourcing partners, often in single locations. ... Restrictions on international trade, such as tariffs and other controls on imports or exports of goods, technology or data, can materially adversely affect the Company’s operations and supply chain and limit the Company’s ability to offer and distribute its products and services to customers.",
+        "answer_span": "Apple's China risk is predominantly a supply-side risk — its manufacturing is concentrated in China and the region, and trade restrictions could disrupt production and distribution.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-23-000106:item-1a-p007",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -237,6 +270,8 @@
           {
             "chunk_id": "0000320193-23-000106:item-1a-p003",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -251,11 +286,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "In the event of such change, we may be unable to sell our inventory of such products and may be unable to develop replacement products not subject to the licensing requirements, effectively excluding us from all or part of the China market, as well as other impacted markets... While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in the Asia-Pacific region, new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business.",
+        "answer_span": "Nvidia's China risk encompasses both demand-side risks — U.S. export controls could prevent it from selling its products to Chinese customers [0001045810-25-000023:item-7-p004] — and supply-side risks, as its supply chain is concentrated in the Asia-Pacific region and export controls could limit alternative manufacturing locations [0001045810-25-000023:item-1-p017].",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-7-p004",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 7",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -263,6 +301,8 @@
           {
             "chunk_id": "0001045810-25-000023:item-1-p017",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -277,11 +317,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "Restrictions on international trade, such as tariffs and other controls on imports or exports of goods, technology or data, can materially adversely affect the Company’s operations and supply chain... For example, tensions between governments, including the U.S. and China, have in the past led to tariffs and other restrictions being imposed on the Company’s business. (For Apple); ...impose a worldwide licensing requirement on all products classified under Export Control Classification Numbers, or ECCNs, 3A090.a, 4A090.a... NVIDIA products, and any others we develop that meet the characteristics of 3A090.a or 4A090.a, including but not limited to: A100, A800, H100, H200, H800, B100, B200, GB200, L4, L40S, and RTX 6000 Ada. (For Nvidia)",
+        "answer_span": "Apple frames China risk in general terms of tariffs, trade tensions, and supply chain disruption, while Nvidia identifies specific export control regimes (e.g., the AI Diffusion IFR, ECCN 3A090.a/4A090.a classifications) and specific product lines affected.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0000320193-23-000106:item-1a-p003",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -289,6 +332,8 @@
           {
             "chunk_id": "0001045810-25-000023:item-7-p004",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 7",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -303,11 +348,14 @@
         "verdict": "partial",
         "method": "semantic",
         "supporting_span": "Our competitive position has been harmed by the existing export controls... Excessive or shifting export controls have already and may in the future encourage customers outside China and other impacted regions to “design-out” certain U.S. semiconductors from their products... Excessive or shifting export controls have already encouraged and may in the future encourage overseas governments to request that our customers purchase from our competitors rather than NVIDIA...",
+        "answer_span": "Nvidia explicitly states that its competitive position has already been harmed by export controls and warns of customer \"design-out\" dynamics and foreign government pressure to buy from competitors, whereas Apple frames the impact more broadly as potential future escalation of trade disputes.",
         "feedback": "The provided excerpts confirm that Nvidia states its competitive position has been harmed by export controls and warns of customer 'design-out' dynamics and foreign government pressure to buy from competitors. However, none of the provided excerpts contain information about Apple framing the impact as a potential future escalation of trade disputes (the Apple excerpt discusses past tariffs and potential future escalation, but there is no excerpt from Apple to support the comparative framing mentioned in the claim). Therefore, the claim is only partially supported due to the missing Apple source text.",
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-1-p016",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -315,6 +363,8 @@
           {
             "chunk_id": "0001045810-24-000029:item-1a-p033",
             "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0001045810-24-000029",
             "filing_date": "2024-02-21"
@@ -322,6 +372,8 @@
           {
             "chunk_id": "0000320193-23-000106:item-1a-p003",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
@@ -336,11 +388,14 @@
         "verdict": "grounded",
         "method": "semantic",
         "supporting_span": "While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in the Asia-Pacific region, new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business.",
+        "answer_span": "Nvidia highlights the risk that export controls could limit alternative manufacturing locations in the Asia-Pacific region, while Apple focuses on the difficulty and cost of changing its existing supply chain partners.",
         "feedback": null,
         "sources": [
           {
             "chunk_id": "0001045810-25-000023:item-1-p017",
             "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
             "section": "Item 1",
             "accession_no": "0001045810-25-000023",
             "filing_date": "2025-02-26"
@@ -348,6 +403,8 @@
           {
             "chunk_id": "0000320193-23-000106:item-1a-p007",
             "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
             "section": "Item 1A",
             "accession_no": "0000320193-23-000106",
             "filing_date": "2023-11-03"
