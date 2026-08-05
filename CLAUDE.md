@@ -26,79 +26,46 @@ full run was a decision, not an oversight** — the corpus is provably identical
 Phase 4 changed no part of the answer path, and the box's 1-CPU/640 MB cap
 plausibly moves only `degraded_attempts`, which the 1 September cron will
 settle. Run it early if anything touches retrieval, prompts, models or the
-corpus first. The exit gate first passed on 2026-07-28, and
-`plans/phase-3-recall-and-retraction.md` then fixed the three post-gate
-issues (ADRs 0020-0025). Its Stage E re-baseline **ran on 2026-08-01 and
-passed 30/30**, so `eval/baselines.json` now holds run `agent-20260801-122527`:
+corpus first. `eval/baselines.json` holds run `agent-20260801-122527`, which
+passed 30/30:
 
-| | 2026-07-28 | **2026-08-01** | target |
-|---|---|---|---|
-| `grounding_rate` | 0.935 | **0.972** | ≥ 0.90 |
-| `hallucination_rate` | 0.015 | **0.000** | ≤ 0.02 |
-| `numeric_fidelity` | 0.926 | **0.963** | ≥ 0.85 |
-| `expected_fact_coverage` | 0.357 (re-scored) | **1.000** | ≥ 0.65 |
-| `citation_accuracy` | 0.685 | **0.851** | not gated |
+| | **2026-08-01** | target |
+|---|---|---|
+| `grounding_rate` | **0.972** | ≥ 0.90 |
+| `hallucination_rate` | **0.000** | ≤ 0.02 |
+| `numeric_fidelity` | **0.963** | ≥ 0.85 |
+| `expected_fact_coverage` | **1.000** | ≥ 0.65 |
+| `citation_accuracy` | **0.851** | not gated |
 
-Getting to the first pass took four run attempts, each failure diagnosed free
-from checkpoints: ADR 0018 (derived-percent / change grounding, mapper label
-vocabulary), ADR 0019 (the facts UNIQUE key was silently deleting
-disaggregation facts — Apple Services/iPhone and NVDA Data Center revenue
-were filed all along; difference-form grounding; metric context scale; and
-the run-killer was a close/query race on the shared SQLite connection, fixed
-with a lock). `plans/phase-4-backend-and-deploy.md` starts now. Retrieval,
-prompts and models remain cleared — do not tune them for gate metrics.
+Retrieval, prompts and models remain cleared — do not tune them for gate
+metrics. How the gate was reached is in ADRs 0018-0025 and in the two findings
+documents (`docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md`
+and the earlier `2026-07-28-...`), which remain accurate on mechanism with
+three corrections recorded in ADR 0020.
+
+**Four things about the instrument a session must not re-derive.**
 
 **A guardrail abort decided a run once, and the cure is a retry, not a
-tolerance.** `guarded` turns a node timeout into `error` on the state and the
-graph routes to END, so `answer_question` *returns* a degraded `RunResult`
-that no exception marks. `_run_gold` retried only on exceptions, so on
-2026-07-31 two stalled synthesize calls scored directly: `hallucination_rate`
-0.049 against a 0.02 target, `expected_fact_coverage` 0.750. Without them the
-same run reads 0.000 and 0.857. It now retries on `error` too, keeps the
-result either way (a dropped question shrinks every denominator), and reports
-`degraded_attempts`. Measured from checkpoint timestamps: a synthesize call
-stalls ~1.5% of the time at the 600s cap (3 of 198 calls; 8 of 223 at the old
-300s cap), and stalls land *exactly* on the cap while clean calls run 21s
-median / 206s max — hangs, not slow work. At ~70 calls a run, an unretried
-clean 30/30 was a ~1-in-3 event. Every run so far has had GLM on synthesis,
-so whether the model causes it is untested, not disproven. The accepted
-baseline had `degraded_attempts: 0`, so the retry is proven by its tests, not
-by that run.
+tolerance** (ADR 0025). `guarded` turns a node timeout into `error` on the
+state and the graph routes to END, so `answer_question` *returns* a degraded
+`RunResult` that no exception marks. `_run_gold` now retries on `error` too,
+not only on exceptions, and reports `degraded_attempts` — a run with a
+non-zero count is not a baseline.
 
-What the remediation changed, measured:
+**`citation_accuracy` does not gate.** It is written to `baselines.json` but
+is absent from `TARGETS`, so it never refuses a run. Do not re-derive the
+diagnosis of why it moved: the change was in the *claims*, not the citations
+(ADR 0024, commit `dcef747`). The judge flips on about 1 in 27 byte-identical
+spans, so a single reading carries ±0.037.
 
-| | before | after |
-|---|---|---|
-| `expected_fact_coverage` (strict, ADR 0020) | 0.357 | **1.000** — all 28 labels, full set |
-| figure delivery, recall@8 | 0.354 | **0.451** (query rewrite) |
-| verifier P/R, incl. new balance-date class | 0.889 | **1.000 / 1.000** |
-| store facts with no date | 15,211 | **0** |
-| facts with a wrong fiscal year | 5,838 | **0** |
+**`hallucination_rate: 0.000` has two possible meanings** — see "Retraction is
+load-bearing".
 
-Two things a future session must not re-derive. **`hallucination_rate: 0.000`
-now has two possible meanings** — see "Retraction is load-bearing". And
-**`citation_accuracy` fell and was recovered by two rendering fixes**:
-0.623 baseline → 0.370 as measured → 0.556 (span formatting, ADR 0022) →
-**0.741** (cite every figure, ADR 0024), all on the same 10 questions; the
-full set then read **0.851** on 2026-08-01, against 0.685 on the 07-28
-baseline. It **does not gate** — it is written to `baselines.json` but is
-absent from `TARGETS`. Do not re-derive the diagnosis: the drop was a change in the
-*claims*, not the citations. Plain claims — entity, metric, period, value —
-were 28 of 47 and scored 0.857; post-remediation there are none, because ADR
-0023 tells synthesis a claim "must stand on its own" and ADR 0020 gave every
-fact a date to state. Per-class rates barely moved; the population did. The
-residual 6 of 23 is claims asserting document locations — "the segment table
-in MD&A" — or naming a different filing than the citation, which a single
-XBRL row cannot support; closing that means constraining synthesis against a
-gate metric, an open decision rather than an oversight. The judge flips on
-about 1 in 27 byte-identical spans, so a single reading carries ±0.037.
-
-The findings documents
-(`docs/findings/2026-07-30-recall-decomposed-and-collateral-excision.md` and
-the earlier `2026-07-28-...`) are the diagnosis and remain accurate on
-mechanism, with three corrections recorded in ADR 0020: the instant-date bug
-is pandas NaN truthiness, not a missing column; the facts UNIQUE key was
-never at risk; and g-008's `$35,934M` was right all along.
+**An answer with no claims passes every gate** (ADR 0038, *proposed, not
+implemented*). Run `2b11fa1d4f9e` of the accepted baseline states
+`$18,497,000,000` in a 434-character draft carrying **zero** claims in every
+checkpoint it ever wrote — nothing to ground, so nothing to fail, and
+`n_completed` counted it. That is a hole in the instrument, not a bad answer.
 
 ## Working guidelines
 
@@ -172,20 +139,18 @@ be. `docs/deploy.md` carries the rest of the procedure, including corpus
 seeding and a `crontab -` pipe that installs an empty crontab without saying
 so.
 
-Langfuse UI is on **http://localhost:3001** (deliberately remapped off 3000;
-the README now says so too). Qdrant on 6333. **Production tracing is Langfuse
+Langfuse UI is on **http://localhost:3001** (deliberately remapped off 3000).
+Qdrant on 6333. **Production tracing is Langfuse
 Cloud, not this stack** — six containers do not fit on the VPS (ADR 0032).
 
 `uv run eval-agent` (30 questions) takes ~75 minutes and costs real money —
 never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
 
-`--write-baseline` is gated since 2026-07-27 (ADR 0016): it refuses a run
+`--write-baseline` is gated since 2026-07-27 (ADR 0015): it refuses a run
 that misses the §13 `TARGETS` or dropped questions unless `--force`, and
-records `n_questions`/`n_completed` in `eval/baselines.json`. That file holds
-the accepted 2026-08-01 run (30/30). `TARGETS` is settled —
-`numeric_fidelity` 0.85 (ADR 0015), `expected_fact_coverage` 0.65 (ADR 0020),
-now a floor well under the measured 1.000 and worth raising. **`citation_accuracy`
-is recorded there but is not in `TARGETS`, so it never refuses a run.**
+records `n_questions`/`n_completed` in `eval/baselines.json`. `TARGETS` is
+settled — `numeric_fidelity` 0.85 (same ADR), `expected_fact_coverage` 0.65
+(ADR 0020), now a floor well under the measured 1.000 and worth raising.
 
 ## Architecture
 
