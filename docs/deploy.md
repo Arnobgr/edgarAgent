@@ -132,6 +132,26 @@ while numeric claims fail, suspect this check first.
 0 3 1 * *   /opt/fie/deploy/monthly-eval.sh >> /var/log/fie-eval.log 2>&1
 ```
 
+Install them through a file, not through a pipe:
+
+```bash
+{ crontab -l 2>/dev/null || true; } | grep -v 'fie/deploy/' > /tmp/fie.cron
+cat >> /tmp/fie.cron <<'CRON'
+0 4 * * *   /opt/fie/deploy/backup.sh       >> /var/log/fie-backup.log 2>&1
+0 3 1 * *   /opt/fie/deploy/monthly-eval.sh >> /var/log/fie-eval.log 2>&1
+CRON
+crontab /tmp/fie.cron && crontab -l && rm -f /tmp/fie.cron
+```
+
+**The obvious `( crontab -l | grep -v …; echo … ) | crontab -` installs an
+empty crontab** when there is no crontab yet and the shell has `set -e`:
+`grep` finds nothing, exits 1, kills the subshell before the `echo`, and
+`crontab -` faithfully accepts the empty input. It reports no error. Always
+`crontab -l` afterwards.
+
+Then prove the backup rather than meeting it at 04:00 — `./deploy/backup.sh`
+takes seconds and writes ~50 MB to `/var/backups/fie`.
+
 Both are self-contained. `backup.sh` needs only docker; `monthly-eval.sh` runs
 `eval-agent` in a one-off container off the deployed image and the service's
 own data volume, so the host needs no Python toolchain and no second copy of
