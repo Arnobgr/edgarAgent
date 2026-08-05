@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from pathlib import Path
 
 import typer
 
@@ -77,6 +78,43 @@ def ingest(
     for line in report.lines():
         typer.echo(line)
     if report.failures:
+        raise typer.Exit(code=1)
+
+
+@app.command("export-runs")
+def export_runs(
+    out: str = typer.Option(
+        "recorded", "--out", help="Directory to write index.json + runs/ into."
+    ),
+    run_ids: str = typer.Option(
+        "", "--run-ids", help="Comma-separated run ids (default: the accepted baseline's)."
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show info-level logs."),
+) -> None:
+    """Export finished runs as static JSON for the demo frontend.
+
+    Defaults to the runs behind the accepted `eval/baselines.json` entry, so
+    the recorded surface shows exactly the runs whose metrics are published.
+    """
+    logging.basicConfig(level=logging.INFO if verbose else logging.WARNING)
+    from fie.eval.datasets import EVAL_DIR
+    from fie.export import accepted_run_ids
+    from fie.export import export_runs as run_export
+
+    settings = get_settings()
+    try:
+        ids = [r.strip() for r in run_ids.split(",") if r.strip()] or sorted(
+            accepted_run_ids(EVAL_DIR).values()
+        )
+        report = run_export(
+            checkpoint_path=settings.data_dir / "checkpoints.db", out_dir=Path(out), run_ids=ids
+        )
+    except RuntimeError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    for line in report.lines():
+        typer.echo(line)
+    if not report.written:
         raise typer.Exit(code=1)
 
 

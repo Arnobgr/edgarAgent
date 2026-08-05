@@ -11,7 +11,12 @@ every factual claim is verified against a source or explicitly retracted.
 The design spec is `financial-intelligence-engine-blueprint.md` (gitignored,
 local-only). `plans/00-overview.md` resolves its open decisions and defines
 conventions; each phase has a self-contained plan in `plans/`. **Phase 3 is
-complete; Phase 4 is next.** The exit gate first passed on 2026-07-28, and
+complete. Phase 4 is code-complete and undeployed** — the service, container,
+nginx/fail2ban config, secrets scaffolding, CI and ADRs 0026-0037 are all
+written and green; nothing has run on the VPS, and the human prerequisites in
+`plans/phase-4-backend-and-deploy.md` (age key, Turnstile, Langfuse Cloud
+project, provider caps, uptime prober) are open. The exit gate first passed on
+2026-07-28, and
 `plans/phase-3-recall-and-retraction.md` then fixed the three post-gate
 issues (ADRs 0020-0025). Its Stage E re-baseline **ran on 2026-08-01 and
 passed 30/30**, so `eval/baselines.json` now holds run `agent-20260801-122527`:
@@ -133,6 +138,9 @@ uv run pytest -k retract -q                    # by keyword
 uv run fie ask "..." [--verbose] [--json]      # one run over the ingested corpus
 uv run fie resume <run-id>                     # resume a killed run from its checkpoint
 uv run fie ingest [--tickers TSLA] [--years 1] [--embedding openai] [--skip-embed]
+uv run fie export-runs [--out recorded] [--run-ids ...]  # finished runs → static JSON (ADR 0027)
+
+uvicorn --factory fie.api.app:create_app --port 8000   # the service; refuses to boot without API_KEY
 
 uv run eval-retrieval --embedding both --rerank both   # retrieval benchmark (ADR 0011)
 uv run eval-retrieval --figures --rewrite all          # figure delivery + rewrite arms (ADR 0020/0022)
@@ -141,10 +149,15 @@ uv run eval-seed                                       # regenerate derived eval
 
 make langfuse-up / langfuse-down   # whole dev stack (Langfuse + Qdrant)
 make qdrant-up                     # Qdrant only — enough for ask/eval
+
+./deploy/deploy.sh          # on the VPS: decrypt secrets → pull → up -d → smoke test
+./deploy/monthly-eval.sh    # the drift eval; reads the same secrets/ the service does
+./scripts/burst-test.sh     # nginx + fail2ban limits, against the live host only
 ```
 
 Langfuse UI is on **http://localhost:3001** (deliberately remapped off 3000;
-the README's setup step still says 3000 and is stale). Qdrant on 6333.
+the README now says so too). Qdrant on 6333. **Production tracing is Langfuse
+Cloud, not this stack** — six containers do not fit on the VPS (ADR 0032).
 
 `uv run eval-agent` (30 questions) takes ~75 minutes and costs real money —
 never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
@@ -303,6 +316,44 @@ SQLite manifest: **acquire** (network → `data/parsed/`) → **chunk** (local �
 `data/chunks/`) → **embed** (API + Qdrant). Re-running skips completed stages;
 failures isolate to their filing. `--skip-embed` runs the free stages with no
 API keys.
+
+### The service, and what actually protects it
+
+`src/fie/api/` wraps `answer_question` in HTTP. `create_app` injects its
+dependencies the way `build_graph` does, so the whole surface — including the
+abuse controls that guard real money — runs against a fake engine in
+`make test` with no network, no keys and no corpus.
+
+**Two sentences here are load-bearing and must not be softened.**
+
+**On the public path the API key identifies; it does not control** (ADR 0030).
+The Phase 5 frontend is a static SPA and ships its key in the bundle.
+Turnstile — a token minted per visitor, per challenge — is what holds that
+path, together with a USD spend governor, a per-IP daily quota and nginx.
+`X-API-Key` authenticates the tailnet consumer and nothing else.
+`test_turnstile_refuses_a_submission_carrying_a_valid_api_key` is that
+sentence as an assertion.
+
+**An accepted claim is `accepted`, never `grounded`** (ADR 0034). That is what
+stops the human review gate from laundering an opinion into `grounding_rate`.
+The gate is off by default and off in the eval, so it can never move a metric.
+
+The rest, briefly: the job model is in-process asyncio with a semaphore (the
+OOM control) and a queue cap (the honesty control) — no broker, per §3.1 and
+ADR 0026. Serving state is `data/api.db`, separate from `ingest.db` and
+`checkpoints.db`. Progress comes from the checkpoint, not the job row. The
+answer cache is **exact-match only** and is checked *before* the governor, so
+a cached answer costs nothing and spends no quota. Per-IP identity is
+`X-Real-IP`; `X-Forwarded-For` is caller-controlled and is not an identity.
+`fie export-runs` emits the exact `GET /v1/jobs/{id}/result` payload as static
+JSON, and `recorded/` holds the accepted baseline's 30 runs — the CDN answers
+the visitor who only reads, so the VPS never sees the request (ADR 0027).
+
+Deployment: `Dockerfile` + `docker-compose.prod.yml` + `deploy/`. CI runs
+ruff/mypy/pytest and publishes the image; **it holds no secret at all**, and
+`grep -r 'secrets\.' .github/` returning only `GITHUB_TOKEN` is the gate
+(ADR 0037). `docs/security.md` and `docs/monitoring.md` are the operational
+view.
 
 ### Everything else
 

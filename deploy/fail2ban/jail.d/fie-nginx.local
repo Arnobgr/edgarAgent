@@ -1,0 +1,25 @@
+# Move a persistent abuser from nginx (userspace, cost per request) to
+# nftables (kernel, cost per packet).
+#
+# Installed as /etc/fail2ban/jail.d/fie-nginx.local. fail2ban was already
+# active on this box with only an `sshd` jail, so this is a drop-in.
+#
+# `filter = nginx-limit-req` is the **stock Debian filter**, not one of ours:
+# it already matches nginx's `limiting requests, excess: ... client: <HOST>`
+# and one fewer regex to maintain is one fewer thing to be wrong. The deploy
+# script verifies it against the real log with `fail2ban-regex` before
+# enabling the jail.
+#
+# **Accepted cost: a firewall ban is IP-wide**, so it also blocks that
+# address from the five other services on this box. The short bantime and
+# the high threshold are the price of one shared IP and one shared port —
+# a visitor who trips this is well past "clicked twice".
+
+[fie-nginx-limit-req]
+enabled  = true
+filter   = nginx-limit-req
+port     = http,https
+logpath  = /var/log/nginx/fie.error.log
+findtime = 600
+maxretry = 20
+bantime  = 3600

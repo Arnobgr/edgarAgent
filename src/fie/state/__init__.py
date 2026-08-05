@@ -18,10 +18,27 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 ClaimType = Literal["numeric", "qualitative", "forward_looking"]
-ClaimStatus = Literal["pending", "grounded", "unsupported", "partial", "retracted"]
+# `accepted` is the human-in-the-loop verdict and is deliberately NOT
+# `grounded`: a reviewer waving a claim through is not the machine finding a
+# source for it, and collapsing the two would let the review gate launder
+# unverified text into `grounding_rate` (Phase 4, ADR 0034). The verdict on
+# the row stays whatever the verifier ruled, so the metrics still see the
+# truth; only the claim's fate in the prose changes.
+ClaimStatus = Literal["pending", "grounded", "unsupported", "partial", "retracted", "accepted"]
 VerdictLabel = Literal["grounded", "unsupported", "partial"]
 VerifyMethod = Literal["numeric_reconciliation", "semantic", "attribution"]
 SubQuestionStatus = Literal["open", "researched", "exhausted"]
+# What a reviewer may decide about one unresolved claim at the HITL gate.
+ReviewAction = Literal["accept", "retract"]
+# When the gate fires. `unresolved` is the product behaviour (a clean run is
+# never held up for a human); `always` exists so a demo can show the gate on
+# a question that happens to verify cleanly. `off` is what the eval runs, so
+# the gate can never move a gate metric.
+ReviewMode = Literal["off", "unresolved", "always"]
+# The claim statuses the gate presents for review. `partial` is included
+# because a partially-supported claim is exactly the judgement call a human
+# is better at than the rubric.
+UNRESOLVED_STATUSES: tuple[ClaimStatus, ...] = ("unsupported", "partial")
 
 # Part of the answer contract: the retract node appends this section listing
 # excised claims, so consumers (metrics, renderers) can split the answer
@@ -112,6 +129,22 @@ class Verdict(BaseModel):
     supporting_span: str | None = None
     method: VerifyMethod
     feedback: str | None = None
+
+
+class ReviewDecision(BaseModel):
+    """One reviewer ruling at the human-in-the-loop gate.
+
+    Decisions travel as a *list* of these, never as a `{claim_id: action}`
+    mapping, and that is load-bearing rather than stylistic. LangGraph reads
+    a `dict` resume value as a map of *interrupt ids* to resume values when
+    every key looks like one (`_loop.py`, `resume_is_map`) — and `all()` over
+    an empty dict is `True`, so resuming with `{}` (a reviewer who accepted
+    nothing) is read as an empty interrupt map and re-raises the interrupt
+    instead of resuming. A list can never be mistaken for that map.
+    """
+
+    claim_id: str
+    action: ReviewAction
 
 
 class RunBudget(BaseModel):
@@ -279,9 +312,17 @@ class RunResult(BaseModel):
     critic_passed: bool | None = None
     budget: RunBudget = Field(default_factory=RunBudget)
     error: str | None = None
+    # True when the run stopped at the human-in-the-loop gate instead of
+    # finishing: the graph is checkpointed inside `review` and resumes once
+    # the decisions arrive. The claims awaiting a decision are the grounding
+    # rows whose status is in `UNRESOLVED_STATUSES` — no second list, so the
+    # two can never disagree.
+    awaiting_review: bool = False
 
 
-def build_run_result(run_id: str, state: EngineState) -> RunResult:
+def build_run_result(
+    run_id: str, state: EngineState, *, awaiting_review: bool = False
+) -> RunResult:
     """Derive the output contract from the final graph state (pure code)."""
     chunk_map = {c.chunk_id: c for c in state.evidence}
     verdict_map = {v.claim_id: v for v in state.verdicts}
@@ -330,4 +371,5 @@ def build_run_result(run_id: str, state: EngineState) -> RunResult:
         critic_passed=state.critic_passed,
         budget=state.run_budget,
         error=state.error,
+        awaiting_review=awaiting_review,
     )

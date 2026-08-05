@@ -1,10 +1,14 @@
 """Shared test fakes: structured-output chat model, retriever, reconciler spy,
-and a graph factory with fast limits — no network anywhere."""
+a graph factory with fast limits, and the HTTP harness — no network anywhere."""
 
 import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
-from langchain_core.callbacks import CallbackManagerForLLMRun
+import httpx
+from fastapi import FastAPI
+from langchain_core.callbacks import BaseCallbackHandler, CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatResult
@@ -15,7 +19,15 @@ from pydantic import Field
 
 from fie.graph import GraphLimits, build_graph
 from fie.guardrails import BudgetTracker
-from fie.state import DecomposeOutput, EngineState, EvidenceChunk
+from fie.state import (
+    DecomposeOutput,
+    EngineState,
+    EvidenceChunk,
+    GroundingRow,
+    ReviewDecision,
+    ReviewMode,
+    RunResult,
+)
 from fie.tools.reconcile import InterimNumericReconciler, ReconcileOutcome
 
 
@@ -133,6 +145,7 @@ def make_graph(
     tracker: BudgetTracker | None = None,
     limits: GraphLimits | None = None,
     k: int = 6,
+    review_mode: ReviewMode = "off",
     checkpointer: Checkpointer = None,
 ) -> CompiledStateGraph[EngineState]:
     # Default decomposer: empty split → the single-part passthrough (one
@@ -152,5 +165,131 @@ def make_graph(
         tracker=tracker or big_tracker(),
         limits=limits or fast_limits(),
         k=k,
+        review_mode=review_mode,
         checkpointer=checkpointer,
     )
+
+
+# --- The HTTP surface ---
+
+
+def make_result(
+    run_id: str = "job-1",
+    *,
+    question: str = "What were Apple's total net sales?",
+    answer: str = "Total net sales were $391.0 billion [c1].",
+    grounding: list[GroundingRow] | None = None,
+    awaiting_review: bool = False,
+    error: str | None = None,
+) -> RunResult:
+    """A minimal `RunResult` for the API tests, which care about how a result
+    travels rather than how it was derived."""
+    rows = grounding or [
+        GroundingRow(
+            claim_id="c-1",
+            text="Total net sales were $391.0 billion",
+            claim_type="numeric",
+            status="grounded",
+            verdict="grounded",
+        )
+    ]
+    return RunResult(
+        run_id=run_id,
+        question=question,
+        answer=answer,
+        grounding=rows,
+        awaiting_review=awaiting_review,
+        error=error,
+    )
+
+
+class FakeEngine:
+    """Stands in for `answer_question` behind the API.
+
+    Records every call, which is the only way a test can see what the HTTP
+    surface actually asked the engine to do: that a resume passes
+    `question=None`, and that a review submission carries the reviewer's
+    decisions rather than dropping them.
+
+    `hold` lets a test park runs in flight — the semaphore and queue-cap
+    assertions need concurrent jobs that do not finish on their own — and
+    `peak_concurrent` records how many the registry ever admitted at once.
+    """
+
+    def __init__(
+        self,
+        *,
+        results: list[RunResult] | None = None,
+        default: RunResult | None = None,
+        hold: asyncio.Event | None = None,
+        raises: Exception | None = None,
+        usage: tuple[int, int, str] | None = None,
+    ) -> None:
+        self.results = list(results or [])
+        self.default = default or make_result()
+        self.hold = hold
+        self.raises = raises
+        self.usage = usage
+        self.calls: list[dict[str, Any]] = []
+        self.concurrent = 0
+        self.peak_concurrent = 0
+
+    async def __call__(
+        self,
+        *,
+        question: str | None,
+        run_id: str,
+        review_decisions: list[ReviewDecision] | None,
+        extra_callbacks: list[BaseCallbackHandler],
+    ) -> RunResult:
+        self.calls.append(
+            {"question": question, "run_id": run_id, "review_decisions": review_decisions}
+        )
+        self.concurrent += 1
+        self.peak_concurrent = max(self.peak_concurrent, self.concurrent)
+        try:
+            if self.hold is not None:
+                await self.hold.wait()
+            for callback in extra_callbacks:
+                if isinstance(callback, BudgetTracker) and self.usage:
+                    callback.record(*self.usage)
+            if self.raises is not None:
+                raise self.raises
+            result = self.results.pop(0) if self.results else self.default
+        finally:
+            self.concurrent -= 1
+        return result.model_copy(update={"run_id": run_id})
+
+
+@asynccontextmanager
+async def api_client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
+    """Drive the app over ASGI on *this* event loop.
+
+    `TestClient` would run it in a second thread with its own loop, which puts
+    the background job tasks out of reach of a test that needs to hold one
+    open or release it at a chosen moment. Running the transport directly
+    keeps the app, its jobs and the test on one loop; the lifespan is entered
+    explicitly because `ASGITransport` does not.
+    """
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://fie.test") as client:
+            yield client
+
+
+async def wait_for_status(
+    client: httpx.AsyncClient,
+    job_id: str,
+    *,
+    headers: dict[str, str],
+    until: set[str],
+    tries: int = 500,
+) -> dict[str, Any]:
+    """Poll a job the way the frontend does, until it reaches one of `until`."""
+    for _ in range(tries):
+        response = await client.get(f"/v1/jobs/{job_id}", headers=headers)
+        body: dict[str, Any] = response.json()
+        if body["status"] in until:
+            return body
+        await asyncio.sleep(0)
+    raise AssertionError(f"job {job_id} never reached {until}")

@@ -1,0 +1,150 @@
+name: ci
+
+# **This workflow receives no secret, and that is a design constraint rather
+# than a convenience** (ADR 0037). `${{ secrets.GITHUB_TOKEN }}` below is the
+# only permitted match for `secrets.` in this directory — it is minted per job,
+# scoped to this repository, and expires when the job ends. Everything else it
+# would otherwise need lives on the VPS:
+#
+#   * the eval needs model keys **and** the corpus, so it runs there (ADR 0036);
+#   * the deploy needs to reach the box, so the operator runs it (ADR 0037) — a tailnet
+#     credential here would grant network reach to their Mac and to five other
+#     production services, which is a different failure class from a spend-
+#     capped, rotatable API key.
+#
+# Before adding a secret, re-read that list. The exit gate for this phase is
+# `grep -r 'secrets\.' .github/` returning `GITHUB_TOKEN` and nothing else.
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+# A second push to the same branch makes the first run's answer worthless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Pinned to what the Dockerfile and the developer's machine both use, so a
+  # resolver change lands as a visible bump rather than as CI drifting away
+  # from the image it certifies.
+  UV_VERSION: "0.10.1"
+
+jobs:
+  checks:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+
+      # `--locked` fails rather than resolving: CI must run the dependency set
+      # in `uv.lock`, not a set it invented that happens to satisfy the ranges.
+      - run: uv sync --locked
+
+      # Three steps rather than `make check` in one, so a red run names which
+      # of the three went red from the job list alone. Each step is the exact
+      # command the Makefile target runs.
+      - name: ruff
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+
+      - name: mypy --strict
+        run: uv run mypy
+
+      # Offline by construction — no service containers, no keys. That is a
+      # property of the test suite (`tests/fakes.py`), not of this runner, and
+      # a test that reaches the network fails here rather than flaking.
+      - name: pytest
+        run: uv run pytest
+
+  secret-scan:
+    name: gitleaks (full history)
+    runs-on: ubuntu-latest
+    steps:
+      # Full history, not the tip: the point is to catch a secret that was
+      # committed and later removed, which a shallow clone cannot see.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # The release binary rather than `gitleaks/gitleaks-action`, which reads
+      # a `GITLEAKS_LICENSE` secret. Installing it directly keeps this job
+      # secret-free and pins exactly what runs.
+      - name: install gitleaks
+        env:
+          GITLEAKS_VERSION: "8.18.4"
+        run: |
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      # `--redact` so a finding does not print the secret it found into a log
+      # that is public on this repo — a scanner that leaks what it catches is
+      # worse than no scanner.
+      - name: scan
+        run: gitleaks detect --source . --config .gitleaks.toml --redact --verbose
+
+  image:
+    name: build · push to ghcr
+    needs: [checks, secret-scan]
+    # Only from `main`, and only on a push: a pull_request build would publish
+    # an image from unreviewed code under a tag the deploy script can pull.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # `fie`, not the repository name: the compose file, the deploy script
+          # and the container are all called that. The package still links back
+          # here through the `image.source` label below, which is what lets
+          # `GITHUB_TOKEN` write to it.
+          #
+          # Spelled out rather than built from `github.repository_owner`, which
+          # is `Arnobgr` — a registry path must be lowercase, and depending on
+          # metadata-action to normalise it would put the one string that has
+          # to match `FIE_IMAGE` in `docker-compose.prod.yml` behind an
+          # action's undocumented behaviour.
+          images: ghcr.io/arnobgr/fie
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      # Building here rather than on the box is the point: `uv sync` plus a
+      # fastembed model download on 2 vCPU, where stale build cache had already
+      # reached 2.2 GB against 11 GB free.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

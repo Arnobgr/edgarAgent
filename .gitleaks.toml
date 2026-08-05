@@ -1,0 +1,50 @@
+# Secret scanning, run over **full history** in CI (ADR 0029).
+#
+# The exit gate reads "no secret exists in the repo history, in an image layer,
+# or in CI logs". The CI-log third is satisfied by construction — no workflow
+# receives a secret — but that is a different failure from a secret *committed*,
+# which is what this catches. Note that GitHub's log masking would not have
+# helped anyway: it fails open on transformed values, so a base64'd secret
+# prints in the clear.
+title = "fie"
+
+[extend]
+useDefault = true
+
+# The most sensitive value in this project is not an API key. It is the SEC
+# user-agent identity, which is a real name and a real email, and the history
+# has been scrubbed of it once already. No default rule looks for personal
+# data, so this one does — matching the *variable*, never the address, because
+# writing the address here to detect the address would be the leak.
+[[rules]]
+id = "edgar-identity"
+description = "EDGAR_IDENTITY carries personal data and belongs only in .env"
+regex = '''(?i)EDGAR_IDENTITY["']?\s*[:=]\s*["']?[^"'\n]*@[^"'\s]+'''
+tags = ["pii", "edgar"]
+
+  [rules.allowlist]
+  description = "The documented placeholder in .env.example"
+  regexTarget = "line"
+  regexes = ['''@example\.com''']
+
+# One global allowlist, matched against the whole line. Both entries below are
+# line shapes rather than paths, and that is the point: allowlisting a *file*
+# silences every rule in it forever, including the rule that would have caught
+# the thing you did not anticipate.
+[allowlist]
+description = "Encrypted-by-design and generated-by-design lines"
+regexTarget = "line"
+regexes = [
+  # SOPS ciphertext. `secrets.enc.yaml` is deliberately not path-allowlisted:
+  # that would also silence the one failure that matters — committing it before
+  # encrypting, or after a `sops -d > secrets.enc.yaml` slip. Matching the
+  # envelope means an encrypted value passes and a plaintext one in the same
+  # file still trips the default rules.
+  '''ENC\[AES256_GCM,data:''',
+  # Measured, not anticipated: `uv.lock`'s wheel digests are high-entropy and
+  # one of them matches the `square-access-token` rule, so without this the
+  # scan fails on every push for a generated file of public checksums. Scoped
+  # to the digest line rather than to `uv.lock`, because a lockfile *can* carry
+  # a credentialed index URL and that is worth still catching.
+  '''hash = "sha256:''',
+]

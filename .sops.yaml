@@ -1,0 +1,24 @@
+# Which key SOPS encrypts `secrets.enc.yaml` with (ADR 0029).
+#
+# Its whole job is to make `sops secrets.enc.yaml` work with no flags on both
+# the Mac and the VPS, so rotating a secret is `sops secrets.enc.yaml`, edit,
+# save, commit — and never a command with a key id pasted into it.
+#
+# **The recipient below is a placeholder and SOPS will refuse it.** That is
+# deliberate: a syntactically valid stand-in would encrypt to a key nobody
+# holds, and the failure would surface at *decrypt* time on the VPS, mid-
+# deploy. Replace it once, with the public half of the age key:
+#
+#     age-keygen -o ~/.config/sops/age/keys.txt     # prints the public key
+#
+# The private half goes in a password manager **and** on both machines — two
+# machines can both fail, and losing it loses every secret in this file's
+# history, not just the current values.
+#
+# `encrypted_regex` is absent on purpose: every value in `secrets.enc.yaml` is
+# a secret, so there is nothing to leave in the clear. The keys stay readable
+# either way, which is what lets `deploy/decrypt-secrets.sh` and
+# `docker-compose.prod.yml` agree on file names without decrypting anything.
+creation_rules:
+  - path_regex: secrets\.enc\.yaml$
+    age: age1REPLACE_WITH_THE_PUBLIC_KEY_FROM_AGE_KEYGEN

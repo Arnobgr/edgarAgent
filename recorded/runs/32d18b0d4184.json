@@ -1,0 +1,191 @@
+{
+  "job_id": "32d18b0d4184",
+  "source": "recorded",
+  "created_at": "2026-08-01T09:57:33.477704+00:00",
+  "result": {
+    "run_id": "32d18b0d4184",
+    "question": "Compare Apple's services revenue growth rate to its products revenue growth rate over the last two fiscal years.",
+    "answer": "Apple's 10-K filings provide full-year Products and Services revenue, enabling a direct comparison of growth rates over the last two fiscal years (FY2024 and FY2025).\n\n**Services revenue growth:**\n- FY2024: Services revenue was $96,169 million, up from $85,200 million in FY2023, a year-over-year increase of approximately 12.9% [0000320193-25-000079:item-8-p001].\n- FY2025: Services revenue was $109,158 million, up from $96,169 million in FY2024, a year-over-year increase of approximately 13.5% [0000320193-25-000079:item-8-p001].\n\n**Products revenue growth:**\n- FY2024: Products revenue was $294,866 million, down from $298,085 million in FY2023, a year-over-year decrease of approximately 1.1% [0000320193-25-000079:item-8-p001].\n- FY2025: Products revenue was $307,003 million, up from $294,866 million in FY2024, a year-over-year increase of approximately 4.1% [0000320193-25-000079:item-8-p001].\n\n**Total net sales context:** Apple's total net sales were $383,285 million in FY2023, $391,035 million in FY2024, and $416,161 million in FY2025 [0000320193-25-000079:item-8-p001]. The FY2024 10-K's Management's Discussion and Analysis explicitly states that total net sales increased 2% in FY2024 compared to FY2023 [0000320193-24-000123:item-7-p001].\n\n**Comparison:** This divergence highlights Apple's increasing reliance on Services as a growth engine, as Products revenue has been comparatively flat or modestly growing while Services has consistently delivered strong double-digit growth.\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- In both FY2024 and FY2025, Apple's Services revenue grew at a double-digit rate (approximately 12.9% and 13.5% respectively), substantially outpacing Products revenue, which declined approximately 1.1% in FY2024 and grew only approximately 4.1% in FY2025.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Apple's services revenue and its year-over-year growth rate for each of the last two fiscal years?",
+        "rationale": "Finding the services revenue growth rate for the last two fiscal years requires its own lookup in the segment results.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What was Apple's products revenue and its year-over-year growth rate for each of the last two fiscal years?",
+        "rationale": "Finding the products revenue growth rate for the last two fiscal years requires its own lookup in the segment results.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple's Services revenue was $96,169 million in FY2024, up from $85,200 million in FY2023, representing a year-over-year increase of approximately 12.9%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 96,169,000,000 usd ($96,169 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 85,200,000,000 usd ($85,200 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services): 96,169,000,000 usd ($96,169 million) (FY 2024) vs 85,200,000,000 usd ($85,200 million) (FY 2023) = +12.87%, acc 0000320193-25-000079",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "Apple's Services revenue was $109,158 million in FY2025, up from $96,169 million in FY2024, representing a year-over-year increase of approximately 13.5%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 109,158,000,000 usd ($109,158 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 96,169,000,000 usd ($96,169 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services): 109,158,000,000 usd ($109,158 million) (FY 2025) vs 96,169,000,000 usd ($96,169 million) (FY 2024) = +13.51%, acc 0000320193-25-000079",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "Apple's Products revenue was $294,866 million in FY2024, down from $298,085 million in FY2023, representing a year-over-year decrease of approximately 1.1%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 294,866,000,000 usd ($294,866 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 298,085,000,000 usd ($298,085 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products): 294,866,000,000 usd ($294,866 million) (FY 2024) vs 298,085,000,000 usd ($298,085 million) (FY 2023) = -1.08%, acc 0000320193-25-000079",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "Apple's Products revenue was $307,003 million in FY2025, up from $294,866 million in FY2024, representing a year-over-year increase of approximately 4.1%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 307,003,000,000 usd ($307,003 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 294,866,000,000 usd ($294,866 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products): 307,003,000,000 usd ($307,003 million) (FY 2025) vs 294,866,000,000 usd ($294,866 million) (FY 2024) = +4.12%, acc 0000320193-25-000079",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "Apple's total net sales were $383,285 million in FY2023, $391,035 million in FY2024, and $416,161 million in FY2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 383,285,000,000 usd ($383,285 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 391,035,000,000 usd ($391,035 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 416,161,000,000 usd ($416,161 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "Apple's FY2024 10-K Management's Discussion and Analysis states that total net sales increased 2% in FY2024 compared to FY2023.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales): 391,035,000,000 usd ($391,035 million) (FY 2024) vs 383,285,000,000 usd ($383,285 million) (FY 2023) = +2.02%, acc 0000320193-25-000079",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-7-p001",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "section": "Item 7",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "The divergence between Services and Products revenue growth highlights Apple's increasing reliance on Services as a growth engine.",
+        "claim_type": "qualitative",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "semantic",
+        "supporting_span": null,
+        "feedback": "The provided excerpts contain the financial statement data showing Products and Services sales figures (Products: $298,085M in 2023, $294,866M in 2024, $307,003M in 2025; Services: $85,200M in 2023, $96,169M in 2024, $109,158M in 2025). However, the analytical claim that this divergence 'highlights Apple's increasing reliance on Services as a growth engine' is an interpretation or qualitative conclusion not explicitly stated in the source text.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-7",
+        "text": "In both FY2024 and FY2025, Apple's Services revenue grew at a double-digit rate (approximately 12.9% and 13.5% respectively), substantially outpacing Products revenue, which declined approximately 1.1% in FY2024 and grew only approximately 4.1% in FY2025.",
+        "claim_type": "qualitative",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "semantic",
+        "supporting_span": null,
+        "feedback": "The source excerpts provide the financial numbers required to calculate the growth rates (Products: FY24 $294,866, FY25 $307,003, FY23 $298,085; Services: FY24 $96,169, FY25 $109,158, FY23 $85,200), but they do not contain the calculated percentages or explicit statements of these growth rates. Since the math must be computed using outside knowledge or logic, the claim is not strictly grounded solely within the text provided.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 54578,
+      "cost_usd_used": 0.06387297
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

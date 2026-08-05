@@ -1,0 +1,110 @@
+# The VPS stack. Two containers, both capped, on a box that already runs
+# five other people's production services (ADR 0031).
+#
+#   docker compose -f docker-compose.prod.yml --project-name fie up -d
+#
+# Every limit here comes from the 2026-08-03 inventory in
+# `plans/phase-4-backend-and-deploy.md`: 3.7 GB RAM with ~1.8 GB available,
+# 2 vCPU, 11 GB free disk. Nothing is left uncapped, because four of the
+# containers already on this box are and there is no room for a fifth.
+#
+# Langfuse is deliberately absent — its six containers would not fit, so
+# production traces go to Langfuse Cloud (ADR 0032). `docker-compose.dev.yml`
+# keeps the self-hosted stack for local work.
+services:
+  fie-api:
+    image: ${FIE_IMAGE:-ghcr.io/arnobgr/fie:latest}
+    restart: unless-stopped
+    # Loopback only. nginx on the host is the sole route in, which is what
+    # makes the `X-Real-IP` the per-IP quota counts trustworthy.
+    ports:
+      - "127.0.0.1:${FIE_API_PORT:-8412}:8000"
+    environment:
+      QDRANT_URL: http://fie-qdrant:6333
+      LANGFUSE_HOST: https://cloud.langfuse.com
+      API_LOG_JSON: "true"
+      # Explicit rather than inherited: this is the public path, and the one
+      # control holding it must never be off by omission.
+      TURNSTILE_REQUIRED: "true"
+      API_CORS_ORIGINS: '["https://fie.pages.dev"]'
+      API_REVIEW_MODE: unresolved
+    # Compose secrets, not env vars: env leaks into `docker inspect`, crash
+    # dumps, child processes and anything that dumps `environ` (ADR 0029).
+    # `get_settings()` reads /run/secrets when the directory exists.
+    # ANTHROPIC_API_KEY and EDGAR_IDENTITY are absent on purpose — the
+    # serving path needs neither, and the second is personal data.
+    secrets:
+      - api_key
+      - openrouter_api_key
+      - openai_api_key
+      - langfuse_public_key
+      - langfuse_secret_key
+      - turnstile_secret_key
+    volumes:
+      - fie_api_data:/app/data
+    depends_on:
+      - fie-qdrant
+    # The `.venv` is 597 MB and pulls onnxruntime; one core leaves one for
+    # the five services that were here first.
+    mem_limit: 640m
+    cpus: 1.0
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import sys, urllib.request
+          sys.exit(0 if urllib.request.urlopen("http://127.0.0.1:8000/healthz", timeout=5).status == 200 else 1)
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: &json-logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  # A second Qdrant rather than neighbour-c's. Reuse would save ~150 MB of
+  # process baseline and the collections are already namespaced, but that
+  # instance runs at 67% of its limit and an ingest run in a demo project
+  # must not be able to affect a production service (ADR 0033).
+  fie-qdrant:
+    image: docker.io/qdrant/qdrant:v1.18.0
+    restart: unless-stopped
+    # Not published at all: only `fie-api` needs it, over the compose
+    # network. Publishing 6333 would also collide with the Qdrant already
+    # on this box.
+    volumes:
+      - fie_qdrant_storage:/qdrant/storage
+    # 4,181 points x 1536 dims ~ 26 MB of vectors — generous.
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    logging: *json-logging
+
+secrets:
+  api_key:
+    file: ./secrets/api_key
+  openrouter_api_key:
+    file: ./secrets/openrouter_api_key
+  openai_api_key:
+    file: ./secrets/openai_api_key
+  langfuse_public_key:
+    file: ./secrets/langfuse_public_key
+  langfuse_secret_key:
+    file: ./secrets/langfuse_secret_key
+  turnstile_secret_key:
+    file: ./secrets/turnstile_secret_key
+
+volumes:
+  fie_api_data:
+  fie_qdrant_storage:

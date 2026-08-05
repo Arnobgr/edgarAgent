@@ -1,0 +1,148 @@
+{
+  "job_id": "ed8e9f299943",
+  "source": "recorded",
+  "created_at": "2026-08-01T09:54:45.423948+00:00",
+  "result": {
+    "run_id": "ed8e9f299943",
+    "question": "How did Tesla's automotive gross margin evolve over the last three fiscal years, and what drove the change?",
+    "answer": "The FY 2023 decline (28.5% → 19.4%) was primarily driven by lower average selling prices on Tesla's vehicles, partially offset by favorable changes in average combined cost per unit and IRA manufacturing credits [0001628280-24-002390:part-i--item-7-p014].\n\nThe FY 2024 decline (19.4% → 18.4%) was due to lower average selling prices and the Cybertruck production ramp, partially offset by lower average combined cost per unit and increases in regulatory credit and FSD (Supervised) revenue [0001628280-25-003063:item-7-p014].\n\nThe FY 2025 decline (18.4% → 17.8%) continued the downward trend, with automotive gross profit falling from $14,197 million in FY 2024 to $12,361 million in FY 2025 [0001628280-26-003952:table-0004]. The evidence provided does not include a narrative explanation of the specific drivers for the FY 2025 margin change.\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- Tesla's automotive gross margin was 28.5% in FY 2022, 19.4% in FY 2023, 18.4% in FY 2024, and 17.8% in FY 2025.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How did Tesla's automotive gross margin evolve over the last three fiscal years?",
+        "rationale": "This sub-question tracks the quantitative evolution of automotive gross margins across the specified timeframe.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What were the primary drivers of the change in Tesla's automotive gross margin over the last three fiscal years?",
+        "rationale": "This sub-question investigates the qualitative and quantitative drivers behind the margin changes over the last three fiscal years.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-3-2",
+        "text": "The FY 2023 automotive gross margin decline from 28.5% to 19.4% was primarily driven by lower average selling prices on Tesla's vehicles, partially offset by favorable changes in average combined cost per unit and IRA manufacturing credits.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Gross margin for total automotive decreased from 28.5% to 19.4% in the year ended December 31, 2023 as compared to the year ended December 31, 2022. The decrease was primarily due to a lower average selling price on our vehicles partially offset by the favorable change in our average combined cost per unit of our vehicles and IRA manufacturing credits earned as discussed above.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-002390:part-i--item-7-p014",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "section": "Part I, Item 7",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-3-3",
+        "text": "The FY 2024 automotive gross margin decline from 19.4% to 18.4% was due to lower average selling prices and the Cybertruck production ramp, partially offset by lower average combined cost per unit and increases in regulatory credit and FSD (Supervised) revenue.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Gross margin for total automotive decreased from 19.4% to 18.4% in the year ended December 31, 2024 as compared to the year ended December 31, 2023 due to lower average selling price on our vehicles and Cybertruck ramp, partially offset by lower average combined cost per unit of our vehicles and increases in regulatory credit and FSD (Supervised) revenue, as discussed above.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-7-p014",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "section": "Item 7",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-3-4",
+        "text": "Tesla's automotive gross profit fell from $14,197 million in FY 2024 to $12,361 million in FY 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…27 | 1 | % |\n| Gross profit total automotive | $ | 12,361 |  |  | $ | 14,197 |  |  | $ | 16,030 |  |  |  |  |  |  |  |  |  |  |  |\n| Gross margin…\n…3) | % |  | $ | 1,127 | 1 | % |\n| Gross profit total automotive | $ | 12,361 |  |  | $ | 14,197 |  |  | $ | 16,030 |  |  |  |  |  |  |  |  |  |  |…",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:table-0004",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-3-5",
+        "text": "The evidence provided does not include a narrative explanation of the specific drivers for the FY 2025 automotive gross margin change.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "feedback": "The provided source excerpt is a table showing financial numbers for automotive cost of revenues, gross profit, and gross margin, but it contains no narrative text or explanation of the specific drivers for the FY 2025 automotive gross margin change.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:table-0004",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-3-1",
+        "text": "Tesla's automotive gross margin was 28.5% in FY 2022, 19.4% in FY 2023, 18.4% in FY 2024, and 17.8% in FY 2025.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "feedback": "figure(s) 28.5%, 19.4%, 18.4%, 17.8% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfit, AutomotiveGrossProfitPercent, AutomotiveRevenues, AutomotiveSalesMember, GrossMarginOfAutomotiveSegment and 3 cited table chunk(s). Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:table-0004",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-25-003063:table-0005",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "section": "Item 7",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:table-0005",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "section": "Item 7",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 2,
+    "critic_passed": false,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 36106,
+      "cost_usd_used": 0.03931203
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

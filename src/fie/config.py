@@ -11,7 +11,16 @@ from typing import Literal
 from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PHASE = "phase-3"
+from fie.state import ReviewMode
+
+PHASE = "phase-4"
+
+# Where `docker compose` mounts secrets in the container. Runtime secrets are
+# files, not env vars: env leaks into `docker inspect`, crash dumps, child
+# processes and any library that dumps `environ` (ADR 0029). Passed to
+# pydantic-settings only when the directory exists — on a dev machine it does
+# not, and pydantic-settings warns about a missing secrets_dir on every run.
+COMPOSE_SECRETS_DIR = Path("/run/secrets")
 
 
 class ModelSpec(BaseModel):
@@ -187,9 +196,78 @@ class Settings(BaseSettings):
         }
     )
 
+    # --- Public API (Phase 4) ---
+    # Static key for the *tailnet* consumer (CLI, the operator's Mac). On the public
+    # path it identifies rather than controls: a static SPA ships its key in
+    # the bundle, where devtools can read it. Turnstile and the quotas below
+    # are the enforcement — see docs/security.md and ADR 0030.
+    api_key: SecretStr = SecretStr("")
+    # Exactly the Pages origin. The frontend and the API are on different
+    # hosts, so every browser call is cross-origin; never "*".
+    api_cors_origins: list[str] = Field(default=[])
+    api_db_name: str = "api.db"
+    api_review_mode: ReviewMode = "off"
+    # JSON logs in the container, human-readable ones on a terminal.
+    api_log_json: bool = False
+
+    # Cloudflare Turnstile. Origin-agnostic, so it needs no zone and no
+    # domain: the widget renders on the Pages origin and this service only
+    # verifies the token. An unset secret disables verification, which is
+    # what tests and local dev run.
+    # Explicit rather than inferred from "is a secret set?": a control that
+    # silently switches itself off when an env var goes missing is the one
+    # failure mode this whole layer exists to avoid. `create_app` refuses to
+    # start with this on and no secret, so "off" is always a decision.
+    turnstile_required: bool = False
+    turnstile_secret_key: SecretStr = SecretStr("")
+    turnstile_verify_url: str = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+    # Public-path run caps, applied by `public_run_settings()`.
+    # `budget_max_cost_usd = 5.0` is ~200x the $0.023 median: a runaway guard
+    # for a CLI the operator drives themselves, not a control for an endpoint strangers
+    # can reach.
+    public_budget_max_cost_usd: float = 0.25
+    # 600s interacts badly with a 2-slot semaphore: CLAUDE.md records
+    # synthesize stalling at the cap ~1.5% of the time, and one stall would
+    # park half the public capacity for ten minutes.
+    public_node_timeout_seconds: float = 180.0
+
+    # Spend governor (ADR 0030). The daily sub-cap is what makes one bad day
+    # cost 7% of the month instead of all of it.
+    spend_cap_daily_usd: float = 0.35
+    spend_cap_monthly_usd: float = 5.0
+    public_daily_quota_per_ip: int = 3
+    # Concurrency is the OOM control, sized to the container memory limits in
+    # docker-compose.prod.yml rather than to taste.
+    api_max_concurrent_runs: int = 2
+    api_max_queued_runs: int = 4
+    question_max_chars: int = 500
+
     @property
     def ingest_db_path(self) -> Path:
         return self.data_dir / self.ingest_db_name
+
+    @property
+    def api_db_path(self) -> Path:
+        """Jobs, spend ledger, per-IP quota and answer cache. Separate from
+        `ingest.db` (read-mostly corpus truth) and from `checkpoints.db`
+        (LangGraph's), so the serving state can be backed up, pruned or
+        dropped without touching either."""
+        return self.data_dir / self.api_db_name
+
+    def public_run_settings(self) -> "Settings":
+        """Settings for a run submitted over the public HTTP path.
+
+        The tailnet path keeps the loose caps: it is the operator driving their own
+        machine and a stall costs them a coffee. The public path gets the
+        tight ones, and they are tightened *here* rather than at the call
+        site so `answer_question` stays one function with one behaviour."""
+        return self.model_copy(
+            update={
+                "budget_max_cost_usd": self.public_budget_max_cost_usd,
+                "node_timeout_seconds": self.public_node_timeout_seconds,
+            }
+        )
 
     def qdrant_collection(self, provider: str | None = None) -> str:
         """Collection name for an embedding provider's model — one collection
@@ -200,4 +278,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    if COMPOSE_SECRETS_DIR.is_dir():
+        return Settings(_secrets_dir=COMPOSE_SECRETS_DIR)
     return Settings()

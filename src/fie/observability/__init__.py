@@ -39,6 +39,16 @@ def new_run_id() -> str:
     return uuid4().hex[:12]
 
 
+def trace_id_for(run_id: str) -> str:
+    """The Langfuse trace id a run will report under.
+
+    Derived from the run id by the same seeded construction
+    `get_langfuse_handler` uses, so the API can hand a caller the trace link
+    for a job without holding a Langfuse client or waiting for the run to
+    produce one."""
+    return str(Langfuse.create_trace_id(seed=run_id))
+
+
 def trace_metadata(run_id: str, phase: str = PHASE) -> dict[str, object]:
     """Metadata to pass in the graph's invoke config: tags the whole trace
     with the run id and phase (and shows up on every span)."""

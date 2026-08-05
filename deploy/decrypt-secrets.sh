@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# SOPS-encrypted YAML in git → one file per secret in ./secrets/, which
+# docker compose mounts at /run/secrets (ADR 0029).
+#
+# One file per value rather than one env file, because that is the shape
+# `pydantic-settings`' `secrets_dir` reads and the shape compose secrets
+# deliver. The file names are the *field* names in `fie.config.Settings`,
+# lowercased — that mapping is the whole contract.
+#
+# The files stay on disk: compose bind-mounts them into the container, so
+# deleting them after a deploy would break the next restart. They are
+# root-owned 0400 and `secrets/` is gitignored.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+: "${SOPS_AGE_KEY_FILE:=/root/.config/sops/age/keys.txt}"
+export SOPS_AGE_KEY_FILE
+
+if [[ ! -f "$SOPS_AGE_KEY_FILE" ]]; then
+    echo "!! No age key at $SOPS_AGE_KEY_FILE." >&2
+    echo "   It is never in git. Restore it from the password manager." >&2
+    exit 1
+fi
+
+mkdir -p secrets
+chmod 700 secrets
+
+# Every key in the decrypted YAML becomes ./secrets/<key>. Adding a secret is
+# therefore a one-line change to secrets.enc.yaml plus a line in
+# docker-compose.prod.yml — no change here.
+sops --decrypt secrets.enc.yaml | while IFS= read -r line; do
+    [[ "$line" =~ ^([a-z_]+):[[:space:]]*(.*)$ ]] || continue
+    name="${BASH_REMATCH[1]}"
+    value="${BASH_REMATCH[2]}"
+    value="${value%\"}"
+    value="${value#\"}"
+    printf '%s' "$value" > "secrets/${name}"
+    chmod 400 "secrets/${name}"
+done
+
+echo "Wrote $(ls secrets | wc -l | tr -d ' ') secret(s) to ./secrets/"

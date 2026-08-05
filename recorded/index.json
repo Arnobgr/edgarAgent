@@ -1,0 +1,244 @@
+{
+  "runs": [
+    {
+      "job_id": "f422772aa91c",
+      "question": "What was Tesla's total revenue in fiscal year 2025?",
+      "created_at": "2026-08-01T09:48:31.592788+00:00",
+      "path": "runs/f422772aa91c.json",
+      "claims": 7,
+      "retracted": 0
+    },
+    {
+      "job_id": "635dfb4766d8",
+      "question": "What was Apple's net income in fiscal year 2025?",
+      "created_at": "2026-08-01T09:48:37.913060+00:00",
+      "path": "runs/635dfb4766d8.json",
+      "claims": 1,
+      "retracted": 0
+    },
+    {
+      "job_id": "2b11fa1d4f9e",
+      "question": "How much did Nvidia spend on research and development in its latest fiscal year (FY2026)?",
+      "created_at": "2026-08-01T09:48:45.786238+00:00",
+      "path": "runs/2b11fa1d4f9e.json",
+      "claims": 0,
+      "retracted": 0
+    },
+    {
+      "job_id": "11e697e34c32",
+      "question": "What was Tesla's gross profit in fiscal year 2024?",
+      "created_at": "2026-08-01T09:49:02.606942+00:00",
+      "path": "runs/11e697e34c32.json",
+      "claims": 3,
+      "retracted": 0
+    },
+    {
+      "job_id": "3276065c49c0",
+      "question": "What was Apple's total net sales in fiscal year 2024?",
+      "created_at": "2026-08-01T09:49:22.674348+00:00",
+      "path": "runs/3276065c49c0.json",
+      "claims": 5,
+      "retracted": 0
+    },
+    {
+      "job_id": "ec078f923045",
+      "question": "What were Nvidia's total assets at the end of its latest fiscal year?",
+      "created_at": "2026-08-01T09:49:51.575592+00:00",
+      "path": "runs/ec078f923045.json",
+      "claims": 1,
+      "retracted": 0
+    },
+    {
+      "job_id": "c81e80b459f2",
+      "question": "What was Tesla's operating income in fiscal year 2025?",
+      "created_at": "2026-08-01T09:50:02.772545+00:00",
+      "path": "runs/c81e80b459f2.json",
+      "claims": 2,
+      "retracted": 0
+    },
+    {
+      "job_id": "88d741269b6b",
+      "question": "How much cash and cash equivalents did Apple report at the end of fiscal 2025?",
+      "created_at": "2026-08-01T09:50:14.894181+00:00",
+      "path": "runs/88d741269b6b.json",
+      "claims": 3,
+      "retracted": 0
+    },
+    {
+      "job_id": "2fef55d1a0e1",
+      "question": "How has Tesla's total revenue changed over its last three fiscal years (2023 to 2025)?",
+      "created_at": "2026-08-01T09:51:33.807846+00:00",
+      "path": "runs/2fef55d1a0e1.json",
+      "claims": 4,
+      "retracted": 0
+    },
+    {
+      "job_id": "fb0c0948ca0b",
+      "question": "What is the trend in Apple's research and development spending over the last three fiscal years?",
+      "created_at": "2026-08-01T09:51:57.199528+00:00",
+      "path": "runs/fb0c0948ca0b.json",
+      "claims": 4,
+      "retracted": 0
+    },
+    {
+      "job_id": "c4595ec12c3d",
+      "question": "How has Nvidia's data center business contributed to its revenue growth across its last three fiscal years?",
+      "created_at": "2026-08-01T09:53:50.640853+00:00",
+      "path": "runs/c4595ec12c3d.json",
+      "claims": 17,
+      "retracted": 1
+    },
+    {
+      "job_id": "ed8e9f299943",
+      "question": "How did Tesla's automotive gross margin evolve over the last three fiscal years, and what drove the change?",
+      "created_at": "2026-08-01T09:54:45.423948+00:00",
+      "path": "runs/ed8e9f299943.json",
+      "claims": 5,
+      "retracted": 1
+    },
+    {
+      "job_id": "32d18b0d4184",
+      "question": "Compare Apple's services revenue growth rate to its products revenue growth rate over the last two fiscal years.",
+      "created_at": "2026-08-01T09:57:33.477704+00:00",
+      "path": "runs/32d18b0d4184.json",
+      "claims": 8,
+      "retracted": 1
+    },
+    {
+      "job_id": "2099171e7111",
+      "question": "How has Nvidia's net income evolved over its last three fiscal years?",
+      "created_at": "2026-08-01T09:58:00.192258+00:00",
+      "path": "runs/2099171e7111.json",
+      "claims": 4,
+      "retracted": 0
+    },
+    {
+      "job_id": "f85ef388f629",
+      "question": "Which of Tesla, Apple, and Nvidia had the highest revenue in their most recent fiscal years, and what were the figures?",
+      "created_at": "2026-08-01T09:58:24.839057+00:00",
+      "path": "runs/f85ef388f629.json",
+      "claims": 5,
+      "retracted": 0
+    },
+    {
+      "job_id": "9e7f73a4ee89",
+      "question": "Compare R&D spending as a share of revenue across Tesla, Apple, and Nvidia in their most recent fiscal years.",
+      "created_at": "2026-08-01T09:59:43.479827+00:00",
+      "path": "runs/9e7f73a4ee89.json",
+      "claims": 14,
+      "retracted": 1
+    },
+    {
+      "job_id": "7447325020d1",
+      "question": "How do the China-related risks disclosed by Apple and Nvidia differ?",
+      "created_at": "2026-08-01T10:02:08.544933+00:00",
+      "path": "runs/7447325020d1.json",
+      "claims": 15,
+      "retracted": 0
+    },
+    {
+      "job_id": "2c5da7127492",
+      "question": "Compare the net income of Apple and Nvidia in their most recent fiscal years.",
+      "created_at": "2026-08-01T10:02:56.360995+00:00",
+      "path": "runs/2c5da7127492.json",
+      "claims": 6,
+      "retracted": 0
+    },
+    {
+      "job_id": "4d264b627151",
+      "question": "Which company among the three carries the largest total assets, and how do their balance sheet sizes compare?",
+      "created_at": "2026-08-01T10:03:46.568223+00:00",
+      "path": "runs/4d264b627151.json",
+      "claims": 6,
+      "retracted": 0
+    },
+    {
+      "job_id": "524f5c2d3d5e",
+      "question": "Compare how Tesla and Nvidia describe supply chain concentration risks in their filings.",
+      "created_at": "2026-08-01T10:06:23.532286+00:00",
+      "path": "runs/524f5c2d3d5e.json",
+      "claims": 22,
+      "retracted": 0
+    },
+    {
+      "job_id": "9f5b29b40821",
+      "question": "What are the main regulatory risks Tesla discloses about its driver-assistance and Full Self-Driving features?",
+      "created_at": "2026-08-01T10:06:56.380991+00:00",
+      "path": "runs/9f5b29b40821.json",
+      "claims": 20,
+      "retracted": 0
+    },
+    {
+      "job_id": "6e9c52369bfd",
+      "question": "What does Apple say about its dependence on third-party manufacturing and logistics partners?",
+      "created_at": "2026-08-01T10:08:07.350573+00:00",
+      "path": "runs/6e9c52369bfd.json",
+      "claims": 16,
+      "retracted": 0
+    },
+    {
+      "job_id": "9c541b665dab",
+      "question": "How does Nvidia characterize the impact of export controls on its business with China?",
+      "created_at": "2026-08-01T10:08:45.066787+00:00",
+      "path": "runs/9c541b665dab.json",
+      "claims": 12,
+      "retracted": 0
+    },
+    {
+      "job_id": "4354e2656aca",
+      "question": "What litigation involving the App Store does Apple disclose, and what outcomes does it describe?",
+      "created_at": "2026-08-01T10:10:06.640017+00:00",
+      "path": "runs/4354e2656aca.json",
+      "claims": 17,
+      "retracted": 1
+    },
+    {
+      "job_id": "746f9abed1cc",
+      "question": "What does Tesla disclose about its dependence on Elon Musk?",
+      "created_at": "2026-08-01T10:10:26.585431+00:00",
+      "path": "runs/746f9abed1cc.json",
+      "claims": 9,
+      "retracted": 0
+    },
+    {
+      "job_id": "74ec5f8991bb",
+      "question": "How does Nvidia describe competition for its data center products?",
+      "created_at": "2026-08-01T10:11:00.240173+00:00",
+      "path": "runs/74ec5f8991bb.json",
+      "claims": 7,
+      "retracted": 0
+    },
+    {
+      "job_id": "c0d7440a4812",
+      "question": "What was Microsoft's Azure revenue growth last quarter?",
+      "created_at": "2026-08-01T10:11:20.061338+00:00",
+      "path": "runs/c0d7440a4812.json",
+      "claims": 3,
+      "retracted": 0
+    },
+    {
+      "job_id": "55c37c6b157e",
+      "question": "What did Tesla's CFO say about 2027 margin guidance on the latest earnings call?",
+      "created_at": "2026-08-01T10:11:55.863386+00:00",
+      "path": "runs/55c37c6b157e.json",
+      "claims": 1,
+      "retracted": 0
+    },
+    {
+      "job_id": "cfdf8435560a",
+      "question": "What is Apple's current market capitalization and today's stock price?",
+      "created_at": "2026-08-01T10:12:58.159007+00:00",
+      "path": "runs/cfdf8435560a.json",
+      "claims": 5,
+      "retracted": 3
+    },
+    {
+      "job_id": "c10054cf1646",
+      "question": "How many Cybertrucks did Tesla deliver in each month of the last quarter?",
+      "created_at": "2026-08-01T10:13:15.570164+00:00",
+      "path": "runs/c10054cf1646.json",
+      "claims": 3,
+      "retracted": 0
+    }
+  ]
+}

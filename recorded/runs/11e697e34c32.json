@@ -1,0 +1,96 @@
+{
+  "job_id": "11e697e34c32",
+  "source": "recorded",
+  "created_at": "2026-08-01T09:49:02.606942+00:00",
+  "result": {
+    "run_id": "11e697e34c32",
+    "question": "What was Tesla's gross profit in fiscal year 2024?",
+    "answer": "Tesla's gross profit in fiscal year 2024 was $17,450 million (approximately $17.45 billion), as reported in its Consolidated Statements of Operations for the year ended December 31, 2024 [0001628280-25-003063:item-8-p005]. This figure is also confirmed by the XBRL-tagged gross profit fact of $17,450,000,000 for the period ending December 31, 2024 [xbrl:0001628280-26-003952:us-gaap:GrossProfit:2024-12-31]. For context, this represented a slight decline from the prior year's gross profit of $17,660 million in fiscal year 2023 [0001628280-25-003063:item-8-p005].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Tesla's gross profit in fiscal year 2024?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Tesla's gross profit in fiscal year 2024 was $17,450 million (approximately $17.45 billion).",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:GrossProfit (Gross profit) = 17,450,000,000 usd ($17,450 million) for FY 2024, period ending 2024-12-31, 10-K acc 0001628280-26-003952",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-8-p005",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "section": "Item 8",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:GrossProfit:2024-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "The XBRL-tagged gross profit fact for Tesla for the period ending December 31, 2024 was $17,450,000,000.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:GrossProfit (Gross profit) = 17,450,000,000 usd ($17,450 million) for FY 2024, period ending 2024-12-31, 10-K acc 0001628280-26-003952",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:GrossProfit:2024-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "Tesla's gross profit in fiscal year 2023 was $17,660 million, which was slightly higher than fiscal year 2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:GrossProfit (Gross profit) = 17,660,000,000 usd ($17,660 million) for FY 2023, period ending 2023-12-31, 10-K acc 0001628280-26-003952",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-8-p005",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "section": "Item 8",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 11901,
+      "cost_usd_used": 0.011366590000000001
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

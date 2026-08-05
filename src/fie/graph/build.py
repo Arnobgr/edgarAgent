@@ -3,10 +3,10 @@
     START → decompose ═(Send per open sub-question)═> research (parallel)
                  ↑                                        │
                  │ (critic: mis-split, bounded)           ▼
-              critic ←─ retract ←─┬─ verify ←── synthesize (fan-in)
-                 │                │    ║
-                 ├→ END           │    ╚═(Send per failed claim's
-                 └→ synthesize ───┘       sub-question — targeted loop-back)
+              critic ←─ retract ←(review)─┬─ verify ←── synthesize (fan-in)
+                 │                        │    ║
+                 ├→ END                   │    ╚═(Send per failed claim's
+                 └→ synthesize ───────────┘       sub-question — targeted loop-back)
 
 `decompose` splits the question into independent sub-questions (trivial
 questions pass through as a single sub-question, no ceremony). The
@@ -21,6 +21,12 @@ route back to the decomposer (bounded to one re-decomposition per run) when
 the answer failed because the question was mis-split. Every node is wrapped
 with the timeout/budget guardrails; iteration caps are enforced in the
 conditional edges so all three cycles terminate.
+
+Phase 4 adds the optional human-in-the-loop `review` node between `verify`
+and `retract`. It is off by default and off in the eval (`review_mode`), so
+it can never move a gate metric; when on, it interrupts with the claims the
+verify loop could not resolve and applies the reviewer's accept/retract
+decisions as the run resumes from its checkpoint.
 """
 
 import asyncio
@@ -34,7 +40,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.types import Checkpointer, Send
+from langgraph.types import Checkpointer, Send, interrupt
 
 from fie.context import (
     DEFAULT_CHUNKS_PER_SUB_QUESTION,
@@ -50,6 +56,7 @@ from fie.guardrails import BudgetExceededError, BudgetTracker, ainvoke_with_retr
 from fie.llm import bind_structured
 from fie.state import (
     RETRACTED_HEADER,
+    UNRESOLVED_STATUSES,
     BranchResult,
     Claim,
     CriticOutput,
@@ -60,6 +67,7 @@ from fie.state import (
     JudgeOutput,
     QueryRewrite,
     ResearchBranch,
+    ReviewMode,
     SubQuestion,
     SynthesisOutput,
     Verdict,
@@ -107,6 +115,7 @@ def build_graph(
     limits: GraphLimits | None = None,
     k: int = 6,
     chunks_per_sub_question: int = DEFAULT_CHUNKS_PER_SUB_QUESTION,
+    review_mode: ReviewMode = "off",
     checkpointer: Checkpointer = None,
 ) -> CompiledStateGraph[EngineState]:
     """Compile the graph over injected dependencies.
@@ -411,6 +420,55 @@ def build_graph(
             "rejection_feedback": feedback,
         }
 
+    async def review(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
+        """The human-in-the-loop gate (blueprint §4): pause with the
+        unresolved claims, then apply the reviewer's decisions.
+
+        Deliberately **not** wrapped in `guarded`. Every other node is bounded
+        by `node_timeout_seconds` because it holds an LLM call; this one holds
+        a person. `interrupt` raises immediately and the waiting happens
+        outside the graph, so the timeout could never actually fire — but
+        wrapping it would claim otherwise, and the budget stamp it adds is
+        noise for a node that spends nothing.
+
+        A claim with no decision keeps the status the machine gave it, so the
+        gate only ever changes an outcome a human explicitly changed. An
+        accepted claim becomes `accepted`, never `grounded` (see
+        `ClaimStatus`); an explicitly retracted one is normalised to
+        `unsupported`, which is the status `retract` excises.
+        """
+        del config
+        unresolved = [c for c in state.claims if c.status in UNRESOLVED_STATUSES]
+        resumed = cast(
+            list[dict[str, str]],
+            interrupt(
+                {
+                    "unresolved": [
+                        {"claim_id": c.id, "text": c.text, "status": c.status} for c in unresolved
+                    ]
+                }
+            )
+            or [],
+        )
+        # A list, not a mapping — see `ReviewDecision` for why the shape is
+        # part of the contract.
+        decisions = {d["claim_id"]: d["action"] for d in resumed}
+        claims: list[Claim] = []
+        for claim in state.claims:
+            action = decisions.get(claim.id)
+            if action is None or claim.status not in UNRESOLVED_STATUSES:
+                claims.append(claim)
+            elif action == "accept":
+                claims.append(claim.model_copy(update={"status": "accepted"}))
+            else:
+                claims.append(claim.model_copy(update={"status": "unsupported"}))
+        logger.info(
+            "review gate: %d unresolved claim(s), %d decision(s) applied",
+            len(unresolved),
+            sum(1 for c in unresolved if c.id in decisions),
+        )
+        return {"claims": claims}
+
     async def retract(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
         """Deterministically excise still-unsupported claims from the answer
         and list them in a retracted-claims section — never silently drop.
@@ -529,6 +587,16 @@ def build_graph(
             return END
         return sends
 
+    def gate_applies(state: EngineState) -> bool:
+        """Whether this run stops for a human. Checked only once the verify
+        loop is exhausted, so the reviewer sees the claims the system could
+        not resolve on its own rather than ones a loop-back would have."""
+        if review_mode == "off":
+            return False
+        if review_mode == "always":
+            return True
+        return any(c.status in UNRESOLVED_STATUSES for c in state.claims)
+
     def after_verify(state: EngineState) -> list[Send] | str:
         """The loop-back decision (conditional edge). A loop-back is now
         targeted: one Send per failed claim, re-researching only that
@@ -537,7 +605,7 @@ def build_graph(
             return END
         unsupported = [c for c in state.claims if c.status == "unsupported"]
         if not unsupported:
-            return "critic"
+            return "review" if gate_applies(state) else "critic"
         if state.verify_iteration < limits.max_verify_iterations:
             logger.info(
                 "loop-back %d: %d unsupported claim(s) → research",
@@ -567,7 +635,7 @@ def build_graph(
                     )
                 )
             return sends
-        return "retract"
+        return "review" if gate_applies(state) else "retract"
 
     def after_critic(state: EngineState) -> str:
         """The critic gate decision (conditional edge, bounded). A rubric
@@ -603,11 +671,18 @@ def build_graph(
         guarded("research", research, tracker=tracker, timeout_seconds=limits.node_timeout_seconds),
         input_schema=ResearchBranch,
     )
+    # Unguarded and always registered: see `review`. Registering it in every
+    # mode keeps the compiled graph one shape, so a checkpoint written with
+    # the gate on stays loadable by a process that has it off.
+    graph.add_node("review", review)
     graph.add_edge(START, "decompose")
     graph.add_conditional_edges("decompose", fan_out_research, ["research", END])
     graph.add_edge("research", "synthesize")
     graph.add_edge("synthesize", "verify")
-    graph.add_conditional_edges("verify", after_verify, ["research", "retract", "critic", END])
+    graph.add_conditional_edges(
+        "verify", after_verify, ["research", "review", "retract", "critic", END]
+    )
+    graph.add_edge("review", "retract")
     graph.add_edge("retract", "critic")
     graph.add_conditional_edges("critic", after_critic, ["synthesize", "decompose", END])
     return graph.compile(checkpointer=checkpointer)

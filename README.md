@@ -5,15 +5,21 @@ filings — every factual claim verified against a source or explicitly
 retracted. See `financial-intelligence-engine-blueprint.md` for the design and
 `plans/` for the phase-by-phase build.
 
-**Current phase: 3 — production RAG + evaluation.** The Phase 2 topology
-(decompose → parallel research → synthesis → per-claim verification →
-bounded loop-backs → critic) now runs over a real corpus: TSLA, AAPL and
-NVDA filings (last 3 fiscal years of 10-Ks, 10-Qs and earnings 8-Ks),
-ingested structure-aware (tables kept structured, never flattened),
-retrieved from Qdrant with hybrid search + reranking, and numerically
-verified against a local XBRL facts store. Two eval layers (`eval/`)
-measure retrieval and the end-to-end §6 metrics; `uv run eval-agent` is
-the regression gate from here on.
+**Current phase: 4 — backend and deploy.** The Phase 2 topology (decompose →
+parallel research → synthesis → per-claim verification → bounded loop-backs →
+critic) runs over a real corpus: TSLA, AAPL and NVDA filings (last 3 fiscal
+years of 10-Ks, 10-Qs and earnings 8-Ks), ingested structure-aware (tables
+kept structured, never flattened), retrieved from Qdrant with hybrid search +
+reranking, and numerically verified against a local XBRL facts store. Two eval
+layers (`eval/`) measure retrieval and the end-to-end §6 metrics;
+`uv run eval-agent` is the regression gate. Phase 3's exit gate passed 30/30
+on 2026-08-01 — `grounding_rate` 0.972, `hallucination_rate` 0.000,
+`numeric_fidelity` 0.963, `expected_fact_coverage` 1.000.
+
+Phase 4 wraps that engine in a service: a FastAPI surface with an async job
+model, a human-in-the-loop review gate, layered abuse controls, a container,
+and a manual deploy behind the VPS's own nginx. See `docs/security.md` and
+`docs/monitoring.md`.
 
 ## Setup
 
@@ -24,7 +30,9 @@ uv sync
 
 # 1. Start the local stack (Langfuse + Qdrant; first boot takes a minute)
 make langfuse-up
-# 2. Open http://localhost:3000 → sign up → create org + project → copy API keys
+# 2. Open http://localhost:3001 → sign up → create org + project → copy API keys
+#    (3001, not 3000 — remapped so the container stops claiming the port every
+#    other dev server wants. Production tracing is Langfuse Cloud, ADR 0032.)
 # 3. Configure secrets
 cp .env.example .env   # ANTHROPIC_API_KEY, OPENROUTER_API_KEY, LANGFUSE_*,
                        # EDGAR_IDENTITY, VOYAGE_API_KEY (embeddings + rerank),
@@ -44,9 +52,32 @@ spans, EDGAR citations by accession number) and the Langfuse trace URL.
 
 ```bash
 uv run fie ingest --tickers TSLA --years 1 --skip-embed   # partial/offline ingest
+uv run fie resume <run-id>                                # continue a killed run from its checkpoint
+uv run fie export-runs                                    # finished runs → static JSON for the demo
 uv run eval-retrieval --embedding both --rerank both      # retrieval benchmark
 uv run eval-agent                                         # gold set → §6 metrics + baseline gate
 uv run eval-seed                                          # regenerate derived eval sets
+```
+
+### The service
+
+```bash
+uvicorn --factory fie.api.app:create_app --port 8000   # needs API_KEY set
+```
+
+`POST /v1/questions` → `202 {job_id}`, poll `GET /v1/jobs/{id}`, fetch
+`GET /v1/jobs/{id}/result`. Runs holding claims the machine could not resolve
+stop in `awaiting_review`; `GET`/`POST /v1/jobs/{id}/review` lists them and
+resumes the graph from its checkpoint (ADR 0034).
+
+**On the public path the API key identifies, it does not control** — a static
+SPA cannot hold a secret. Turnstile, a USD spend governor, a per-IP quota and
+nginx are the enforcement (ADR 0030, `docs/security.md`).
+
+```bash
+docker compose -f docker-compose.prod.yml up -d   # the VPS stack
+./deploy/deploy.sh                                # decrypt secrets → pull → up → smoke test
+./scripts/burst-test.sh                           # prove the nginx/fail2ban limits, live
 ```
 
 ## Retrieval design (why hybrid + reranking)
@@ -103,5 +134,8 @@ The package mirrors the blueprint's harness layers (`plans/00-overview.md` §5):
 reconciliation, legacy fetch) · `ingest/` (EDGAR pipeline, parsing,
 chunking, facts store, embeddings) · `eval/` (metrics + runners; datasets
 live in the repo-root `eval/`) · `observability/` (Langfuse wiring) ·
-`guardrails/` · `api/` (Phase 4 placeholder). Decisions are logged in
-`docs/decisions/`.
+`guardrails/` · `api/` (the HTTP service: routes, job registry, SQLite store,
+spend governor, Turnstile). Deployment lives in `Dockerfile`,
+`docker-compose.prod.yml`, `deploy/` (nginx, fail2ban, deploy/backup/eval
+scripts) and `.github/workflows/`. Decisions are logged in `docs/decisions/`;
+operations in `docs/security.md` and `docs/monitoring.md`.

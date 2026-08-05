@@ -1,0 +1,362 @@
+{
+  "job_id": "4354e2656aca",
+  "source": "recorded",
+  "created_at": "2026-08-01T10:10:06.640017+00:00",
+  "result": {
+    "run_id": "4354e2656aca",
+    "question": "What litigation involving the App Store does Apple disclose, and what outcomes does it describe?",
+    "answer": "Apple discloses one principal App Store litigation matter: the lawsuit filed by Epic Games, Inc. (\"Epic\") in the U.S. District Court for the Northern District of California (the \"California District Court\") alleging violations of federal and state antitrust laws and California's unfair competition law based on Apple's operation of its App Store [0000320193-25-000057:part-ii--item-1-p002].\n\n**Initial ruling and injunction.** On September 10, 2021, the District Court ruled in favor of Apple on nine of the ten counts in Epic's claim, but found that certain provisions of Apple's App Store Review Guidelines violate California's unfair competition law and issued an injunction (the \"2021 Injunction\") enjoining Apple from prohibiting developers from including in their apps buttons, external links, or other calls to action that direct customers to purchasing mechanisms other than Apple's in-app purchase system [0000320193-23-000077:part-ii--item-1-p001]. The injunction applies to apps on the U.S. storefronts of the iOS and iPadOS App Stores [0000320193-25-000057:part-ii--item-1-p002].\n\n**Ninth Circuit affirmation and stay.** On April 24, 2023, the U.S. Court of Appeals for the Ninth Circuit affirmed the District Court's ruling; on June 30, 2023, it denied both parties' petitions for further review; and on July 17, 2023, it granted Apple's motion to stay enforcement of the injunction pending appeal to the U.S. Supreme Court [0000320193-23-000077:part-ii--item-1-p001].\n\n**Compliance and subsequent disputes.** On January 16, 2024, Apple implemented a plan to comply with the 2021 Injunction and filed a statement of compliance with the California District Court [0000320193-25-000057:part-ii--item-1-p002]. \n\n**April 30, 2025 ruling.** On April 30, 2025, the California District Court found Apple to be in violation of the 2021 Injunction and issued a new injunction (the \"2025 Injunction\") enjoining Apple from imposing any commission or fee on purchases consumers make outside an app; restricting, conditioning, limiting, or prohibiting how developers guide consumers to purchases outside an app; or otherwise interfering with a consumer's choice to proceed in or out of an app [0000320193-25-000057:part-ii--item-1-p002]. The court also denied Apple's motion to narrow or vacate the 2021 Injunction and referred Apple to the U.S. Attorney for the Northern District of California for a determination whether criminal contempt proceedings are appropriate [0000320193-25-000057:part-ii--item-1-p002].\n\n**Appeal to the Ninth Circuit.** Apple appealed the April 2025 decision to the Ninth Circuit [0000320193-25-000073:part-ii--item-1-p002]. Although Apple's request to stay the decision pending appeal was denied, the Ninth Circuit agreed to consider the appeal on an expedited basis with arguments scheduled for October 2025 [0000320193-25-000073:part-ii--item-1-p002].\n\n**Ninth Circuit's December 11, 2025 order.** On December 11, 2025, the Ninth Circuit issued an order upholding the 2025 Injunction in part and modifying certain aspects to allow Apple to require parity in size, form, and placement between Apple's in-app purchase and any links for consumers to make purchases outside an app [0000320193-26-000013:part-ii--item-1-p002]. The Ninth Circuit also held that Apple can charge a commission on link-out purchases, and remanded to the California District Court to further amend or modify the 2025 Injunction consistent with the Ninth Circuit's order [0000320193-26-000013:part-ii--item-1-p002]. The deadline for Apple to file a petition for rehearing is March 2, 2026 [0000320193-26-000006:part-ii--item-1-p002].\n\nApple states it will continue to vigorously defend its actions and employees [0000320193-25-000057:part-ii--item-1-p002].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- Epic disputed Apple's compliance plan and sought to enforce the injunction.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What litigation involving the App Store does Apple disclose?",
+        "rationale": "Identify what specific litigation involving the App Store Apple discloses in its filings.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What outcomes does Apple describe for the disclosed App Store litigation?",
+        "rationale": "Identify the specific outcomes, status, or judgments described for the disclosed App Store litigation.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple discloses a lawsuit filed by Epic Games, Inc. in the U.S. District Court for the Northern District of California alleging violations of federal and state antitrust laws and California's unfair competition law based on Apple's operation of its App Store.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Epic Games, Inc. (“Epic”) filed a lawsuit in the U.S. District Court for the Northern District of California (the “California District Court”) against the Company alleging violations of federal and state antitrust laws and California’s unfair competition law based upon the Company’s operation of its App Store.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "On September 10, 2021, the District Court ruled in favor of Apple on nine of the ten counts in Epic's claim.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…law based upon the Company’s operation of its App Store. On September 10, 2021, the District Court ruled in favor of the Company with respect…",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000077:part-ii--item-1-p001",
+            "doc_id": "AAPL-10-Q-0000320193-23-000077",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-23-000077",
+            "filing_date": "2023-08-04"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "The District Court found that certain provisions of Apple's App Store Review Guidelines violate California's unfair competition law and issued an injunction enjoining Apple from prohibiting developers from including in their apps buttons, external links, or other calls to action that direct customers to purchasing mechanisms other than Apple's in-app purchase system.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The District Court found that certain provisions of the Company’s App Store Review Guidelines violate California’s unfair competition law and issued an injunction enjoining the Company from prohibiting developers from including in their apps external links that direct customers to purchasing mechanisms other than Apple in-app purchasing.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000077:part-ii--item-1-p001",
+            "doc_id": "AAPL-10-Q-0000320193-23-000077",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-23-000077",
+            "filing_date": "2023-08-04"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "The injunction applies to apps on the U.S. storefronts of the iOS and iPadOS App Stores.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The 2021 Injunction applies to apps on the U.S. storefronts of the iOS and iPadOS® App Stores.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "On April 24, 2023, the U.S. Court of Appeals for the Ninth Circuit affirmed the District Court's ruling.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On April 24, 2023, the U.S. Court of Appeals for the Ninth Circuit (the “Circuit Court”) affirmed the District Court’s ruling.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000077:part-ii--item-1-p001",
+            "doc_id": "AAPL-10-Q-0000320193-23-000077",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-23-000077",
+            "filing_date": "2023-08-04"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "On June 30, 2023, the Ninth Circuit denied both parties' petitions for further review.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On June 30, 2023, the Circuit Court denied both petitions.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000077:part-ii--item-1-p001",
+            "doc_id": "AAPL-10-Q-0000320193-23-000077",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-23-000077",
+            "filing_date": "2023-08-04"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-7",
+        "text": "On July 17, 2023, the Ninth Circuit granted Apple's motion to stay enforcement of the injunction pending appeal to the U.S. Supreme Court.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On July 17, 2023, the Circuit Court granted Apple’s motion to stay enforcement of the injunction pending appeal to the U.S. Supreme Court.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000077:part-ii--item-1-p001",
+            "doc_id": "AAPL-10-Q-0000320193-23-000077",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-23-000077",
+            "filing_date": "2023-08-04"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "On January 16, 2024, Apple implemented a plan to comply with the 2021 Injunction and filed a statement of compliance with the California District Court.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On January 16, 2024, the Company implemented a plan to comply with the 2021 Injunction and filed a statement of compliance with the California District Court.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-11",
+        "text": "On April 30, 2025, the California District Court found Apple to be in violation of the 2021 Injunction and issued a new injunction enjoining Apple from imposing any commission or fee on purchases consumers make outside an app; restricting, conditioning, limiting, or prohibiting how developers guide consumers to purchases outside an app; or otherwise interfering with a consumer's choice to proceed in or out of an app.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On April 30, 2025, the California District Court found the Company to be in violation of the 2021 Injunction and enjoined the Company from imposing any commission or any fee on purchases that consumers make outside an app; restricting, conditioning, limiting, or prohibiting how developers guide consumers to purchases outside an app; or otherwise interfering with a consumer’s choice to proceed in or out of an app.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-12",
+        "text": "The California District Court denied Apple's motion to narrow or vacate the 2021 Injunction and referred Apple to the U.S. Attorney for the Northern District of California for a determination whether criminal contempt proceedings are appropriate.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The California District Court also denied the Company’s motion to narrow or vacate the 2021 Injunction and referred the Company to the U.S. Attorney for the Northern District of California for a determination whether criminal contempt proceedings are appropriate.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-13",
+        "text": "Apple appealed the April 2025 decision to the Ninth Circuit.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On April 30, 2025, the California District Court found the Company to be in violation of the 2021 Injunction... The Company will continue to vigorously defend its actions and employees, and has appealed the California District Court’s most recent decision to the U.S. Court of Appeals for the Ninth Circuit (the “Ninth Circuit Court”).",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000073:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000073",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000073",
+            "filing_date": "2025-08-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-14",
+        "text": "Apple's request to stay the decision pending appeal was denied, but the Ninth Circuit agreed to consider the appeal on an expedited basis with arguments scheduled for October 2025.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Although the Company’s request to stay the decision pending appeal was denied, the Ninth Circuit Court has agreed to consider the Company’s appeal on an expedited basis, with arguments scheduled for October 2025.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000073:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000073",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000073",
+            "filing_date": "2025-08-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-15",
+        "text": "On December 11, 2025, the Ninth Circuit issued an order upholding the 2025 Injunction in part and modifying certain aspects to allow Apple to require parity in size, form, and placement between Apple's in-app purchase and any links for consumers to make purchases outside an app.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "On December 11, 2025, the Ninth Circuit Court issued an order upholding the 2025 Injunction in part and modifying certain aspects to allow the Company to require parity in size, form and placement between the Company’s in-app purchase and any links for consumers to make purchases outside an app.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000013:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000013",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-26-000013",
+            "filing_date": "2026-05-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-16",
+        "text": "The Ninth Circuit held that Apple can charge a commission on link-out purchases, and remanded to the California District Court to further amend or modify the 2025 Injunction consistent with the Ninth Circuit's order.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The Ninth Circuit Court also held that the Company can charge a commission on link-out purchases, and remanded to the California District Court to further amend or modify the 2025 Injunction, consistent with the Ninth Circuit Court’s order.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000013:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000013",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-26-000013",
+            "filing_date": "2026-05-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-17",
+        "text": "The deadline for Apple to file a petition for rehearing is March 2, 2026.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The deadline for the Company to file a petition for rehearing is March 2, 2026.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000006:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000006",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-26-000006",
+            "filing_date": "2026-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-18",
+        "text": "Apple states it will continue to vigorously defend its actions and employees.",
+        "claim_type": "forward_looking",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "attribution",
+        "supporting_span": "The Company will continue to vigorously defend its actions and employees, including by appealing the California District Court’s most recent decision.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-9",
+        "text": "Epic disputed Apple's compliance plan and sought to enforce the injunction.",
+        "claim_type": "qualitative",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "semantic",
+        "supporting_span": null,
+        "feedback": "The excerpt states that on January 16, 2024, Apple implemented a compliance plan, and later on April 30, 2025, the court found Apple in violation of the injunction. However, the text does not mention Epic disputing Apple's compliance plan or seeking to enforce the injunction.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000057:part-ii--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-25-000057",
+            "section": "Part II, Item 1",
+            "accession_no": "0000320193-25-000057",
+            "filing_date": "2025-05-02"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 49725,
+      "cost_usd_used": 0.050406369999999985
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

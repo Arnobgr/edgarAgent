@@ -1,0 +1,24 @@
+# Everything the image must never carry. `data/` is the big one: the corpus,
+# the 256 MB checkpoint store and the SQLite files all live there and reach
+# the container through a named volume, not a layer.
+data/
+.venv/
+.git/
+.env
+.env.example
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local-only reference material and generated reports.
+financial-intelligence-engine-blueprint.md
+eval/reports/
+docs/
+plans/
+recorded/
+.DS_Store

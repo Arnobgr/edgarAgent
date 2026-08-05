@@ -5,17 +5,26 @@ Shared by the CLI (`fie ask` / `fie resume`) and the end-to-end eval runner
 """
 
 import logging
+from typing import Any
 
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.types import Command
 
 from fie.config import Settings
 from fie.graph import GraphLimits, build_graph
 from fie.guardrails import BudgetTracker
 from fie.llm import bind_structured, get_model
 from fie.observability import get_langfuse_handler, trace_metadata
-from fie.state import EngineState, RunBudget, RunResult, build_run_result
+from fie.state import (
+    EngineState,
+    ReviewDecision,
+    ReviewMode,
+    RunBudget,
+    RunResult,
+    build_run_result,
+)
 from fie.tools.fact_lookup import FactLookupOutput, XbrlFactLookup
 from fie.tools.reconcile import FactMappingOutput, XbrlNumericReconciler
 from fie.tools.retrieval import (
@@ -104,9 +113,19 @@ async def answer_question(
     settings: Settings,
     run_name: str = "fie-ask",
     extra_callbacks: list[BaseCallbackHandler] | None = None,
+    review_mode: ReviewMode = "off",
+    review_decisions: list[ReviewDecision] | None = None,
 ) -> RunResult:
     """Run (question given) or resume (question None) one engine run over
-    the production corpus, checkpointed and traced."""
+    the production corpus, checkpointed and traced.
+
+    Three entries, one function, because this stays the single production
+    wiring point: a fresh question, a plain resume of a killed run, and a
+    resume carrying the reviewer's decisions from the human-in-the-loop gate
+    (`review_decisions`). A run that stopped at the gate comes back with
+    `awaiting_review=True` and no exception — the caller checks the flag, the
+    same way a guardrail abort is read off `error` rather than caught.
+    """
     retriever = build_production_retriever(settings)
     reconciler = build_production_reconciler(settings)
     fact_lookup = build_production_fact_lookup(settings)
@@ -144,6 +163,7 @@ async def answer_question(
                 ),
                 k=settings.retrieval_k,
                 chunks_per_sub_question=settings.chunks_per_sub_question,
+                review_mode=review_mode,
                 checkpointer=saver,
             )
             config: RunnableConfig = {
@@ -152,18 +172,25 @@ async def answer_question(
                 "metadata": trace_metadata(run_id),
                 "callbacks": callbacks,
             }
-            initial = (
-                None
-                if question is None
-                else EngineState(
+            initial: Any
+            if review_decisions is not None:
+                initial = Command(resume=[d.model_dump() for d in review_decisions])
+            elif question is None:
+                initial = None
+            else:
+                initial = EngineState(
                     question=question,
                     run_budget=RunBudget(
                         max_tokens=settings.budget_max_tokens,
                         max_cost_usd=settings.budget_max_cost_usd,
                     ),
                 )
-            )
             raw = await graph.ainvoke(initial, config)
+            # `ainvoke` returns the state either way, so the pause has to be
+            # read from the checkpoint: a graph parked at an interrupt has a
+            # next task, a finished one has none.
+            snapshot = await graph.aget_state(config)
+            awaiting_review = bool(snapshot.next)
     finally:
         reconciler.close()
         fact_lookup.close()
@@ -171,4 +198,6 @@ async def answer_question(
     if trace is not None:
         trace.flush()
         logger.info("Langfuse trace: %s", trace.trace_url)
-    return build_run_result(run_id, EngineState.model_validate(raw))
+    return build_run_result(
+        run_id, EngineState.model_validate(raw), awaiting_review=awaiting_review
+    )
