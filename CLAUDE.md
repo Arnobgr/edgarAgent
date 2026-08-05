@@ -11,12 +11,22 @@ every factual claim is verified against a source or explicitly retracted.
 The design spec is `financial-intelligence-engine-blueprint.md` (gitignored,
 local-only). `plans/00-overview.md` resolves its open decisions and defines
 conventions; each phase has a self-contained plan in `plans/`. **Phase 3 is
-complete. Phase 4 is code-complete and undeployed** — the service, container,
-nginx/fail2ban config, secrets scaffolding, CI and ADRs 0026-0037 are all
-written and green; nothing has run on the VPS, and the human prerequisites in
-`plans/phase-4-backend-and-deploy.md` (age key, Turnstile, Langfuse Cloud
-project, provider caps, uptime prober) are open. The exit gate first passed on
-2026-07-28, and
+complete. Phase 4 is deployed on the private path** (2026-08-05) — the service
+answers real questions on the VPS, reachable over the tailnet and nothing else,
+with both crons installed and each proven by an actual run. The corpus is on
+the box and was counted equal to the developer's: 28,550 facts, 78 filings, 34
+accessions, 4,181 Qdrant points, same dense+sparse config.
+
+**What is open is the public path, and it is all Phase 5.** No nginx vhost, no
+Turnstile widget (the widget validates the hostname it rendered on, so it
+cannot exist before Cloudflare Pages does), `FIE_TURNSTILE_REQUIRED=false`, and
+the uptime prober paused. Two exit-gate items wait on that vhost:
+`scripts/burst-test.sh` and one full `eval-agent` on the box. **Deferring the
+full run was a decision, not an oversight** — the corpus is provably identical,
+Phase 4 changed no part of the answer path, and the box's 1-CPU/640 MB cap
+plausibly moves only `degraded_attempts`, which the 1 September cron will
+settle. Run it early if anything touches retrieval, prompts, models or the
+corpus first. The exit gate first passed on 2026-07-28, and
 `plans/phase-3-recall-and-retraction.md` then fixed the three post-gate
 issues (ADRs 0020-0025). Its Stage E re-baseline **ran on 2026-08-01 and
 passed 30/30**, so `eval/baselines.json` now holds run `agent-20260801-122527`:
@@ -151,9 +161,16 @@ make langfuse-up / langfuse-down   # whole dev stack (Langfuse + Qdrant)
 make qdrant-up                     # Qdrant only — enough for ask/eval
 
 ./deploy/deploy.sh          # on the VPS: decrypt secrets → pull → up -d → smoke test
-./deploy/monthly-eval.sh    # the drift eval; reads the same secrets/ the service does
+./deploy/monthly-eval.sh    # the full eval, in a one-off container off the deployed image
+./deploy/backup.sh          # tar fie_api_data, 7-day retention (~16 MB steady state)
 ./scripts/burst-test.sh     # nginx + fail2ban limits, against the live host only
 ```
+
+`./deploy/monthly-eval.sh` is also **the way to run a full eval on the VPS by
+hand** — there is no `uv` on that box and there is deliberately not going to
+be. `docs/deploy.md` carries the rest of the procedure, including corpus
+seeding and a `crontab -` pipe that installs an empty crontab without saying
+so.
 
 Langfuse UI is on **http://localhost:3001** (deliberately remapped off 3000;
 the README now says so too). Qdrant on 6333. **Production tracing is Langfuse
@@ -353,7 +370,44 @@ Deployment: `Dockerfile` + `docker-compose.prod.yml` + `deploy/`. CI runs
 ruff/mypy/pytest and publishes the image; **it holds no secret at all**, and
 `grep -r 'secrets\.' .github/` returning only `GITHUB_TOKEN` is the gate
 (ADR 0037). `docs/security.md` and `docs/monitoring.md` are the operational
-view.
+view; `docs/deploy.md` is the procedure, written from the first real deploy
+rather than from the plan.
+
+### What deploying found, and the tests could not
+
+**The image carries code, not data, and the corpus cannot be rebuilt on the
+box.** `run_ingest` always calls the acquire stage, which raises without
+`EDGAR_IDENTITY` — personal data deliberately kept off the VPS. So `ingest.db`
+(13 MB) and a Qdrant snapshot (71 MB) travel from the machine that ingested;
+dev and prod are pinned to Qdrant `v1.18.0` so a snapshot restores exactly.
+This step exists in no plan and the deploy is useless without it.
+
+**`/healthz` reported `facts_store: true` over an empty store.** SQLite creates
+a database on connect, so the app made a 0-byte `ingest.db` and `path.exists()`
+said yes — the service advertising ready for the one thing it could not do,
+with every numeric claim failing and the monitor green. `_facts_store_ok()`
+reads a row instead. **`path.exists()` is never the question for a SQLite
+file**; suspect this check first if numbers fail while health is green.
+
+**Compose bind-mounts preserve host ownership**, so root-owned 0400 secrets are
+unreadable to the container's uid 10001 and the app dies naming the *field*,
+not the cause. `decrypt-secrets.sh` chowns. Relatedly, `cap_drop: ALL` removes
+CAP_CHOWN, so a container cannot fix ownership inside its own volume even as
+root — that is a host-side operation at the volume mountpoint.
+
+**The monthly eval runs in a one-off container, not on the host** (ADR 0036,
+amended the day it was written). The host has no `uv`, no `data/` and no route
+to Qdrant, which publishes no port. Fixing that host-side needed a second copy
+of the corpus, and **a second corpus is wrong rather than merely wasteful** —
+re-seed one and the eval reports drift that is really a stale snapshot. The
+container uses the deployed image and the service's own volume, so the drift
+run measures the artifact that is actually serving.
+
+**`backup.sh` archives `fie_api_data` only.** Qdrant's volume was 48 of the
+first night's 50 MB and is a snapshot of the developer's collection; a local
+backup only survives failures where that original is fine. What cannot be
+recreated — `checkpoints.db` and the spend ledger in `api.db` — is 2.2 MB a
+night.
 
 ### Everything else
 

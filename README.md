@@ -18,7 +18,13 @@ on 2026-08-01 — `grounding_rate` 0.972, `hallucination_rate` 0.000,
 
 Phase 4 wraps that engine in a service: a FastAPI surface with an async job
 model, a human-in-the-loop review gate, layered abuse controls, a container,
-and a manual deploy behind the VPS's own nginx. See `docs/security.md` and
+and a manual deploy behind the VPS's own nginx. **It is deployed and
+answering** — on a private path, reachable over the tailnet and nothing else,
+with a nightly backup and a monthly drift eval on cron. The public path
+(nginx vhost, Turnstile, TLS) is Phase 5: Turnstile validates the hostname its
+widget rendered on, and that hostname does not exist yet. `deploy.sh` refuses
+to start with Turnstile off *and* a public vhost present, so the two cannot
+drift apart. See `docs/deploy.md`, `docs/security.md` and
 `docs/monitoring.md`.
 
 ## Setup
@@ -35,8 +41,8 @@ make langfuse-up
 #    other dev server wants. Production tracing is Langfuse Cloud, ADR 0032.)
 # 3. Configure secrets
 cp .env.example .env   # ANTHROPIC_API_KEY, OPENROUTER_API_KEY, LANGFUSE_*,
-                       # EDGAR_IDENTITY, VOYAGE_API_KEY (embeddings + rerank),
-                       # OPENAI_API_KEY (embedding benchmark baseline only)
+                       # EDGAR_IDENTITY, OPENAI_API_KEY (production embeddings),
+                       # VOYAGE_API_KEY (benchmark arm only — ADR 0011)
 # 4. Ingest the corpus (resumable; re-runs skip everything already ingested)
 uv run fie ingest
 ```
@@ -77,8 +83,16 @@ nginx are the enforcement (ADR 0030, `docs/security.md`).
 ```bash
 docker compose -f docker-compose.prod.yml up -d   # the VPS stack
 ./deploy/deploy.sh                                # decrypt secrets → pull → up → smoke test
-./scripts/burst-test.sh                           # prove the nginx/fail2ban limits, live
+./deploy/monthly-eval.sh                          # the full eval, in a container off the deployed image
+./deploy/backup.sh                                # tar fie_api_data, 7-day retention
+./scripts/burst-test.sh                           # prove the nginx/fail2ban limits — needs the public vhost
 ```
+
+The VPS runs no Python toolchain by design, so `monthly-eval.sh` is also how a
+full eval is run there by hand. `docs/deploy.md` covers the rest, including the
+step no plan had: **the image carries code, not data**, and the corpus cannot
+be rebuilt on the box because ingestion needs an `EDGAR_IDENTITY` deliberately
+kept off it.
 
 ## Retrieval design (why hybrid + reranking)
 
@@ -94,15 +108,15 @@ then reranked by a hosted cross-encoder (`src/fie/tools/retrieval/`):
 - **RRF fusion** combines the two rankings without tuning score
   normalization across incomparable score distributions, server-side in
   one query.
-- **Reranking.** The fused top-50 is recall-oriented; the agent reads only
-  k=8 chunks, so precision at small k is what matters. A cross-encoder
-  reads query and chunk *together* — the measured precision win at k≤10
-  that bi-encoders structurally can't provide. Primary: Voyage
-  `rerank-2.5` (single vendor with the embeddings if Voyage wins the
-  benchmark); documented local fallback: `bge-reranker-v2-m3`
-  (self-hosted, no per-call cost, wants a GPU). The rerank on/off delta is
-  an arm of `eval-retrieval`, so the stage justifies itself with numbers
-  or gets removed.
+- **Reranking — benchmarked, then switched off.** The fused top-50 is
+  recall-oriented and the agent reads only k=8, so precision at small k is
+  what matters, and a cross-encoder reads query and chunk *together* in a
+  way bi-encoders structurally cannot. That argument was still an arm of
+  `eval-retrieval` rather than an assumption, and the measured delta was
+  ≈0 — so `reranker_provider` is `none` (ADR 0011). The stage was told to
+  justify itself with numbers or be removed; it was removed. Voyage
+  `rerank-2.5` and a self-hosted `bge-reranker-v2-m3` stay documented as
+  the options if that ever changes.
 - **Filtered retrieval.** Payload indexes on ticker/form/period/chunk-type;
   filters are inferred from the query only when it names exactly one
   company or one explicit period — never on ambiguous or cross-company
@@ -110,7 +124,9 @@ then reranked by a hosted cross-encoder (`src/fie/tools/retrieval/`):
 
 Embedding model (voyage-finance-2 vs text-embedding-3-small) and the
 reranker are **decided by the retrieval eval**, not by taste — ADR 0011
-holds the measured numbers.
+holds the measured numbers. `text-embedding-3-small` won: roughly tied with
+Voyage at the top and ahead on deeper recall, so it is what production
+embeds with, one collection per model so the arms stay side by side.
 
 Numeric truth is separate from retrieval: every numeric claim reconciles
 against a local **XBRL facts store** (SQLite), exactly, at the claim's
@@ -138,4 +154,6 @@ live in the repo-root `eval/`) · `observability/` (Langfuse wiring) ·
 spend governor, Turnstile). Deployment lives in `Dockerfile`,
 `docker-compose.prod.yml`, `deploy/` (nginx, fail2ban, deploy/backup/eval
 scripts) and `.github/workflows/`. Decisions are logged in `docs/decisions/`;
-operations in `docs/security.md` and `docs/monitoring.md`.
+operations in `docs/security.md` and `docs/monitoring.md`, and the deploy
+procedure in `docs/deploy.md` — written from the first real deploy, not from
+the plan, and it says which four things that deploy broke.
