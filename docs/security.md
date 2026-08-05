@@ -44,6 +44,20 @@ into `docker inspect`, crash dumps, child processes and any library that dumps
 | `API_KEY`, `TURNSTILE_SECRET_KEY` | ✓ | — | — |
 | `ANTHROPIC_API_KEY` | **✗** | ✓ (judge only) | — |
 | `EDGAR_IDENTITY` | **✗** | **✗** | — |
+| `ghcr_token` | **✗** | **✗** | — (deploy tooling only) |
+
+`ghcr_token` is the one entry in `secrets.enc.yaml` that names no `Settings`
+field. It exists because the repository is private, so GHCR made the container
+package private too and an anonymous pull gets a 403. It is a classic GitHub
+token scoped to **`read:packages` and nothing else** — it cannot write a
+package and it cannot reach a machine, which is what separates it from the
+tailnet credential ADR 0037 refused. `deploy/deploy.sh` uses it for one
+`docker login` and the application never sees it.
+
+**This is temporary by plan.** The repository goes public after the final
+phase, following a pass to remove dead code, stale docs and any PII. At that
+point: make the package public, delete `ghcr_token` from the store, and delete
+the login block from `deploy.sh`.
 
 `EDGAR_IDENTITY` is the most sensitive value in the project — it is personal
 data, required by SEC's user-agent policy, and this repo's history has been
@@ -53,19 +67,35 @@ path nor the eval holds it.
 ### First-time setup
 
 ```bash
-# Once, on the Mac. The private half goes in a password manager as well —
-# two machines can both fail, and losing this key loses every secret in the
-# file's history, not just today's values.
-age-keygen -o ~/.config/sops/age/keys.txt
+# Once, on the Mac. `age-keygen` does not create the directory itself.
+# The private half goes in a password manager as well — two machines can
+# both fail, and losing this key loses every secret in the file's history,
+# not just today's values.
+mkdir -p "$HOME/Library/Application Support/sops/age"
+age-keygen -o "$HOME/Library/Application Support/sops/age/keys.txt"
+chmod 600 "$HOME/Library/Application Support/sops/age/keys.txt"
 
 # Paste the printed public key into .sops.yaml, replacing the placeholder.
+# Encrypt BEFORE the file holds anything real: a file created first and
+# encrypted later spends that gap as plaintext under a name that looks safe.
 cp secrets.example.yaml secrets.enc.yaml
 sops --encrypt --in-place secrets.enc.yaml
 sops secrets.enc.yaml        # edit values; commit the encrypted file
 
-# On the VPS: copy the same key to /root/.config/sops/age/keys.txt (0600),
+# Verify before every commit. Both counts must be non-zero.
+grep -c '^sops:' secrets.enc.yaml
+grep -c 'ENC\[AES256_GCM' secrets.enc.yaml
+
+# On the VPS (Linux): the same key at /root/.config/sops/age/keys.txt (0600),
 # then deploy/deploy.sh decrypts into ./secrets/ automatically.
 ```
+
+> **`sops` reads the age key from the OS config directory, and that path
+> differs by platform** — `~/Library/Application Support/sops/age/` on macOS,
+> `~/.config/sops/age/` on Linux. The Linux path on a Mac produces
+> `identity did not match any of the recipients`, which reads like a wrong key
+> and is not one. `deploy/decrypt-secrets.sh` sets `SOPS_AGE_KEY_FILE`
+> explicitly, so the VPS side is fixed rather than inferred.
 
 Key names in `secrets.enc.yaml` **must** be the lowercased field names on
 `fie.config.Settings`. A typo produces a setting left at its default rather

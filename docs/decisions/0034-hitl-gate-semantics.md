@@ -68,15 +68,15 @@ reconstructing the graph (ADR 0027).
 
 ## Honest limits
 
-- The gate is `off` in production config today and `unresolved` in
-  `docker-compose.prod.yml`. On the public path that means a stranger can
-  accept a claim into the prose. It cannot move `grounding_rate`, and the
-  answer records the claim as `accepted` rather than `grounded` — but it is a
-  demo affordance, and switching it to `off` publicly is a one-line change if
-  that trade stops looking right.
+- **The gate is `off` on the public path** (`docker-compose.prod.yml`, decided
+  2026-08-05). It shipped as `unresolved`, and two limits below decided
+  against it. The feature stays exercised by tests and reachable over the
+  tailnet; it is simply not offered to strangers.
 - There is no reviewer identity. A decision is anonymous, so the record shows
   that a human ruled, not which one. Fine for one operator; not fine for
-  anything audited.
+  anything audited — and on a page with no login, "a human" means any visitor.
 - A job can wait at the gate indefinitely, holding a semaphore slot. Nothing
   expires it, and with `api_max_concurrent_runs: 2` two abandoned reviews
-  would close the public path until a restart.
+  would close the public path until a restart. **This is the concrete reason
+  the public path runs `off` rather than a hypothetical one**: the failure
+  needs no bad actor, only two people who close a tab.

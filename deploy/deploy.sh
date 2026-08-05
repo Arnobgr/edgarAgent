@@ -16,8 +16,32 @@ cd "$(dirname "$0")/.."
 COMPOSE="docker compose -f docker-compose.prod.yml --project-name fie"
 HEALTH_URL="http://127.0.0.1:${FIE_API_PORT:-8412}/healthz"
 
+# The one combination that must never ship: Turnstile off *and* the public
+# vhost installed. Turnstile is what makes a copied API key worthless
+# (ADR 0030), and the key is copyable by design — the SPA ships it. Turning it
+# off is legitimate only while nothing but the tailnet can reach the service,
+# so the interlock is between the two facts rather than a warning in a doc.
+if [[ "${FIE_TURNSTILE_REQUIRED:-true}" == "false" ]] \
+   && compgen -G "/etc/nginx/sites-enabled/fie*" > /dev/null; then
+    echo "!! Refusing to deploy: TURNSTILE_REQUIRED=false with the public" >&2
+    echo "   vhost installed. Either remove /etc/nginx/sites-enabled/fie*" >&2
+    echo "   or configure Turnstile and drop the override." >&2
+    exit 1
+fi
+
 echo "==> Decrypting secrets"
 ./deploy/decrypt-secrets.sh
+
+# The repository is private, so GHCR made the package private too, and an
+# anonymous pull gets a 403. The token is scoped to `read:packages` and
+# nothing else — it cannot write a package and it cannot reach a machine,
+# which is what makes it a different animal from the tailnet credential
+# ADR 0037 refused. When the repository goes public after the final phase,
+# make the package public and delete this block along with `ghcr_token`.
+if [[ -f ./secrets/ghcr_token ]]; then
+    echo "==> Logging in to ghcr.io"
+    docker login ghcr.io -u "${GHCR_USER:-Arnobgr}" --password-stdin < ./secrets/ghcr_token
+fi
 
 echo "==> Pulling the image"
 $COMPOSE pull

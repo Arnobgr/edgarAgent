@@ -25,9 +25,25 @@ services:
       API_LOG_JSON: "true"
       # Explicit rather than inherited: this is the public path, and the one
       # control holding it must never be off by omission.
-      TURNSTILE_REQUIRED: "true"
+      # Defaults to on, and overriding it is a deliberate act at the shell
+      # rather than an edit to this file — an edit is the kind of thing that
+      # gets committed and forgotten, and this is the control that makes a
+      # copied API key worthless (ADR 0030).
+      #
+      # `false` is legitimate for exactly one configuration: the service bound
+      # to loopback with **no nginx vhost installed**, reachable only over the
+      # tailnet. Turnstile validates the hostname the widget rendered on, so a
+      # widget cannot exist before the Cloudflare Pages hostname does.
+      #
+      #   FIE_TURNSTILE_REQUIRED=false docker compose -f docker-compose.prod.yml up -d
+      TURNSTILE_REQUIRED: "${FIE_TURNSTILE_REQUIRED:-true}"
       API_CORS_ORIGINS: '["https://fie.pages.dev"]'
-      API_REVIEW_MODE: unresolved
+      # `off` on the public path, decided 2026-08-05. `unresolved` would stop a
+      # run whenever the machine could not prove a claim and wait for a person
+      # — and on a page with no login that person is any visitor. It also let
+      # an abandoned review hold one of two concurrency slots forever. See the
+      # honest-limits section of ADR 0034.
+      API_REVIEW_MODE: "off"
     # Compose secrets, not env vars: env leaks into `docker inspect`, crash
     # dumps, child processes and anything that dumps `environ` (ADR 0029).
     # `get_settings()` reads /run/secrets when the directory exists.

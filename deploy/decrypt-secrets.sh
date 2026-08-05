@@ -7,6 +7,11 @@
 # deliver. The file names are the *field* names in `fie.config.Settings`,
 # lowercased — that mapping is the whole contract.
 #
+# One exception, and it is deliberate: `ghcr_token` names no `Settings` field.
+# It belongs to the deploy tooling (`docker login ghcr.io`), and it lives here
+# so there is one encrypted store rather than one plus a stray file on the box.
+# Compose mounts only the secrets it declares, so the application never sees it.
+#
 # The files stay on disk: compose bind-mounts them into the container, so
 # deleting them after a deploy would break the next restart. They are
 # root-owned 0400 and `secrets/` is gitignored.

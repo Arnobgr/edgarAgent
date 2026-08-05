@@ -21,4 +21,4 @@
 # `docker-compose.prod.yml` agree on file names without decrypting anything.
 creation_rules:
   - path_regex: secrets\.enc\.yaml$
-    age: age1REPLACE_WITH_THE_PUBLIC_KEY_FROM_AGE_KEYGEN
+    age: age1vpk2ckq5qcekgvl8kzyegxp8pm9mey5fpxx6f2g5aer06djjyy3sung8wa
