@@ -81,10 +81,11 @@ echo "=== $(date -u +%FT%TZ) monthly eval starting ==="
 # line it is measured against.
 #
 # The `data` volume is the service's own, deliberately: one corpus, one truth.
-# The eval and the service therefore share `checkpoints.db`; SQLite's busy
-# timeout plus the runner's retry cover the contention, and at 03:00 on the
-# 1st there is nothing to contend with. The alternative — a private volume —
-# trades that for a corpus copy that can go stale without saying so.
+# The eval and the service therefore share `checkpoints.db`, which the saver
+# opens in WAL mode (there is a `.db-wal` beside it on the box) — so a reader
+# never blocks a writer, and the busy timeout plus the runner's retry cover
+# what is left. The alternative, a private volume, trades that contention for
+# a corpus copy that can go stale without saying so.
 #
 # `|| status=$?` rather than `status=$?`: under `set -e` a failing run exits
 # the script before the line below can report it, and the exit status is the

@@ -9,6 +9,14 @@
 #
 # `checkpoints.db` is inside `fie_api_data` and was already 256 MB before
 # this phase, so the retention below is deliberately short.
+#
+# **A tar of a live WAL-mode SQLite file is not a guaranteed-consistent
+# snapshot** — the `.db` and its `.db-wal` are read at different instants, so
+# a write landing between them yields an archive that needs recovery. Accepted
+# rather than fixed: at 04:00 nothing is writing, `ingest.db` is read-only in
+# production, and the file this could damage is `checkpoints.db`, which holds
+# diagnostics rather than the corpus. `sqlite3 .backup` per file is the fix if
+# that ever stops being true.
 set -euo pipefail
 
 BACKUP_DIR="${FIE_BACKUP_DIR:-/var/backups/fie}"
