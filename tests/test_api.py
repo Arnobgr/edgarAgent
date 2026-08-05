@@ -7,12 +7,16 @@ their own file because they guard real money.
 """
 
 import asyncio
+import sqlite3
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import pytest
 from pydantic import SecretStr
 
 from fie.api import create_app
+from fie.api.app import _facts_store_ok
 from fie.api.models import RunPayload
 from fie.api.progress import _phase
 from fie.api.store import ApiStore
@@ -141,6 +145,41 @@ async def test_healthz_needs_no_key_and_never_gates_on_langfuse(api_settings: Se
         assert body["qdrant"] is False
         assert body["status"] == "degraded"
         assert body["langfuse_configured"] is False
+
+
+@pytest.mark.parametrize(
+    ("build", "expected"),
+    [
+        pytest.param(lambda p: None, False, id="absent"),
+        pytest.param(lambda p: p.touch(), False, id="empty-file"),
+        pytest.param(
+            lambda p: sqlite3.connect(p).executescript("CREATE TABLE facts (id INTEGER); "),
+            False,
+            id="table-but-no-rows",
+        ),
+        pytest.param(
+            lambda p: sqlite3.connect(p).executescript(
+                "CREATE TABLE facts (id INTEGER); INSERT INTO facts VALUES (1);"
+            ),
+            True,
+            id="has-facts",
+        ),
+    ],
+)
+def test_facts_store_health_is_about_rows_not_about_a_file(
+    tmp_path: Path, build: Callable[[Path], object], expected: bool
+) -> None:
+    """The first real deploy reported `facts_store: true` over an empty store.
+
+    SQLite creates a database on connect, so the container had made a 0-byte
+    `ingest.db` before the real one arrived and `path.exists()` said yes. A
+    health check that goes green over an empty store reports ready for the one
+    job the system cannot do — every numeric claim would fail verification
+    while the service insisted it was fine.
+    """
+    path = tmp_path / "ingest.db"
+    build(path)
+    assert _facts_store_ok(path) is expected
 
 
 async def test_the_service_refuses_to_start_without_an_api_key(api_settings: Settings) -> None:

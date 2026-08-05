@@ -31,6 +31,16 @@ fi
 mkdir -p secrets
 chmod 700 secrets
 
+# The uid `fie` runs as inside the image (see the `useradd` in the Dockerfile).
+# **Mode 0400 alone is not enough**: compose bind-mounts these files into the
+# container, which keeps their host ownership, and a root-owned 0400 file is
+# unreadable to a non-root process. The container then dies at startup with
+# `error getting value for field ... from source "SecretsSettingsSource"`,
+# which names the field and not the cause. Found on the first real deploy,
+# 2026-08-05. Root still reads these regardless of owner, so `monthly-eval.sh`
+# is unaffected.
+CONTAINER_UID="${FIE_CONTAINER_UID:-10001}"
+
 # Every key in the decrypted YAML becomes ./secrets/<key>. Adding a secret is
 # therefore a one-line change to secrets.enc.yaml plus a line in
 # docker-compose.prod.yml — no change here.
@@ -41,6 +51,7 @@ sops --decrypt secrets.enc.yaml | while IFS= read -r line; do
     value="${value%\"}"
     value="${value#\"}"
     printf '%s' "$value" > "secrets/${name}"
+    chown "${CONTAINER_UID}:${CONTAINER_UID}" "secrets/${name}"
     chmod 400 "secrets/${name}"
 done
 

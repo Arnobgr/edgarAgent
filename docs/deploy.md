@@ -1,0 +1,136 @@
+# Deploying
+
+Written from the first real deploy (2026-08-05), not from the plan. Every
+step here is one that actually had to happen, and the four that are not
+obvious are marked.
+
+## Prerequisites, once
+
+**The image must exist.** CI publishes `ghcr.io/arnobgr/fie:latest` on a push
+to `main` only. A deploy from a `dev` commit pulls whatever `main` last built.
+
+**The age key, and its path differs by platform.** `sops` reads the OS config
+directory: `~/Library/Application Support/sops/age/` on macOS,
+`~/.config/sops/age/` on Linux. The Linux path on a Mac fails with
+`identity did not match any of the recipients`, which reads like a wrong key
+and is not one.
+
+**A read-only deploy key on the VPS**, because the repository is private and
+`ghcr_token` only carries `read:packages` — it can pull an image and cannot
+clone code:
+
+```bash
+ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_fie_deploy -C 'fie-deploy@vps'
+# Add the .pub half at GitHub → repo → Settings → Deploy keys.
+# Leave "Allow write access" UNCHECKED.
+git clone --branch main git@github.com:Arnobgr/edgarAgent.git /opt/fie
+```
+
+**`sops` on the VPS**, matching the version on the Mac:
+
+```bash
+curl -sSfL -o /usr/local/bin/sops \
+  https://github.com/getsops/sops/releases/download/v3.13.3/sops-v3.13.3.linux.amd64
+chmod +x /usr/local/bin/sops
+```
+
+## Seeding the corpus
+
+**Not obvious, and the deploy is useless without it.** The image carries code,
+not data. Two things must travel from the machine that ingested:
+
+| Item | Size | Read by |
+|---|---|---|
+| `data/ingest.db` | 13 MB | every numeric verification and every fact lookup |
+| the Qdrant collection | 71 MB as a snapshot | every retrieval |
+
+**Re-ingesting on the VPS is not an option, by design.** `run_ingest` always
+calls the acquire stage, which raises without `EDGAR_IDENTITY` — and that
+value is personal data deliberately kept off the box (ADR 0029). The corpus
+therefore travels as data, not as a rebuild.
+
+Dev and production both run Qdrant `v1.18.0`, so a snapshot restores exactly.
+Only the collection named by `embedding_provider` is needed; the second
+collection is a benchmark arm (ADR 0011).
+
+```bash
+# On the Mac
+make qdrant-up
+COL=fie_chunks__text-embedding-3-small
+SNAP=$(curl -sX POST "http://localhost:6333/collections/$COL/snapshots" \
+       | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["name"])')
+curl -s -o /tmp/qdrant.snapshot "http://localhost:6333/collections/$COL/snapshots/$SNAP"
+scp /tmp/qdrant.snapshot data/ingest.db vps:/srv/fie-import/
+```
+
+```bash
+# On the VPS. /root is mode 700 and curlimages/curl runs as a non-root user,
+# so the snapshot must be staged somewhere it can traverse.
+chmod 755 /srv/fie-import && chmod 644 /srv/fie-import/qdrant.snapshot
+docker run --rm --network fie_default -v /srv/fie-import:/snap:ro docker.io/curlimages/curl \
+  -sS -X POST "http://fie-qdrant:6333/collections/$COL/snapshots/upload?priority=snapshot" \
+  -F "snapshot=@/snap/qdrant.snapshot"
+
+docker cp /srv/fie-import/ingest.db fie-fie-api-1:/app/data/ingest.db
+# The container cannot chown even as root -- `cap_drop: ALL` removes CAP_CHOWN,
+# which is the hardening working. Do it host-side, on the volume.
+chown -R 10001:10001 "$(docker volume inspect fie_fie_api_data --format '{{.Mountpoint}}')"
+```
+
+Verify, and verify the *rows* rather than the file:
+
+```bash
+curl -s http://127.0.0.1:8412/healthz
+# {"status":"ok","qdrant":true,"facts_store":true,...}
+```
+
+## The deploy itself
+
+```bash
+cd /opt/fie && git pull
+./deploy/deploy.sh                       # public path, Turnstile enforced
+FIE_TURNSTILE_REQUIRED=false ./deploy/deploy.sh   # private path, see below
+```
+
+`deploy.sh` decrypts secrets, logs in to GHCR, pulls, starts, waits for
+`/healthz` to report `qdrant:true`, and submits one canned question.
+
+### The private path
+
+Turnstile validates the hostname its widget rendered on, so no widget can
+exist before the Cloudflare Pages hostname does. Until then the service runs
+with `FIE_TURNSTILE_REQUIRED=false` **and no nginx vhost installed** — nothing
+but the tailnet reaches it. `deploy.sh` refuses the combination of Turnstile
+off with a `fie` vhost present, so the interlock is between the two facts
+rather than a warning in a document.
+
+## Four things that bit on the first deploy
+
+**Secret files need the container's uid.** Mode 0400 owned by root is
+unreadable to a non-root process, and compose bind-mounts preserve host
+ownership. The container dies with
+`error getting value for field "openrouter_api_key" from source
+"SecretsSettingsSource"`, which names the field and not the cause.
+`decrypt-secrets.sh` now chowns to uid 10001.
+
+**The container cannot chown its own volume.** `cap_drop: ALL` removes
+CAP_CHOWN. Fix ownership from the host, at the volume mountpoint.
+
+**A nested `ssh` inside a heredoc eats the rest of the script.** `ssh` reads
+stdin, and `bash -s <<EOF` *is* stdin. Redirect the inner command from
+`/dev/null`, or put the script in a file.
+
+**`/healthz` used to go green over an empty facts store.** SQLite creates a
+database on connect, so the app made a 0-byte `ingest.db` and `path.exists()`
+said yes. It now checks for a row. If it ever reports `facts_store: true`
+while numeric claims fail, suspect this check first.
+
+## Cron, after the first successful deploy
+
+```cron
+0 4 * * *   /opt/fie/deploy/backup.sh       >> /var/log/fie-backup.log 2>&1
+0 3 1 * *   /opt/fie/deploy/monthly-eval.sh >> /var/log/fie-eval.log 2>&1
+```
+
+`monthly-eval.sh` needs `uv` and the corpus on the host, which the container
+does not provide. See ADR 0036 for why it runs there rather than in CI.

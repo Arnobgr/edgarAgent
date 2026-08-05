@@ -48,7 +48,7 @@ cat <<'EOF'
 Now check on the box, in this order:
     grep -c 'limiting requests, excess:' /var/log/nginx/fie.error.log
     fail2ban-client status fie-nginx-limit-req      # banned, then expiring in 1h
-    docker stats --no-stream fie-api fie-qdrant     # inside mem_limit / cpus
+    docker stats --no-stream fie-fie-api-1 fie-fie-qdrant-1   # inside mem_limit / cpus
     free -h && dmesg -T | grep -i 'oom' | tail      # headroom, no OOM events
 A quiet error log means the limits are sized right. A noisy one is the
 upgrade trigger firing.

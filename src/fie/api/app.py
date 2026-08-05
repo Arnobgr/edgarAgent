@@ -15,10 +15,12 @@ commented there.
 """
 
 import logging
+import sqlite3
 from collections.abc import AsyncIterator, Callable
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, closing
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
@@ -88,6 +90,32 @@ def client_ip(request: Request) -> str:
     if forwarded:
         return forwarded.strip()
     return request.client.host if request.client else "unknown"
+
+
+def _facts_store_ok(path: Path) -> bool:
+    """Whether the XBRL facts store can actually ground a number.
+
+    **`path.exists()` is not the question**, which the first real deploy
+    proved: SQLite creates an empty database on connect, so the container had
+    made a 0-byte `ingest.db` and `/healthz` reported `facts_store: true`
+    before the 13 MB file arrived. A health check that goes green over an
+    empty store is worse than none — it reports ready for the one job the
+    system cannot do, and every numeric claim would fail verification while
+    the service insisted it was fine.
+
+    One indexed row, read-only, no write and no WAL file, so this is cheap
+    enough for a healthcheck that runs every 30 seconds.
+    """
+    if not path.exists():
+        return False
+    try:
+        with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True)) as conn:
+            return conn.execute("SELECT 1 FROM facts LIMIT 1").fetchone() is not None
+    except sqlite3.Error:
+        # A missing table, a corrupt file or a locked database are all the
+        # same answer to the caller: this store cannot ground a claim.
+        logger.warning("Facts store health check failed", exc_info=True)
+        return False
 
 
 def _production_run_fn(settings: Settings) -> RunFn:
@@ -245,7 +273,7 @@ def create_app(
             qdrant_ok = response.status_code == status.HTTP_200_OK
         except Exception:
             logger.warning("Qdrant health check failed", exc_info=True)
-        facts_ok = svc.settings.ingest_db_path.exists()
+        facts_ok = _facts_store_ok(svc.settings.ingest_db_path)
         return HealthResponse(
             status="ok" if qdrant_ok and facts_ok else "degraded",
             qdrant=qdrant_ok,

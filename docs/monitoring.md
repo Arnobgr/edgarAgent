@@ -52,9 +52,14 @@ JSON on stdout, so `docker logs` is the interface. Every line inside a request
 carries `request_id`; every line inside a job carries `job_id` and the
 Langfuse `trace_id` (ADR 0028), so any one of the three finds the other two.
 
+**The container is `fie-fie-api-1`, not `fie-api`.** Compose names containers
+`<project>-<service>-<index>`, and the project is `fie`. The service name
+`fie-api` is what the ADRs and the compose network use; the container name is
+what `docker logs` and `docker stats` want.
+
 ```bash
-docker logs --since 1h fie-api | jq -c 'select(.job_id == "…")'
-docker logs --since 1h fie-api | jq -c 'select(.level == "error")'
+docker logs --since 1h fie-fie-api-1 | jq -c 'select(.job_id == "…")'
+docker logs --since 1h fie-fie-api-1 | jq -c 'select(.level == "error")'
 ```
 
 Rotation for the container logs is compose's `json-file` driver at
@@ -83,7 +88,7 @@ If the stock glob is ever narrowed, that dry run is where it shows up.
 Run these together — they are one picture, not five checks:
 
 ```bash
-docker stats --no-stream fie-api fie-qdrant   # inside mem_limit / cpus?
+docker stats --no-stream fie-fie-api-1 fie-fie-qdrant-1   # inside mem_limit / cpus?
 free -h                                        # headroom; swap in use?
 dmesg -T | grep -i oom | tail                  # nothing, ever
 df -h /                                        # 11 GB was the starting point
@@ -138,7 +143,8 @@ killed run from its checkpoint.
 
 | symptom | first look |
 |---|---|
-| `/healthz` degraded | `docker logs fie-qdrant`; is the container up and inside its `mem_limit`? |
+| `/healthz` degraded, `qdrant:false` | `docker logs fie-fie-qdrant-1`; is the container up and inside its `mem_limit`? |
+| `/healthz` degraded, `facts_store:false` | `ingest.db` is absent or empty. Re-seed it — see §"Seeding the corpus" in `docs/deploy.md`. |
 | submissions 429 but the box is idle | `/v1/admin/spend` — the governor, not nginx |
 | 429 with an HTML body | nginx `limit_req`, not the app. The body is how they are told apart |
 | a job stuck `running` | the process died; restart marks it `interrupted` and `POST /v1/jobs/{id}/resume` replays from the checkpoint |
