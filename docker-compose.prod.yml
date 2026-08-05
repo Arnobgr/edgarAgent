@@ -37,7 +37,12 @@ services:
       #
       #   FIE_TURNSTILE_REQUIRED=false docker compose -f docker-compose.prod.yml up -d
       TURNSTILE_REQUIRED: "${FIE_TURNSTILE_REQUIRED:-true}"
-      API_CORS_ORIGINS: '["https://fie.pages.dev"]'
+      # The Cloudflare Pages hostname, confirmed 2026-08-05. **The same string
+      # is the hostname the Turnstile widget must be registered for** —
+      # Turnstile validates where the widget rendered, so a mismatch refuses
+      # every submission while CORS still passes, which looks like two
+      # unrelated faults. If a custom domain is ever added, both move together.
+      API_CORS_ORIGINS: '["https://edgaragent.pages.dev"]'
       # `off` on the public path, decided 2026-08-05. `unresolved` would stop a
       # run whenever the machine could not prove a claim and wait for a person
       # — and on a page with no login that person is any visitor. It also let
