@@ -5,7 +5,8 @@
 #
 # Local, not offsite — offsite is out of scope for a demo, and saying so is
 # more honest than a backup that exists only in a comment. What this protects
-# against is a bad deploy or a `docker volume rm`, not the box dying.
+# against is a bad deploy or a `docker volume rm`, not the box dying. That
+# scope is what decides which volumes are worth archiving, below.
 #
 # `checkpoints.db` is inside `fie_api_data` and was already 256 MB before
 # this phase, so the retention below is deliberately short.
@@ -25,7 +26,18 @@ STAMP="$(date -u +%Y%m%d)"
 
 mkdir -p "$BACKUP_DIR"
 
-for volume in fie_fie_api_data fie_fie_qdrant_storage; do
+# **`fie_qdrant_storage` is deliberately not backed up.** It was, for one
+# night, and it was 48 of the 50 MB. Measured 2026-08-05: the VPS collection
+# and the developer's are identical — same 4,181 points, same dense+sparse
+# config — because the VPS one *is* a snapshot of it (see "Seeding the corpus"
+# in docs/deploy.md). Backing it up spends 96% of the archive on a second copy
+# of something that already exists elsewhere, and this backup is local, so the
+# only failures it survives are ones where that elsewhere is fine.
+#
+# What is irreplaceable is all in `fie_api_data`: `checkpoints.db`, which is
+# how this project diagnoses a run without re-running it, and `api.db`, which
+# holds the spend ledger the governor counts against. That is 2.2 MB a night.
+for volume in fie_fie_api_data; do
     # A throwaway container is the only way to read a named volume without
     # reaching into /var/lib/docker by hand.
     docker run --rm \

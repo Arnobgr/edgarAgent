@@ -108,7 +108,7 @@ first real reading; treat the limits as provisional until then.
 
 | what | when | log | ADR |
 |---|---|---|---|
-| `deploy/backup.sh` | `0 4 * * *` | `/var/log/fie-backup.log` | tar of both named volumes, 7-day retention |
+| `deploy/backup.sh` | `0 4 * * *` | `/var/log/fie-backup.log` | tar of `fie_api_data`, 7-day retention — ~16 MB steady state |
 | `deploy/monthly-eval.sh` | `0 3 1 * *` | `/var/log/fie-eval.log` | 0036 |
 
 ```cron
@@ -120,6 +120,13 @@ Backups are **local, not offsite** — that protects against a bad deploy or a
 `docker volume rm`, not against the box dying. Offsite is out of scope for a
 demo, and saying so is more honest than a backup that exists only in a
 comment.
+
+That scope is also why **only `fie_api_data` is archived**. Qdrant's volume was
+48 of the first night's 50 MB and is a snapshot of the developer's collection,
+verified identical; a local backup only survives failures where that original
+is fine, so archiving it buys nothing. Restore it from `docs/deploy.md`
+instead. What cannot be recreated — `checkpoints.db` and the spend ledger in
+`api.db` — is 2.2 MB a night.
 
 The monthly eval is drift detection against things we cannot cause: a model
 re-routed to another provider or quantization, an alias updated underneath us,
