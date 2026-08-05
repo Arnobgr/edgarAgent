@@ -127,6 +127,11 @@ a deprecation. **It does not write a baseline.** Its exit status is the signal;
 wiring that to the same alert destination as the uptime probe is a deploy-time
 task.
 
+It runs as `fie-monthly-eval`, a one-off container off the same image and the
+same data volume as the service (ADR 0036), so `docker stats fie-monthly-eval`
+works while it runs and its report lands in `/opt/fie/eval/reports/`. Nothing
+about it lives on the host.
+
 ## Traces
 
 Langfuse Cloud. Every model call is tagged `fie-role:<role>`, so a trace shows
@@ -149,4 +154,4 @@ killed run from its checkpoint.
 | 429 with an HTML body | nginx `limit_req`, not the app. The body is how they are told apart |
 | a job stuck `running` | the process died; restart marks it `interrupted` and `POST /v1/jobs/{id}/resume` replays from the checkpoint |
 | a job stuck `awaiting_review` | it holds a semaphore slot until someone rules on it (ADR 0034) |
-| answers wrong, service fine | this is an eval question, not an ops one — `uv run eval-agent` on the box |
+| answers wrong, service fine | this is an eval question, not an ops one — `./deploy/monthly-eval.sh` on the box, which is the same full run cron does |

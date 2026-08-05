@@ -132,5 +132,7 @@ while numeric claims fail, suspect this check first.
 0 3 1 * *   /opt/fie/deploy/monthly-eval.sh >> /var/log/fie-eval.log 2>&1
 ```
 
-`monthly-eval.sh` needs `uv` and the corpus on the host, which the container
-does not provide. See ADR 0036 for why it runs there rather than in CI.
+Both are self-contained. `backup.sh` needs only docker; `monthly-eval.sh` runs
+`eval-agent` in a one-off container off the deployed image and the service's
+own data volume, so the host needs no Python toolchain and no second copy of
+the corpus. See ADR 0036 for why it runs here rather than in CI.

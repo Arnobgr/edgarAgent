@@ -62,9 +62,24 @@ blast radius:
 does not silently move the line it is measured against. `--write-baseline`
 stays manual and stays gated (ADR 0016).
 
-**It runs `nice -n 10`.** ~75 minutes sharing 2 vCPU with five production
-services. The work is I/O-bound on model APIs, but being a good neighbour is
-free.
+**On the VPS, but in a one-off container from the deployed image — not on the
+host.** This paragraph said `nice -n 10 uv run eval-agent` until the first
+real deploy the same day disproved it: the host has no `uv`, no `data/`, and
+no route to Qdrant, which publishes no port because only `fie-api` needs it
+(ADR 0033). Fixing that on the host meant a Python toolchain plus a ~600 MB
+second copy of the image's dependencies on a disk with 7.9 GB free, a
+published Qdrant port, and a second copy of the corpus. **The corpus copy is
+the part that would have been wrong rather than merely wasteful** — re-seed
+one and the eval measures the other, reporting drift that is really a stale
+snapshot. A container off the same image and the same `fie_api_data` volume
+keeps one corpus and one truth, and has the property the host version never
+had: the drift run measures the artifact that is actually serving.
+
+Its CPU cap is the service's own 1.0 rather than a `nice` level — ~75 minutes
+sharing 2 vCPU with five production services, and the compose file already
+argues that number. It shares `checkpoints.db` with the running service;
+SQLite's busy timeout and the runner's retry cover that, and at 03:00 on the
+1st there is nothing to contend with.
 
 **Its spend is not governed by the public $5/month counter.** That governs the
 HTTP path; the eval calls `answer_question()` directly. Size the provider
