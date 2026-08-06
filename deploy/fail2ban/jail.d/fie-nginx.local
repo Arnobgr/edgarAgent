@@ -6,9 +6,12 @@
 #
 # `filter = nginx-limit-req` is the **stock Debian filter**, not one of ours:
 # it already matches nginx's `limiting requests, excess: ... client: <HOST>`
-# and one fewer regex to maintain is one fewer thing to be wrong. The deploy
-# script verifies it against the real log with `fail2ban-regex` before
-# enabling the jail.
+# and one fewer regex to maintain is one fewer thing to be wrong. Verify it by
+# hand against a log that has a real refusal in it, per `docs/deploy.md` —
+# `fail2ban-regex` against a quiet log passes against nothing and tells you
+# only that the file parses. **No script does this.** Nothing in the repo
+# installs the public path, and an earlier version of this comment asserted
+# that `deploy.sh` ran the check, which it never has.
 #
 # **Accepted cost: a firewall ban is IP-wide**, so it also blocks that
 # address from the five other services on this box. The short bantime and
@@ -20,6 +23,15 @@ enabled  = true
 filter   = nginx-limit-req
 port     = http,https
 logpath  = /var/log/nginx/fie.error.log
+# Debian's own jail.d/defaults-debian.conf sets `backend = systemd` under
+# [DEFAULT], and a [DEFAULT] this file does not override wins over `logpath`
+# — the jail then starts, reports healthy, and watches the journal, which
+# never carries these lines: nginx writes limit_req errors to the per-vhost
+# error_log. Found on the 2026-08-06 install, where `fail2ban-client status`
+# showed `Journal matches: _SYSTEMD_UNIT=nginx.service` and a jail that could
+# not have banned anyone. An enabled jail reading the wrong source is worse
+# than no jail, because the status output says it is working.
+backend  = polling
 findtime = 600
 maxretry = 20
 bantime  = 3600

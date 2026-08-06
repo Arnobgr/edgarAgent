@@ -61,12 +61,29 @@ curl -fsS "$HEALTH_URL" | tee /dev/stderr | grep -q '"qdrant":true' || {
     exit 1
 }
 
-echo "==> Smoke test (one canned question)"
-API_KEY="$(cat ./secrets/api_key)"
-curl -fsS -X POST "http://127.0.0.1:${FIE_API_PORT:-8412}/v1/questions" \
-    -H "X-API-Key: ${API_KEY}" \
+# Which answer proves a good deploy depends on the path this one is on, and
+# the two are exact opposites. With Turnstile on, a submission carrying only
+# an API key must be *refused* — that is ADR 0030's entire claim — so the 202
+# that proves the private path is the public path's failure signature. Asserted
+# the old way this step failed every public deploy after it had already
+# succeeded. The refusal is the better assertion regardless: d5e9f01 found this
+# test returning `source: cached`, which exercised nothing.
+echo "==> Smoke test"
+if [[ "${FIE_TURNSTILE_REQUIRED:-true}" == "false" ]]; then expect=202; else expect=403; fi
+body="$(mktemp)"
+code="$(curl -s -o "$body" -w '%{http_code}' \
+    -X POST "http://127.0.0.1:${FIE_API_PORT:-8412}/v1/questions" \
+    -H "X-API-Key: $(cat ./secrets/api_key)" \
     -H 'Content-Type: application/json' \
-    -d '{"question":"What was Tesla'"'"'s total revenue in fiscal year 2025?"}'
-echo
+    -d '{"question":"What was Tesla'"'"'s total revenue in fiscal year 2025?"}')"
+cat "$body"; echo; rm -f "$body"
+[[ "$code" == "$expect" ]] || {
+    echo "!! Smoke test: expected HTTP $expect, got $code" >&2
+    exit 1
+}
 
-echo "==> Done. Poll the job id above; watch the trace in Langfuse Cloud."
+if [[ "$expect" == 202 ]]; then
+    echo "==> Done. Poll the job id above; watch the trace in Langfuse Cloud."
+else
+    echo "==> Done. Turnstile refused a keyed submission, which is the point."
+fi

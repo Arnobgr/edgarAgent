@@ -1,8 +1,8 @@
 # Deploying
 
-Written from the first real deploy (2026-08-05), not from the plan. Every
-step here is one that actually had to happen, and the four that are not
-obvious are marked.
+Written from the real deploys — the private path on 2026-08-05, the public
+path on 2026-08-06 — not from the plan. Every step here is one that actually
+had to happen, and the six that are not obvious are marked.
 
 ## Prerequisites, once
 
@@ -93,7 +93,8 @@ FIE_TURNSTILE_REQUIRED=false ./deploy/deploy.sh   # private path, see below
 ```
 
 `deploy.sh` decrypts secrets, logs in to GHCR, pulls, starts, waits for
-`/healthz` to report `qdrant:true`, and submits one canned question.
+`/healthz` to report `qdrant:true`, and submits one canned question — asserting
+the status code that the path it is deploying is supposed to return.
 
 ### The private path
 
@@ -104,7 +105,93 @@ but the tailnet reaches it. `deploy.sh` refuses the combination of Turnstile
 off with a `fie` vhost present, so the interlock is between the two facts
 rather than a warning in a document.
 
-## Four things that bit on the first deploy
+### The public path
+
+**Turnstile goes on before the vhost, which is not the order the plan gave.**
+`plans/phase-5-frontend.md` puts the vhost first, but certbot's HTTP-01
+challenge needs it live on port 80 — so that order publishes the service for
+the length of the issuance with whatever Turnstile setting happens to be
+running. Flipping first costs nothing, because the box is still tailnet-only at
+that moment, and it closes the window rather than relying on `deploy.sh`'s
+interlock to catch a mistake.
+
+**1. Pull, then check the key and not the file.** The checkout carries
+`secrets.enc.yaml`, so a box that has not pulled decrypts the *old* one and
+`sops` reports success either way. On 2026-08-06 that left a 5-byte placeholder
+where the Turnstile secret belonged. Compare lengths, never contents:
+
+```bash
+cd /opt/fie && git pull --ff-only && ./deploy/decrypt-secrets.sh
+wc -c < ./secrets/turnstile_secret_key   # 35. A placeholder is 5.
+```
+
+**2. Turnstile on**, with nothing but the tailnet able to reach it. No
+override, so compose's default applies. The smoke test expects **403** here,
+not 202 — see the sixth item below.
+
+```bash
+./deploy/deploy.sh
+```
+
+**3. nginx.** Three new files; no existing vhost is edited (ADR 0035).
+
+```bash
+install -m 644 deploy/nginx/fie-limits.conf /etc/nginx/conf.d/fie-limits.conf
+install -m 644 deploy/nginx/fie-proxy.conf  /etc/nginx/snippets/fie-proxy.conf
+install -m 644 deploy/nginx/fie.conf        /etc/nginx/sites-available/fie
+ln -sfn /etc/nginx/sites-available/fie /etc/nginx/sites-enabled/fie
+nginx -t && systemctl reload nginx
+```
+
+**4. certbot**, which rewrites `sites-available/fie` in place. It appends the
+`listen 443` lines to the **bottom** of the existing block and adds a second
+block for the redirect, so a check that slices the file from `listen 443`
+onwards sees no `location` at all and looks alarming for no reason.
+
+```bash
+certbot --nginx -d api.example.com --non-interactive --agree-tos --redirect
+```
+
+sslip.io is not on the Public Suffix List, so Let's Encrypt counts every
+sslip.io name as one registered domain and the 50-new-certs-per-week ceiling is
+shared with strangers. Renewals are exempt. Retry; do not deploy to a deadline.
+
+**5. fail2ban, verified against a real refusal.** The filter check is
+meaningless until nginx has logged one, so provoke it — every request is
+refused before the app does any work, so this costs nothing:
+
+```bash
+for i in $(seq 1 8); do curl -s -o /dev/null -w '%{http_code} ' \
+  -X POST https://api.example.com/v1/questions \
+  -H "X-API-Key: $(cat ./secrets/api_key)" \
+  -H 'Content-Type: application/json' -d '{"question":"probe"}'; done
+# 403 403 403 429 429 429 429 429   — the app, then nginx taking over
+
+fail2ban-regex /var/log/nginx/fie.error.log /etc/fail2ban/filter.d/nginx-limit-req.conf
+# Lines: 7 lines, 0 ignored, 5 matched, 2 missed
+
+install -m 644 deploy/fail2ban/jail.d/fie-nginx.local /etc/fail2ban/jail.d/
+fail2ban-client reload && fail2ban-client status fie-nginx-limit-req
+```
+
+That last line must report `File list: /var/log/nginx/fie.error.log`. If it
+says `Journal matches:`, the jail is reading nothing — see below. Eight probes
+is well under `maxretry = 20`, so the box does not ban itself.
+
+**6. Prove the controls from outside.** Run the keyed cases *on the VPS against
+its own public hostname*: the request still traverses nginx, and the API key
+never leaves the box.
+
+| request | expected |
+|---|---|
+| valid API key, no Turnstile token | 403 — this is ADR 0030 |
+| no API key | 401 |
+| forged Turnstile token | 403 |
+| `GET /v1/admin/spend` | 403 |
+| `GET /` | 404 |
+| `GET /healthz`, and `http://` → `https://` | 200, 301 |
+
+## Six things that bit on a real deploy
 
 **Secret files need the container's uid.** Mode 0400 owned by root is
 unreadable to a non-root process, and compose bind-mounts preserve host
@@ -124,6 +211,21 @@ stdin, and `bash -s <<EOF` *is* stdin. Redirect the inner command from
 database on connect, so the app made a 0-byte `ingest.db` and `path.exists()`
 said yes. It now checks for a row. If it ever reports `facts_store: true`
 while numeric claims fail, suspect this check first.
+
+**Debian's fail2ban default silently outranks `logpath`.**
+`jail.d/defaults-debian.conf` sets `backend = systemd` under `[DEFAULT]`, and a
+jail that does not override it starts, reports healthy, and reads the journal —
+which never carries these lines, because nginx writes `limit_req` errors to the
+per-vhost `error_log`. The jail could not have banned anyone, and its status
+output said it was fine. `fie-nginx.local` now sets `backend = polling`. This
+is the same failure as the `/healthz` one above: a green light over nothing.
+
+**The smoke test failed every public deploy, after the deploy had succeeded.**
+`deploy.sh` posted with only an API key and expected 202. Under Turnstile that
+is a 403 *by design* — the key identifies and does not control (ADR 0030) — so
+`curl -fsS` failed and `set -e` aborted at the last line of a working deploy.
+It now expects 202 or 403 according to `FIE_TURNSTILE_REQUIRED`, which turns
+the refusal into a permanent assertion instead of a one-off check.
 
 ## Cron, after the first successful deploy
 
