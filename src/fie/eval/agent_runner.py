@@ -2,9 +2,10 @@
 
 Runs the gold questions through the production graph (same wiring as
 `fie ask`), computes the §6 metrics, writes a JSON + markdown report with
-Langfuse-linked run ids, and gates against `eval/baselines.json`: any
-metric below its accepted baseline exits non-zero. This is the CI gate in
-Phase 4 and the phase-advance gate from Phase 3 on (blueprint §13).
+Langfuse-linked run ids, and gates against `eval/baselines.json`: any metric
+*in that file's `metrics` block* below its accepted baseline exits non-zero.
+Membership in that block is the whole gate — see `_ratcheted`. This is the CI
+gate in Phase 4 and the phase-advance gate from Phase 3 on (blueprint §13).
 """
 
 import asyncio
@@ -73,11 +74,22 @@ _LOWER_IS_BETTER = {"hallucination_rate"}
 # floor — the unmeasured half is the harder cross-company questions — and far
 # above both the pre-fix 0.357 and the 0.000 a declining system scores.
 # Raise it once a full baseline has measured all 28.
+#
+# `citation_accuracy` is here and **not** in the ratchet (ADR 0039), which is
+# the only combination that fits it: a reading carries ±0.037 of judge noise,
+# so comparing it to a single previous reading fails runs on coin flips, but a
+# metric with no check at all is a metric nobody is watching. A floor is
+# insensitive to noise and still catches the case worth an exit code — the
+# judge finding cited spans do not support their claims *at all*. 0.75 sits
+# more than twice the measured noise below both observations to date (0.851 on
+# 2026-08-01, 0.828 on 2026-08-06); it is deliberately coarse, because two
+# readings do not support a tighter one. Raise it as readings accumulate.
 TARGETS = {
     "hallucination_rate": 0.02,
     "numeric_fidelity": 0.85,
     "grounding_rate": 0.90,
     "expected_fact_coverage": 0.65,
+    "citation_accuracy": 0.75,
 }
 
 
@@ -378,6 +390,36 @@ def _gate(metrics: dict[str, Any], baselines: Mapping[str, float | None]) -> lis
     return failures
 
 
+# What `--write-baseline` records inside `metrics`, and therefore exactly what
+# `_gate` ratchets the next run against. **Membership here is the gate** —
+# there is no list of gated names anywhere else, which is the trap ADR 0039
+# closes: `citation_accuracy` was absent from `TARGETS`, documented as
+# non-gating, and refused runs anyway, because writing a number into that
+# block enrolls it.
+#
+# A metric belongs here only when a drop in it is evidence of a worse system
+# rather than a different reading of the same one. That is the test a noisy
+# measurement fails.
+_RATCHETED_PREFIXES = (
+    "grounding",
+    "hallucination",
+    "numeric",
+    "verifier",
+    "expected_fact_coverage",
+)
+
+
+def _ratcheted(metrics: Mapping[str, Any]) -> dict[str, Any]:
+    """The subset of a run's metrics that a written baseline will gate on."""
+    return {
+        k: v
+        for k, v in metrics.items()
+        if isinstance(v, int | float)
+        and not isinstance(v, bool)
+        and k.startswith(_RATCHETED_PREFIXES)
+    }
+
+
 @app.command()
 def run(
     gold: str = typer.Option("", "--gold", help="Gold-set JSONL path override."),
@@ -505,22 +547,6 @@ def run(
                 fg=typer.colors.RED,
             )
             raise typer.Exit(code=1)
-        gated = {
-            k: v
-            for k, v in metrics.items()
-            if isinstance(v, int | float)
-            and not isinstance(v, bool)
-            and k.startswith(
-                (
-                    "grounding",
-                    "hallucination",
-                    "citation_accuracy",
-                    "numeric",
-                    "verifier",
-                    "expected_fact_coverage",
-                )
-            )
-        }
         baselines_path.write_text(
             json.dumps(
                 {
@@ -534,7 +560,17 @@ def run(
                     # a count of 3 inside `metrics` would fail the next run
                     # for improving on it.
                     "runs_with_no_claims": metrics["runs_with_no_claims"],
-                    "metrics": gated,
+                    # Out here for the same reason, and ADR 0039 is what it
+                    # cost to learn it a second time. The judge flips on about
+                    # 1 in 27 byte-identical spans, so a single reading
+                    # carries ±0.037 — a ratchet on that refuses runs on noise,
+                    # which is what happened to the 2026-08-06 drift run on a
+                    # delta of 0.023. Recorded, so a real move stays visible
+                    # across baselines; not ratcheted, so the monthly cron
+                    # keeps the credibility it needs to report a real one. It
+                    # is not unwatched — `TARGETS` gives it a 0.75 floor.
+                    "citation_accuracy": metrics["citation_accuracy"],
+                    "metrics": _ratcheted(metrics),
                 },
                 indent=2,
             )
@@ -546,14 +582,25 @@ def run(
     if dropped:
         raise typer.Exit(code=1)
 
+    # `TARGETS` used to be checked on the `--write-baseline` path only, so an
+    # ordinary run — every monthly drift run is one — was gated by the ratchet
+    # and by nothing else. That is harmless for a ratcheted metric, whose
+    # baseline already sits above its floor, and it is the whole exposure for a
+    # metric held out of the ratchet: `citation_accuracy` could have collapsed
+    # and exited 0 (ADR 0039). Both gates now apply to both paths.
+    floor_misses = _gate(metrics, TARGETS)
+    for miss in floor_misses:
+        typer.secho(f"TARGET MISSED: {miss}", fg=typer.colors.RED)
+
+    baseline_metrics: dict[str, float] = {}
     if baselines_path.exists():
         baseline_metrics = json.loads(baselines_path.read_text()).get("metrics", {})
-        failures = _gate(metrics, baseline_metrics)
-        if failures:
-            for failure in failures:
-                typer.secho(f"REGRESSION: {failure}", fg=typer.colors.RED)
-            raise typer.Exit(code=1)
-        typer.echo("All gated metrics at or above baseline.")
+    failures = _gate(metrics, baseline_metrics)
+    for failure in failures:
+        typer.secho(f"REGRESSION: {failure}", fg=typer.colors.RED)
+    if failures or floor_misses:
+        raise typer.Exit(code=1)
+    typer.echo("All gated metrics at or above baseline, and every target met.")
 
 
 def main() -> None:

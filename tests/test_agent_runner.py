@@ -2,6 +2,7 @@
 never shrinks silently, citation judging separates judge failures from
 citation failures, and a crash is never scored as a decline."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -11,12 +12,13 @@ from fie.config import Settings
 from fie.eval.agent_runner import (
     TARGETS,
     _gate,
+    _ratcheted,
     _run_gold,
     declined_unanswerables,
     expected_fact_coverage,
     judge_citations,
 )
-from fie.eval.datasets import ExpectedFact, GoldQuestion
+from fie.eval.datasets import EVAL_DIR, ExpectedFact, GoldQuestion
 from fie.eval.metrics import grounding_rate, hallucination_rate, numeric_fidelity
 from fie.ingest.store import Fact, IngestStore
 from fie.state import GroundingRow, JudgeOutput, RunResult, SourceRef
@@ -356,3 +358,34 @@ def test_the_claimless_count_is_reported_and_never_gates() -> None:
     assert _gate({"runs_with_no_claims": 0}, {"runs_with_no_claims": 3}) == [
         "runs_with_no_claims: 0.000 below baseline 3.000"
     ]
+
+
+def test_citation_accuracy_is_floored_not_ratcheted() -> None:
+    """It had the two wrong halves and now has the two right ones (ADR 0039).
+
+    It used to ratchet, without ever being declared a gate — the ratchet has
+    no list and gates on membership in the written `metrics` block. The judge
+    flips on about 1 in 27 byte-identical spans, so a reading carries ±0.037,
+    and the 2026-08-06 drift run printed `REGRESSION` on a delta of 0.023.
+    And it had no floor, so simply un-ratcheting it would have let a collapse
+    exit 0.
+
+    So: a floor coarse enough to ignore the noise, and no ratchet. Both halves
+    of the de-gating are asserted, because either alone leaves the bug live —
+    the writer must stop enrolling it, *and* the accepted baseline the next
+    run actually reads must stop carrying it there, since a fixed writer
+    leaves an armed file behind until a new baseline is written, which is
+    months away by design."""
+    assert TARGETS["citation_accuracy"] == 0.75
+    assert _gate({"citation_accuracy": 0.40}, TARGETS) == [
+        "citation_accuracy: 0.400 below baseline 0.750"
+    ]
+    assert _gate({"citation_accuracy": 0.828}, TARGETS) == []
+
+    sample = {"citation_accuracy": 0.83, "grounding_rate": 0.95, "n_completed": 30}
+    assert "citation_accuracy" not in _ratcheted(sample)
+    assert "grounding_rate" in _ratcheted(sample)
+
+    accepted = json.loads((EVAL_DIR / "baselines.json").read_text())
+    assert "citation_accuracy" not in accepted["metrics"]
+    assert accepted["citation_accuracy"] == pytest.approx(0.851, abs=0.001)

@@ -17,25 +17,33 @@ with both crons installed and each proven by an actual run. The corpus is on
 the box and was counted equal to the developer's: 28,550 facts, 78 filings, 34
 accessions, 4,181 Qdrant points, same dense+sparse config.
 
-**What is open is the public path, and it is all Phase 5.** No nginx vhost, no
-Turnstile widget (the widget validates the hostname it rendered on, so it
-cannot exist before Cloudflare Pages does), `FIE_TURNSTILE_REQUIRED=false`, and
-the uptime prober paused. Two exit-gate items wait on that vhost:
-`scripts/burst-test.sh` and one full `eval-agent` on the box. **Deferring the
-full run was a decision, not an oversight** — the corpus is provably identical,
-Phase 4 changed no part of the answer path, and the box's 1-CPU/640 MB cap
-plausibly moves only `degraded_attempts`, which the 1 September cron will
-settle. Run it early if anything touches retrieval, prompts, models or the
-corpus first. `eval/baselines.json` holds run `agent-20260801-122527`, which
-passed 30/30:
+**The public path went up on 2026-08-06** — nginx vhost, Let's Encrypt cert,
+Turnstile enforced, fail2ban armed on the real log, all four neighbouring
+vhosts untouched (ADR 0035). `docs/deploy.md` is the procedure, written from
+that deploy. **Two Phase 5 exit-gate items remain**: `scripts/burst-test.sh`
+against the live host, and the uptime prober is still paused. The widget path
+has never rendered in a browser, so one live end-to-end ask through the real
+Turnstile challenge is still owed.
 
-| | **2026-08-01** | target |
-|---|---|---|
-| `grounding_rate` | **0.972** | ≥ 0.90 |
-| `hallucination_rate` | **0.000** | ≤ 0.02 |
-| `numeric_fidelity` | **0.963** | ≥ 0.85 |
-| `expected_fact_coverage` | **1.000** | ≥ 0.65 |
-| `citation_accuracy` | **0.851** | not gated |
+`eval/baselines.json` holds run `agent-20260801-122527`, which passed 30/30.
+The 2026-08-06 column is the pre-public-deploy full run that ADR 0036 mandated,
+executed on the box against the deployed image — **it passed every target and
+is not a baseline**, because `degraded_attempts: 1` disqualifies it (ADR 0025):
+
+| | **2026-08-01** | 2026-08-06 | target |
+|---|---|---|---|
+| `grounding_rate` | **0.972** | 0.955 | ≥ 0.90 |
+| `hallucination_rate` | **0.000** | 0.000 | ≤ 0.02 |
+| `numeric_fidelity` | **0.963** | 0.924 | ≥ 0.85 |
+| `expected_fact_coverage` | **1.000** | 0.893 | ≥ 0.65 |
+| `citation_accuracy` | **0.851** | 0.828 | ≥ 0.75 floor, never ratcheted |
+
+**Do not read the 08-06 column as decay without reading ADR 0039 first.** All
+three missing expected facts are one question (g-016, the degraded run), which
+is the whole of that metric's drop. The other two fell with their denominators
+— 199 claims against 217, 92 figures against 107 — and **one reading cannot
+separate run-to-run variance from GLM drift**. Nothing on the answer path
+changed between the two runs.
 
 Retrieval, prompts and models remain cleared — do not tune them for gate
 metrics. How the gate was reached is in ADRs 0018-0025 and in the two findings
@@ -52,11 +60,21 @@ state and the graph routes to END, so `answer_question` *returns* a degraded
 not only on exceptions, and reports `degraded_attempts` — a run with a
 non-zero count is not a baseline.
 
-**`citation_accuracy` does not gate.** It is written to `baselines.json` but
-is absent from `TARGETS`, so it never refuses a run. Do not re-derive the
-diagnosis of why it moved: the change was in the *claims*, not the citations
-(ADR 0024, commit `dcef747`). The judge flips on about 1 in 27 byte-identical
-spans, so a single reading carries ±0.037.
+**`citation_accuracy` is floored, not ratcheted, and the distinction is the
+whole of ADR 0039.** Two gates exist. `TARGETS` holds absolute floors and lists
+its members; the *baseline ratchet* (`_gate(metrics, baseline_metrics)`) has no
+list at all and gates on whatever sits in the `metrics` block of
+`baselines.json` — **membership there is the gate**, which is why
+`runs_with_no_claims` and now `citation_accuracy` are recorded *beside* that
+block. Writing a number into it enrols it. That is how a metric documented as
+non-gating failed the 2026-08-06 drift run: 0.828 against 0.851 printed
+`REGRESSION` on a delta of **0.023**, while the judge flips on about 1 in 27
+byte-identical spans and a reading therefore carries **±0.037**. It now has a
+floor of 0.75 instead, and `TARGETS` is checked on every path rather than only
+under `--write-baseline` — without that second half, un-ratcheting would have
+left a collapse to 0.40 exiting 0. Do not re-derive the diagnosis of why it
+moved in July: that change was in the *claims*, not the citations (ADR 0024,
+commit `dcef747`).
 
 **`hallucination_rate: 0.000` has two possible meanings** — see "Retraction is
 load-bearing".
@@ -71,8 +89,11 @@ claimless, so such a run costs an attempt and lands in `degraded_attempts`;
 `eval-agent` reports `runs_with_no_claims` beside the metrics, ungated and
 recorded outside `metrics` in `baselines.json` so it cannot become a gate.
 **The accepted 2026-08-01 baseline is still 29 verifiable runs of 30** —
-`grounding_rate` 0.972 was measured over 29 runs' claims. §3 stands until the
-pre-public-deploy eval supersedes it.
+`grounding_rate` 0.972 was measured over 29 runs' claims. **§3 was expected to
+close on 2026-08-06 and did not**: that run reached a clean 30
+(`runs_with_no_claims: 0`, the guard working nine times over) but carries
+`degraded_attempts: 1`, so it cannot be accepted and `recorded/` is still
+generated from the 08-01 run. The next clean full run supersedes both.
 
 ## Working guidelines
 
