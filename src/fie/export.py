@@ -61,11 +61,14 @@ class RecordedIndex(BaseModel):
 class ExportReport:
     written: list[Path] = field(default_factory=list)
     skipped: list[tuple[str, str]] = field(default_factory=list)
+    pruned: list[Path] = field(default_factory=list)
 
     def lines(self) -> Iterator[str]:
         yield f"wrote {len(self.written)} run(s)"
         for run_id, why in self.skipped:
             yield f"  skipped {run_id}: {why}"
+        for path in self.pruned:
+            yield f"  removed {path.name}: no longer in the export"
 
 
 def accepted_run_ids(eval_dir: Path) -> dict[str, str]:
@@ -137,8 +140,19 @@ def read_run(saver: SqliteSaver, run_id: str) -> tuple[RunPayload | None, str]:
     )
 
 
-def export_runs(*, checkpoint_path: Path, out_dir: Path, run_ids: list[str]) -> ExportReport:
-    """Write `<out>/runs/<run_id>.json` per run plus `<out>/index.json`."""
+def export_runs(
+    *, checkpoint_path: Path, out_dir: Path, run_ids: list[str], prune: bool = False
+) -> ExportReport:
+    """Write `<out>/runs/<run_id>.json` per run plus `<out>/index.json`.
+
+    `prune` removes run files this export did not write. It matters at the
+    *second* export and not the first: run ids are per-run, so accepting a new
+    baseline changes all of them, and without pruning the previous baseline's
+    files stay on disk as a second set of runs that `index.json` no longer
+    lists but the bundle still ships. Off by default, and the caller turns it
+    on only for a full export — pruning a `--run-ids` subset would delete
+    every run the subset left out.
+    """
     if not checkpoint_path.exists():
         raise RuntimeError(f"checkpoint store {checkpoint_path} does not exist — no runs to export")
     runs_dir = out_dir / "runs"
@@ -168,7 +182,18 @@ def export_runs(*, checkpoint_path: Path, out_dir: Path, run_ids: list[str]) -> 
                 )
             )
 
+    pruned: list[Path] = []
+    if prune and written:
+        # Guarded on `written` as well as `prune`: an export that produced
+        # nothing is a failed export, and emptying the demo surface is the
+        # worst possible response to one.
+        keep = {path.name for path in written}
+        pruned = sorted(p for p in runs_dir.glob("*.json") if p.name not in keep)
+        for path in pruned:
+            path.unlink()
+            logger.info("pruned %s", path.name)
+
     entries.sort(key=lambda e: (e.created_at, e.job_id))
     index = RecordedIndex(runs=entries)
     (out_dir / "index.json").write_text(index.model_dump_json(indent=2) + "\n")
-    return ExportReport(written=written, skipped=skipped)
+    return ExportReport(written=written, skipped=skipped, pruned=pruned)

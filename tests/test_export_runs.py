@@ -151,6 +151,56 @@ def test_a_run_with_no_claims_is_not_exported() -> None:
     assert why == "no claims (nothing to ground — ADR 0038)"
 
 
+async def test_a_full_export_removes_runs_it_no_longer_writes(tmp_path: Path) -> None:
+    """The second export is where this matters. Run ids are per-run, so
+    accepting a new baseline changes all thirty; without pruning the previous
+    baseline's files stay on disk as a second set of runs `index.json` does
+    not list but the Pages bundle still ships."""
+    checkpoint = tmp_path / "checkpoints.db"
+    await _record(checkpoint, "run-a")
+    out = tmp_path / "out"
+    stale = out / "runs" / "run-from-the-last-baseline.json"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("{}")
+
+    report = export_runs(checkpoint_path=checkpoint, out_dir=out, run_ids=["run-a"], prune=True)
+
+    assert [p.name for p in report.pruned] == ["run-from-the-last-baseline.json"]
+    assert not stale.exists()
+    assert (out / "runs" / "run-a.json").exists()
+
+
+async def test_a_partial_export_leaves_the_runs_it_was_not_asked_about(tmp_path: Path) -> None:
+    """`--run-ids` names a subset, so it owns a subset. Pruning there would
+    delete every run the invocation left out."""
+    checkpoint = tmp_path / "checkpoints.db"
+    await _record(checkpoint, "run-a")
+    out = tmp_path / "out"
+    export_runs(checkpoint_path=checkpoint, out_dir=out, run_ids=["run-a"])
+    other = out / "runs" / "run-b.json"
+    other.write_text("{}")
+
+    report = export_runs(checkpoint_path=checkpoint, out_dir=out, run_ids=["run-a"])
+
+    assert report.pruned == []
+    assert other.exists()
+
+
+async def test_an_export_that_wrote_nothing_never_empties_the_surface(tmp_path: Path) -> None:
+    """A failed export is the worst possible moment to delete the runs that
+    are currently being served."""
+    checkpoint = tmp_path / "checkpoints.db"
+    await _record(checkpoint, "run-a")
+    out = tmp_path / "out"
+    export_runs(checkpoint_path=checkpoint, out_dir=out, run_ids=["run-a"], prune=True)
+
+    report = export_runs(checkpoint_path=checkpoint, out_dir=out, run_ids=["ghost"], prune=True)
+
+    assert report.written == []
+    assert report.pruned == []
+    assert (out / "runs" / "run-a.json").exists()
+
+
 def test_a_run_with_no_checkpoint_is_reported_not_guessed_at(tmp_path: Path) -> None:
     checkpoint = tmp_path / "checkpoints.db"
     checkpoint.touch()

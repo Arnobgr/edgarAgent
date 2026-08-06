@@ -103,11 +103,15 @@ def export_runs(
 
     settings = get_settings()
     try:
-        ids = [r.strip() for r in run_ids.split(",") if r.strip()] or sorted(
-            accepted_run_ids(EVAL_DIR).values()
-        )
+        explicit = [r.strip() for r in run_ids.split(",") if r.strip()]
+        ids = explicit or sorted(accepted_run_ids(EVAL_DIR).values())
         report = run_export(
-            checkpoint_path=settings.data_dir / "checkpoints.db", out_dir=Path(out), run_ids=ids
+            checkpoint_path=settings.data_dir / "checkpoints.db",
+            out_dir=Path(out),
+            run_ids=ids,
+            # Only a full export owns the whole directory. A `--run-ids`
+            # subset must leave the runs it did not ask for alone.
+            prune=not explicit,
         )
     except RuntimeError as exc:
         typer.secho(str(exc), fg=typer.colors.RED)

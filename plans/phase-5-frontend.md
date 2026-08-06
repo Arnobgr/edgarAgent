@@ -53,6 +53,47 @@ Each is small. Each needs `make check` green and a test, per the repo's normal r
 
 The trace id was a fourth item in an earlier draft. It is now decision 6 and needs no backend change.
 
+## What is built (2026-08-06)
+
+`frontend/` exists and all four views are written: landing over
+`recorded/index.json`, ask with the Turnstile widget, run status over the six
+phases, and the result view. `make check` is green (255 tests) and
+`npm run check` is green (20 tests, `tsc -b` clean, `vite build` clean).
+
+Three things a cold start should not re-derive.
+
+**The claim → prose mapping is `src/lib/answer.ts`, and its test asserts the
+product's thesis**: across all 29 recorded runs, the highlighted text equals
+the claim's `answer_span` exactly. Nothing guesses a position from word
+overlap — a colour on a sentence no verifier ruled on is the one error this
+surface must not make. Two failures are reported separately and neither is
+guessed at: `spanless` (synthesis emitted no span — 6 rows, all in run
+`4d264b627151`) and `unlocated` (the span exists but another claim's excision
+took the sentence — 0 in this baseline, and it is ADR 0021 point 3, so it can
+recur).
+
+**Retracted spans are absent from the prose by design and are never searched
+for.** Across the corpus, spans missing from the body equal the retracted-row
+count exactly, in every run. Looking for them would report correct behaviour
+as a fault.
+
+**`recorded/` reaches the bundle as a committed symlink**,
+`frontend/public/recorded → ../../recorded`, which Vite dereferences into
+`dist/`. No copy step, so the export stays the only source of truth.
+`export_runs()` now prunes run files it did not write on a full export
+(`--run-ids` subsets never prune), which matters at the *second* export: run
+ids change wholesale when a baseline is accepted.
+
+**npm policy, set 2026-08-06**: `frontend/.npmrc` pins `ignore-scripts=true`
+and `before=2026-07-23` — nothing published inside a two-week window is ever
+resolved. Use `npm --prefix frontend run <script>`, never `npx`: npx silently
+fetches from the network when a binary is missing from the local tree. The
+date pin currently holds `postcss` at 8.5.22, which carries a moderate
+advisory fixed in 8.5.25; that version becomes eligible on 2026-08-12.
+
+Still open: the screenshot/GIF for `docs/` (needs a browser), and everything
+under "Deployment" below.
+
 ## Turnstile (the work item this plan used to be missing)
 
 `POST /v1/questions` already accepts `turnstile_token`; the backend half is built and tested — `test_turnstile_refuses_a_submission_carrying_a_valid_api_key` is the load-bearing assertion. The frontend half does not exist.

@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+/**
+ * Two voices, and the split is true about the content: the answer is prose
+ * lifted out of a document, so it is set in a serif; everything the machine
+ * says *about* that prose — labels, verdicts, the table, accession numbers —
+ * is the instrument speaking, and is set in Plex. Identifiers in this domain
+ * really are fixed-width strings, so they get the mono.
+ *
+ * One accent, and it is the same colour as "verified", because the product is
+ * checking. Nothing else in the palette competes with it.
+ */
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+
+  --color-paper: #f7f8fa;
+  --color-raised: #ffffff;
+  --color-ink: #12181f;
+  --color-slate: #5a6875;
+  --color-rule: #dfe4ea;
+
+  --color-verified: #0f766e;
+  --color-partial: #a16207;
+  --color-retracted: #b42318;
+  --color-anomaly: #7c3aed;
+
+  --color-verified-wash: #e6f2ef;
+  --color-partial-wash: #fbf1de;
+  --color-retracted-wash: #fbeae8;
+  --color-anomaly-wash: #f1ebfd;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv05" 1;
+}
+
+/* One declaration feeds the mark, the tick and the table row, so a claim is
+   the same colour everywhere it appears. */
+[data-tone="verified"] {
+  --tone: var(--color-verified);
+  --tone-wash: var(--color-verified-wash);
+}
+[data-tone="partial"] {
+  --tone: var(--color-partial);
+  --tone-wash: var(--color-partial-wash);
+}
+[data-tone="retracted"] {
+  --tone: var(--color-retracted);
+  --tone-wash: var(--color-retracted-wash);
+}
+[data-tone="anomaly"] {
+  --tone: var(--color-anomaly);
+  --tone-wash: var(--color-anomaly-wash);
+}
+
+/* The claim mark. At rest it is a rule under the sentence and nothing else:
+   nearly every sentence in a good answer is a checked claim, so a filled
+   highlight over all of them says only "this is an answer". The rule marks
+   the extent, the colour carries the verdict, and the wash is spent on the
+   one sentence the reader is actually pointing at.
+
+   `box-decoration-break: clone` is what makes the rule run under every line a
+   wrapped sentence occupies instead of only the last. */
+.claim-mark {
+  background-color: transparent;
+  border-bottom: 2px solid var(--tone);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.04em 0.05em 0.02em;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.claim-mark:hover,
+.claim-mark[data-lit="true"] {
+  background-color: var(--tone-wash);
+}
+
+/* Provenance, set as a footnote, because that is what it is. Kept out of the
+   reading line: an accession number is 20 characters of digits that no reader
+   parses, and inline it breaks mid-number and strands the sentence's full
+   stop on the next line. The whole identifier is one hover away. */
+.citation {
+  font-family: var(--font-mono);
+  font-size: 0.62em;
+  vertical-align: 0.42em;
+  line-height: 0;
+  white-space: nowrap;
+  color: var(--color-slate);
+  opacity: 0.75;
+}
+
+.claim-mark:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 1px;
+}
+
+/* The signature, at its smallest: one mark per claim. Drawn in the margin
+   beside a paragraph, in a strip under the question, and on a table row — the
+   same object at three scales. */
+.tick {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 1px;
+  background-color: var(--tone);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.tick[data-lit="true"] {
+  transform: scale(1.45);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tone) 28%, transparent);
+}
+
+/* The one orchestrated moment: on the landing run, the ticks draw in left to
+   right, which is the shape of the work the engine did. */
+@keyframes tick-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tick-strip .tick {
+  animation: tick-in 260ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tick-strip .tick {
+    animation: none;
+  }
+  .claim-mark,
+  .tick {
+    transition: none;
+  }
+}
+
+/* The answer, in document voice. */
+.prose-answer {
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+@media (min-width: 768px) {
+  .prose-answer {
+    font-size: 1.125rem;
+  }
+}
