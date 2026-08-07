@@ -156,7 +156,7 @@ The eval sits last rather than first (decision 8) and is still what the public d
 
 - ✅ A stranger with the URL sees a recorded run immediately, and within one screen *sees* verification working: coloured claims, hover-to-source, a retracted claim visible on at least one example.
 - ✅ Asking a live question works end to end, with Turnstile enforced (2026-08-07, through the real challenge in a browser).
-- ☐ Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile.
+- ✅ Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile — passed 2026-08-07, Chrome DevTools against the live Pages URL on the mobile preset.
 - ✅ Screenshot/GIF of the grounding table saved under `docs/` (README + CV material) — `docs/grounding-table.png`.
 
 ### Inherited from Phase 4
@@ -173,19 +173,12 @@ Both were written as Phase 4 exit criteria and neither was doable in Phase 4. Th
 
 ## Open items (2026-08-07)
 
-Two things outlive the build. Each has a trigger rather than a hope, because
-"still open" without one is how an item stops being read. A third — the
-budget uptime monitor — closed the same day it was written, on 2026-08-07.
-The gaps that are open *by choice* rather than pending are in
-`docs/monitoring.md` under "What is not watched".
+**The exit gate is closed.** Every bullet above and both inherited Phase 4
+criteria are met, all on or before 2026-08-07. One item outlives the phase,
+and it has a date rather than a hope, because "still open" without one is how
+an item stops being read. The gaps that are open *by choice* rather than
+pending are in `docs/monitoring.md` under "What is not watched".
 
-- **The Lighthouse pass** — the one exit-gate bullet with nothing behind it.
-  Chrome DevTools → Lighthouse, mobile preset, against
-  `https://edgaragent.pages.dev/`, which serves the recorded landing view and
-  therefore needs no live run and spends nothing. Deliberately not a
-  dependency: `npx` is banned by the npm policy above, and a devDependency for
-  a check run once is exactly the un-earned complexity `plans/00-overview.md`
-  §3.1 refuses.
 - **`postcss` 8.5.22 → 8.5.25**, eligible on **2026-08-12**, when the
   `before=2026-07-23` pin's fortnight clears the release. The advisory is
   moderate and build-time only — postcss runs in `vite build`, and nothing of

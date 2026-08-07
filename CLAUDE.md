@@ -20,11 +20,13 @@ accessions, 4,181 Qdrant points, same dense+sparse config.
 **The public path went up on 2026-08-06** — nginx vhost, Let's Encrypt cert,
 Turnstile enforced, fail2ban armed on the real log, all four neighbouring
 vhosts untouched (ADR 0035). `docs/deploy.md` is the procedure, written from
-that deploy. **Phase 5's exit gate is closed but for the Lighthouse pass**
-(2026-08-07): `scripts/burst-test.sh` ran against the live host, one live
-end-to-end ask went through the real Turnstile challenge in a browser, and the
-screenshot is `docs/grounding-table.png`. What is left is dated at the foot of
-`plans/phase-5-frontend.md`.
+that deploy. **Phase 5 is complete — its exit gate closed on 2026-08-07**:
+`scripts/burst-test.sh` ran against the live host, one live end-to-end ask
+went through the real Turnstile challenge in a browser, Lighthouse passed on
+the mobile preset, and the screenshot is `docs/grounding-table.png`. One dated
+item outlives it at the foot of `plans/phase-5-frontend.md`; the monitoring
+gaps left open *by choice* are in `docs/monitoring.md`. **Phase 6 is
+security** — threat model, adversarial evals, and the writeup.
 
 **`/healthz` returns 200 whether or not it is degraded, so the assertion has
 to live in the prober.** Qdrant, the facts store and `spend_ok` all report in
