@@ -191,6 +191,44 @@ never leaves the box.
 | `GET /` | 404 |
 | `GET /healthz`, and `http://` → `https://` | 200, 301 |
 
+**7. The burst test, and what a pass looks like.** Run it from a machine that
+is **not** the box — the point is a real client over the real network. Take
+the key from the box rather than retyping it:
+
+```bash
+FIE_API_KEY="$(ssh vps cat /opt/fie/secrets/api_key)" ./scripts/burst-test.sh
+```
+
+The script prints; it does not judge. **These numbers are the assertion**,
+measured 2026-08-06:
+
+| | expected | why that exact number |
+|---|---|---|
+| 20 submissions | **3× 403, 17× 429** | 3 is nginx's entire allowance — one immediate plus two buffered. A 5/15 split means someone changed `burst`. |
+| the 429 body | **nginx's HTML** | the app's 429 is JSON with a `detail` field. Same status code, opposite meaning: the HTML one cost no worker and no money. |
+| 40 polls at `/healthz` | **40× 200** | the poll path is deliberately unlimited, because the frontend polls. |
+| the neighbour | **401** | `rec.neighbour-c.example` healthy behind auth. Baseline it *before* bursting — read cold, a 401 afterwards looks like collateral damage to someone else's service. |
+
+Then on the box: ~17 new `limiting requests, excess:` lines, `Currently
+banned: 0`, both containers inside their caps, no OOM lines.
+
+**Seventeen refusals against a `maxretry` of 20 is a three-line margin, not a
+design.** The comment in `deploy/fail2ban/jail.d/fie-nginx.local` carries the
+constraint; the short version is that the loop count, nginx's `burst` and
+`maxretry` move together, and getting it wrong bans whoever runs the test.
+
+**The jail counts — prove it can also ban.** Everything above shows fail2ban
+*reading* the right file. After the `backend = systemd` bug below, "the status
+output looks right" is not evidence of anything. Ban a reserved address, which
+costs no real visitor anything:
+
+```bash
+fail2ban-client set fie-nginx-limit-req banip 203.0.113.7   # TEST-NET-3
+nft list ruleset | grep -c 203.0.113.7                      # 1
+fail2ban-client set fie-nginx-limit-req unbanip 203.0.113.7
+nft list ruleset | grep -c 203.0.113.7                      # 0
+```
+
 ## Six things that bit on a real deploy
 
 **Secret files need the container's uid.** Mode 0400 owned by root is

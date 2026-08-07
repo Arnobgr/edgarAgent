@@ -33,5 +33,14 @@ logpath  = /var/log/nginx/fie.error.log
 # than no jail, because the status output says it is working.
 backend  = polling
 findtime = 600
+# **`maxretry` is coupled to `scripts/burst-test.sh` and to nginx's `burst`,
+# and no other file says so.** The exit-gate burst sends 20 submissions; nginx
+# passes 3 (`rate=3r/m, burst=2` in `fie-limits.conf` — one immediate plus two
+# buffered) and refuses 17. Seventeen is three short of this number, and that
+# margin is the only reason the documented test does not firewall the person
+# running it. Raise the loop count, raise `burst`, or lower this, and
+# re-derive all three: the failure lands on the operator mid-run, IP-wide
+# across all six services on the box, with their own connection to it
+# degraded. Measured 2026-08-06; `docs/deploy.md` carries the numbers.
 maxretry = 20
 bantime  = 3600
