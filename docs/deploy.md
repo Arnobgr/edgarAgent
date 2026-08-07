@@ -229,7 +229,7 @@ fail2ban-client set fie-nginx-limit-req unbanip 203.0.113.7
 nft list ruleset | grep -c 203.0.113.7                      # 0
 ```
 
-## Six things that bit on a real deploy
+## Seven things that bit on a real deploy
 
 **Secret files need the container's uid.** Mode 0400 owned by root is
 unreadable to a non-root process, and compose bind-mounts preserve host
@@ -264,6 +264,41 @@ is a 403 *by design* — the key identifies and does not control (ADR 0030) — 
 `curl -fsS` failed and `set -e` aborted at the last line of a working deploy.
 It now expects 202 or 403 according to `FIE_TURNSTILE_REQUIRED`, which turns
 the refusal into a permanent assertion instead of a one-off check.
+
+**Rotating `api_key` is three moves, and doing one of them looks like doing
+all three.** The key exists in two places that never learn about each other:
+the encrypted store this box decrypts, and the Cloudflare Pages build that
+bakes it into the SPA bundle. Rotating it means
+
+1. edit `secrets.enc.yaml`, commit, push;
+2. **on the box**: `git pull` then `deploy/deploy.sh` — the pull alone changes
+   nothing, because the service reads `secrets/`, which only
+   `decrypt-secrets.sh` rewrites and only a container restart re-reads;
+3. **in Cloudflare Pages**: update `VITE_API_KEY` *and trigger a fresh
+   deployment*. Vite inlines `import.meta.env` at **build** time, so changing
+   the variable without rebuilding ships the old key indefinitely.
+
+Miss step 2 and every submission from the browser returns **401 `invalid or
+missing X-API-Key`** while `/healthz` is green, the Turnstile widget solves
+normally, and the box's own smoke test passes — because `deploy.sh` reads the
+key from the same stale file the app does, so both halves agree with each
+other and disagree with the world. It reads as a Cloudflare problem and is not
+one. Diagnose it by hash, so neither value is ever printed or pasted:
+
+```bash
+# What the browser sends: resolve the identifier in `"X-API-Key":<id>`,
+# then hash the literal it is bound to. Prints `<sha256[:12]> <length>`.
+curl -s https://edgaragent.pages.dev/ \
+  | grep -oE '/assets/[^"]+\.js' \
+  | xargs -I{} curl -s "https://edgaragent.pages.dev{}" \
+  | python3 -c 'import hashlib,re,sys; s=sys.stdin.read(); v=re.search(r"\"X-API-Key\":(\w+)",s).group(1); k=re.search(rf"\b{v}\s*=\s*\"([^\"]*)\"",s).group(1); print(hashlib.sha256(k.encode()).hexdigest()[:12], len(k))'
+
+# What the box accepts.
+ssh vps 'tr -d "\n" < /opt/fie/secrets/api_key | sha256sum | cut -c1-12'
+```
+
+Equal hashes mean the rotation landed on both sides. A mismatch is step 2 or
+step 3 undone, and the length tells you which way it is stale.
 
 ## Cron, after the first successful deploy
 

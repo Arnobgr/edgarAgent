@@ -20,10 +20,18 @@ accessions, 4,181 Qdrant points, same dense+sparse config.
 **The public path went up on 2026-08-06** — nginx vhost, Let's Encrypt cert,
 Turnstile enforced, fail2ban armed on the real log, all four neighbouring
 vhosts untouched (ADR 0035). `docs/deploy.md` is the procedure, written from
-that deploy. **Two Phase 5 exit-gate items remain**: `scripts/burst-test.sh`
-against the live host, and the uptime prober is still paused. The widget path
-has never rendered in a browser, so one live end-to-end ask through the real
-Turnstile challenge is still owed.
+that deploy. **Every Phase 5 exit-gate item is now closed** (2026-08-07):
+`scripts/burst-test.sh` ran against the live host, the uptime prober is
+running, and one live end-to-end ask went through the real Turnstile challenge
+in a browser.
+
+**The prober is up but is not yet asserting what it should.** `/healthz`
+returns **200 whether or not it is degraded** — Qdrant and the facts store
+report in the *body*, and `docs/monitoring.md` says to alert on `status !=
+"ok"` **or** a non-200. A prober watching only the status line is therefore
+green through exactly the failure the first deploy produced. Fix the monitor,
+not the endpoint: 200-when-degraded is deliberate, and the container
+healthcheck and `deploy.sh`'s health wait both key off that status.
 
 `eval/baselines.json` holds run `agent-20260801-122527`, which passed 30/30.
 The 2026-08-06 column is the pre-public-deploy full run that ADR 0036 mandated,
