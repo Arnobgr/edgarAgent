@@ -5,7 +5,7 @@ filings — every factual claim verified against a source or explicitly
 retracted. See `financial-intelligence-engine-blueprint.md` for the design and
 `plans/` for the phase-by-phase build.
 
-**Current phase: 4 — backend and deploy.** The Phase 2 topology (decompose →
+**Current phase: 6 — security.** The Phase 2 topology (decompose →
 parallel research → synthesis → per-claim verification → bounded loop-backs →
 critic) runs over a real corpus: TSLA, AAPL and NVDA filings (last 3 fiscal
 years of 10-Ks, 10-Qs and earnings 8-Ks), ingested structure-aware (tables
@@ -19,12 +19,13 @@ on 2026-08-01 — `grounding_rate` 0.972, `hallucination_rate` 0.000,
 Phase 4 wraps that engine in a service: a FastAPI surface with an async job
 model, a human-in-the-loop review gate, layered abuse controls, a container,
 and a manual deploy behind the VPS's own nginx. **It is deployed and
-answering** — on a private path, reachable over the tailnet and nothing else,
-with a nightly backup and a monthly drift eval on cron. The public path
-(nginx vhost, Turnstile, TLS) is Phase 5: Turnstile validates the hostname its
-widget rendered on, and that hostname does not exist yet. `deploy.sh` refuses
-to start with Turnstile off *and* a public vhost present, so the two cannot
-drift apart. See `docs/deploy.md`, `docs/security.md` and
+answering on both paths** — the private one over the tailnet since
+2026-08-05, and the public one at `https://api.example.com` since
+2026-08-06, with Turnstile enforced, fail2ban armed on the real log, and a
+nightly backup and monthly drift eval on cron. `deploy.sh` refuses to start
+with Turnstile off *and* a public vhost present, so the two cannot drift
+apart. Phase 5 added the static frontend on Cloudflare Pages and closed its
+exit gate on 2026-08-07. See `docs/deploy.md`, `docs/security.md` and
 `docs/monitoring.md`.
 
 ## Setup
