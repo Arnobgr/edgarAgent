@@ -120,9 +120,16 @@ class SpendResponse(BaseModel):
 class HealthResponse(BaseModel):
     """Liveness plus the dependencies that are actually on the answer path.
 
-    Langfuse is reported but never gates: tracing is off the answer path, and
-    letting an external SaaS turn this service red would page the operator for
-    someone else's outage.
+    Two fields are reported and neither gates `status`, for opposite reasons.
+    Langfuse is *below* the line: tracing is off the answer path, and letting
+    an external SaaS turn this service red would page the operator for someone else's
+    outage. `spend_ok` is *ahead of* it: it goes false while the service is
+    still answering, so folding it into `status` would report an outage that
+    has not happened, and it is watched by its own monitor instead
+    (`docs/monitoring.md`).
+
+    `spend_ok` is a boolean and not the figures, because this endpoint is
+    unauthenticated. The figures live behind `/v1/admin/spend`.
     """
 
     status: Literal["ok", "degraded"]
@@ -130,3 +137,4 @@ class HealthResponse(BaseModel):
     facts_store: bool
     jobs_in_flight: int
     langfuse_configured: bool
+    spend_ok: bool

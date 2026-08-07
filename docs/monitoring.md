@@ -15,18 +15,40 @@ curl -s https://api.example.com/healthz | jq
 
 ```json
 {"status": "ok", "qdrant": true, "facts_store": true,
- "jobs_in_flight": 0, "langfuse_configured": true}
+ "jobs_in_flight": 0, "langfuse_configured": true, "spend_ok": true}
 ```
 
 `status` is `degraded` when Qdrant or the facts store is unreachable — those
-are on the answer path. **`langfuse_configured` is informational and never
-gates** (ADR 0032): letting an external SaaS turn this service red would page
-someone for another company's outage. The endpoint is unauthenticated and
-reports no secret.
+are on the answer path. **Two fields sit outside that verdict, for opposite
+reasons.** `langfuse_configured` is below it (ADR 0032): letting an external
+SaaS turn this service red would page someone for another company's outage.
+`spend_ok` is ahead of it — it goes false at 80% of the month while the
+service is still answering, so folding it into `status` would report an outage
+that has not happened and put a budget decision inside the uptime figure. The
+endpoint is unauthenticated and reports no secret; `spend_ok` is a boolean and
+not the figures for that reason.
 
-**External probing is a human setup task**: point an uptime checker at
-`/healthz`, alert on `status != "ok"` or a non-200. A prober on the same box
-tells you nothing when the box is the problem.
+**External probing is a human setup task**, and it is **two monitors on this
+one URL**, because the two signals mean different things and deserve different
+urgency:
+
+| monitor | keyword, alert on **absence** | means |
+|---|---|---|
+| liveness | `"status":"ok"` | the service cannot answer — box, nginx, container, Qdrant, or an empty facts store |
+| budget | `"spend_ok":true` | the month is ≥80% spent and will go dark before the 1st |
+
+Keyword type, not plain HTTP: a status-line check is green over
+`"status":"degraded"`, since this endpoint returns **200 either way**. That
+is deliberate — the container healthcheck and `deploy.sh`'s health wait both
+key off the 200 — so the assertion belongs in the prober, not the endpoint.
+
+A prober on the same box tells you nothing when the box is the problem. The
+keyword is matched against the serialized body, so if the response is ever
+pretty-printed the check breaks **loud** (a false down, never a false up).
+
+Neither monitor watches the static half. `https://edgaragent.pages.dev/` can
+be broken while all of the above is green — that is how the 2026-08-07 key
+rotation failed, and it needs a third, plain HTTP check.
 
 ## Spend
 
@@ -42,6 +64,14 @@ Returns `day_usd` / `month_usd` against their caps and an `exhausted` flag.
 The ledger is in `data/api.db` and survives restarts (ADR 0030). `exhausted`
 going true means submissions are returning 429 — expected once a month at
 most, worth looking at if it happens on a Tuesday.
+
+**This is the diagnosis, not the alarm.** By the time `exhausted` is true the
+demo is already dark and the only choice left is which month to be sorry
+about; the `spend_ok` monitor above is what fires while raising the cap is
+still an option. Note that `exhausted` ORs the two caps, and the **day** cap
+($0.35 against a $5.00 month) is reached on any busy day and reopens at
+midnight UTC on its own — alerting on `exhausted` would page for the system
+working. Only the month is worth waking up for.
 
 The monthly eval's ~$0.69 is **not** counted here (ADR 0036). Size the
 provider balance for the eval plus the demo.

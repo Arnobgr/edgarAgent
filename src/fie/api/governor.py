@@ -19,6 +19,20 @@ from fie.api.store import ApiStore, utcnow
 
 Clock = Callable[[], datetime]
 
+# How much of the month may be spent before `/healthz` says so.
+#
+# **The month is the only one of the two caps worth an alert, and it is worth
+# one *before* it binds.** A day that runs out reopens at midnight UTC with
+# nobody doing anything — alerting on that pages for the system working, and
+# at $0.35 against a $5.00 month it would page on any day the demo is busy.
+# A month that runs out leaves the demo dark until the 1st, and both cures —
+# raise the cap, or accept the dark — are decisions someone has to make.
+#
+# 0.8 of $5.00 is $4.00, which at a full $0.35 day is about three days of
+# warning. Deliberately not configurable: one threshold with one reader is
+# not a setting (`plans/00-overview.md` §3.1).
+MONTH_WARN_FRACTION = 0.8
+
 
 @dataclass(frozen=True)
 class SpendTotals:
@@ -34,6 +48,17 @@ class SpendTotals:
     @property
     def exhausted(self) -> bool:
         return self.day_usd >= self.day_cap_usd or self.month_usd >= self.month_cap_usd
+
+    @property
+    def month_nearly_spent(self) -> bool:
+        """Whether the month is close enough to its cap to be worth telling
+        someone, while the service is still answering.
+
+        This is deliberately true well before `exhausted` is: an alarm that
+        fires when the demo is already dark reports history, not a problem
+        anyone can still act on.
+        """
+        return self.month_usd >= MONTH_WARN_FRACTION * self.month_cap_usd
 
 
 class SpendGovernor:

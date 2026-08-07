@@ -18,7 +18,7 @@ import pytest
 from pydantic import SecretStr
 
 from fie.api import create_app
-from fie.api.governor import cache_key
+from fie.api.governor import SpendTotals, cache_key
 from fie.api.store import ApiStore
 from fie.config import Settings
 from tests.conftest import API_KEY
@@ -67,6 +67,82 @@ async def test_the_spend_governor_refuses_once_the_day_cap_is_crossed_and_stays_
         clock.advance(days=1)
         tomorrow = await client.post("/v1/questions", json={"question": "Fourth?"}, headers=AUTH)
         assert tomorrow.status_code == 202
+
+
+def test_the_month_warning_leads_exhaustion_rather_than_reporting_it() -> None:
+    """The warning is only worth having if it fires while there is still a
+    decision to make.
+
+    At $4.00 of $5.00 the service is answering normally and `exhausted` is
+    false — that gap is the whole feature. An alarm keyed on `exhausted`
+    reports history: the demo is already dark, and the only choice left is
+    which month to be sorry about.
+
+    The day cap is deliberately absent from this. It reopens at midnight UTC
+    with nobody doing anything, so alerting on it would page for the system
+    working as designed.
+    """
+
+    def at(day_usd: float, month_usd: float) -> SpendTotals:
+        return SpendTotals(
+            day="2026-08-07",
+            month="2026-08",
+            day_usd=day_usd,
+            month_usd=month_usd,
+            day_cap_usd=0.35,
+            month_cap_usd=5.0,
+        )
+
+    assert at(0.0, 3.99).month_nearly_spent is False
+    assert at(0.0, 4.00).month_nearly_spent is True
+    assert at(0.0, 4.00).exhausted is False
+    assert at(0.0, 5.00).exhausted is True
+
+    # A spent day says nothing about the month.
+    assert at(0.35, 0.35).exhausted is True
+    assert at(0.35, 0.35).month_nearly_spent is False
+
+
+async def test_healthz_reports_the_month_warning_without_touching_status(
+    api_settings: Settings,
+) -> None:
+    """`spend_ok` crosses while questions are still being accepted, and
+    `status` does not move with it.
+
+    Spend is a budget state, not a liveness one. Folding them together gives
+    a monitor that either pages for a working service or — once the two are
+    one number — hides a dead one behind a full wallet. So they are two
+    fields and, in `docs/monitoring.md`, two monitors.
+    """
+    settings = api_settings.model_copy(
+        update={"spend_cap_daily_usd": 5.0, "spend_cap_monthly_usd": 5.0}
+    )
+    app = create_app(settings, run_fn=FakeEngine(), clock=FakeClock())
+    async with api_client(app) as client:
+        governor = app.state.services.governor
+        before = (await client.get("/healthz")).json()
+        assert before["spend_ok"] is True
+
+        governor.record(3.90)
+        assert (await client.get("/healthz")).json()["spend_ok"] is True
+
+        governor.record(0.20)  # $4.10 of $5.00
+        after = (await client.get("/healthz")).json()
+        assert after["spend_ok"] is False
+        assert governor.totals().exhausted is False
+
+        # The warning fired; the thing it warns about has not happened.
+        still_open = await client.post("/v1/questions", json={"question": "Still?"}, headers=AUTH)
+        assert still_open.status_code == 202
+
+        # Qdrant is unreachable offline, so both readings are `degraded` for
+        # that reason — the assertion that matters is that crossing the spend
+        # line moved `spend_ok` and left every other field where it was.
+        assert before["status"] == after["status"]
+        assert (before["qdrant"], before["facts_store"]) == (
+            after["qdrant"],
+            after["facts_store"],
+        )
 
 
 async def test_the_month_cap_holds_on_a_day_that_is_otherwise_clear(

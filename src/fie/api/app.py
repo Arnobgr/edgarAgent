@@ -264,7 +264,10 @@ def create_app(
 
         Unauthenticated on purpose: the external prober is what tells the operator
         the box is down, and it cannot hold a secret. It reveals nothing an
-        attacker could not learn by submitting a question.
+        attacker could not learn by submitting a question — `spend_ok`
+        included, and by some margin: the 429 a refused visitor already
+        receives quotes the month's spend *and* its cap to the cent
+        (`SpendGovernor.refusal`), where this discloses one bit, earlier.
         """
         svc = services(request)
         qdrant_ok = False
@@ -283,6 +286,12 @@ def create_app(
             # answer path, and letting a SaaS outage turn this red would page
             # the operator for someone else's problem.
             langfuse_configured=bool(svc.settings.langfuse_public_key),
+            # Also out of the pass/fail, for the opposite reason: this goes
+            # false while the service is still answering, so folding it into
+            # `status` would report an outage that has not happened and would
+            # corrupt the uptime figure with a budget decision. Its own
+            # monitor watches it (`docs/monitoring.md`).
+            spend_ok=not svc.governor.totals().month_nearly_spent,
         )
 
     return app
