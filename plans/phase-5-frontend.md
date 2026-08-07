@@ -173,8 +173,11 @@ Both were written as Phase 4 exit criteria and neither was doable in Phase 4. Th
 
 ## Open items (2026-08-07)
 
-Three things outlive the build. Each has a trigger rather than a hope, because
-"still open" without one is how an item stops being read.
+Two things outlive the build. Each has a trigger rather than a hope, because
+"still open" without one is how an item stops being read. A third — the
+budget uptime monitor — closed the same day it was written, on 2026-08-07.
+The gaps that are open *by choice* rather than pending are in
+`docs/monitoring.md` under "What is not watched".
 
 - **The Lighthouse pass** — the one exit-gate bullet with nothing behind it.
   Chrome DevTools → Lighthouse, mobile preset, against
@@ -183,11 +186,6 @@ Three things outlive the build. Each has a trigger rather than a hope, because
   dependency: `npx` is banned by the npm policy above, and a devDependency for
   a check run once is exactly the un-earned complexity `plans/00-overview.md`
   §3.1 refuses.
-- **The budget uptime monitor.** `docs/monitoring.md` specifies **two** keyword
-  checks on `/healthz` and only the liveness one exists. `spend_ok` went live
-  on 2026-08-07, so the second can be created now — same URL, absence mode,
-  keyword `"spend_ok":true`. Until it is, the month can reach 80% of its cap
-  with nothing saying so, and the first sign will be visitors getting 429.
 - **`postcss` 8.5.22 → 8.5.25**, eligible on **2026-08-12**, when the
   `before=2026-07-23` pin's fortnight clears the release. The advisory is
   moderate and build-time only — postcss runs in `vite build`, and nothing of

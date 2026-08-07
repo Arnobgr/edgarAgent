@@ -37,9 +37,7 @@ urgency:
 | liveness | `"status":"ok"` | the service cannot answer — box, nginx, container, Qdrant, or an empty facts store |
 | budget | `"spend_ok":true` | the month is ≥80% spent and will go dark before the 1st |
 
-**Installed as of 2026-08-07: liveness only.** The budget one is creatable
-now — `spend_ok` shipped the same day — and until it exists the month can
-reach 80% of its cap with nothing saying so.
+Both were installed on 2026-08-07, the day `spend_ok` shipped.
 
 Keyword type, not plain HTTP: a status-line check is green over
 `"status":"degraded"`, since this endpoint returns **200 either way**. That
@@ -50,9 +48,7 @@ A prober on the same box tells you nothing when the box is the problem. The
 keyword is matched against the serialized body, so if the response is ever
 pretty-printed the check breaks **loud** (a false down, never a false up).
 
-Neither monitor watches the static half. `https://edgaragent.pages.dev/` can
-be broken while all of the above is green — that is how the 2026-08-07 key
-rotation failed, and it needs a third, plain HTTP check.
+Neither monitor watches the static half — see "What is not watched" below.
 
 ## Spend
 
@@ -172,6 +168,35 @@ It runs as `fie-monthly-eval`, a one-off container off the same image and the
 same data volume as the service (ADR 0036), so `docker stats fie-monthly-eval`
 works while it runs and its report lands in `/opt/fie/eval/reports/`. Nothing
 about it lives on the host.
+
+## What is not watched, deliberately
+
+Two gaps are open on purpose. They are written down because an unwatched thing
+nobody recorded is indistinguishable from one nobody thought of.
+
+**The static half has no monitor.** `https://edgaragent.pages.dev/` can be
+broken while every check above is green — the two keyword monitors watch the
+API and nothing else. That is not hypothetical: it is how the 2026-08-07 key
+rotation failed, with the box healthy and every visitor getting a 401 from a
+bundle carrying the old key. A third monitor closes it, plain HTTP this time,
+since Cloudflare either serves the page or does not.
+
+**`backup.sh` has no dead-man's switch.** It runs at 04:00 and writes to
+`/var/log/fie-backup.log`, which nobody reads. A stopped cron writes nothing;
+a failed run writes an error into that unread log. Both look exactly like
+success and surface at restore time, which is the wrong moment to learn it.
+The cure is one line — a `curl` to a heartbeat service after the tar succeeds,
+alerting on the **absence** of a ping.
+
+Both rank below the two monitors that exist, and that ranking is why they are
+still open rather than forgotten. The health checks watch whether a stranger
+can get an answer. These watch whether a stranger can reach the page — bad,
+but visible the moment anyone looks — and whether a 2.2 MB nightly copy is
+still being taken, a copy whose loss costs run history rather than uptime.
+
+One part of that deserves a second thought before it is dismissed: lose
+`api.db` and the governor restarts the month at zero, so the $5.00 cap can be
+spent twice inside one month. Bounded at $5, and cheaper than preventing it.
 
 ## Traces
 
