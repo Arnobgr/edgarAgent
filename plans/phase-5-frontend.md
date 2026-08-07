@@ -156,7 +156,7 @@ The eval sits last rather than first (decision 8) and is still what the public d
 
 - ✅ A stranger with the URL sees a recorded run immediately, and within one screen *sees* verification working: coloured claims, hover-to-source, a retracted claim visible on at least one example.
 - ✅ Asking a live question works end to end, with Turnstile enforced (2026-08-07, through the real challenge in a browser).
-- ✅ Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile — passed 2026-08-07, Chrome DevTools against the live Pages URL on the mobile preset.
+- ✅ Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile — **2026-08-07, mobile preset against the live Pages URL: Performance 92, Accessibility 96, Best Practices 77, SEO 91.** The gate asks about performance and a11y and both clear it comfortably. **Best Practices 77 is not a frontend defect and is not this phase's to fix** — `curl -I https://edgaragent.pages.dev/` returns `referrer-policy` and `x-content-type-options` and *no* `content-security-policy`, `strict-transport-security`, `x-frame-options` or `cross-origin-opener-policy`, which is exactly Lighthouse's four Trust-and-Safety audits failing. Those are response headers on the static host, they are Phase 6's Step 2, and they are recorded there.
 - ✅ Screenshot/GIF of the grounding table saved under `docs/` (README + CV material) — `docs/grounding-table.png`.
 
 ### Inherited from Phase 4
