@@ -20,18 +20,19 @@ accessions, 4,181 Qdrant points, same dense+sparse config.
 **The public path went up on 2026-08-06** — nginx vhost, Let's Encrypt cert,
 Turnstile enforced, fail2ban armed on the real log, all four neighbouring
 vhosts untouched (ADR 0035). `docs/deploy.md` is the procedure, written from
-that deploy. **Every Phase 5 exit-gate item is now closed** (2026-08-07):
-`scripts/burst-test.sh` ran against the live host, the uptime prober is
-running, and one live end-to-end ask went through the real Turnstile challenge
-in a browser.
+that deploy. **Phase 5's exit gate is closed but for the Lighthouse pass**
+(2026-08-07): `scripts/burst-test.sh` ran against the live host, one live
+end-to-end ask went through the real Turnstile challenge in a browser, and the
+screenshot is `docs/grounding-table.png`. What is left is dated at the foot of
+`plans/phase-5-frontend.md`.
 
-**The prober is up but is not yet asserting what it should.** `/healthz`
-returns **200 whether or not it is degraded** — Qdrant and the facts store
-report in the *body*, and `docs/monitoring.md` says to alert on `status !=
-"ok"` **or** a non-200. A prober watching only the status line is therefore
-green through exactly the failure the first deploy produced. Fix the monitor,
-not the endpoint: 200-when-degraded is deliberate, and the container
-healthcheck and `deploy.sh`'s health wait both key off that status.
+**`/healthz` returns 200 whether or not it is degraded, so the assertion has
+to live in the prober.** Qdrant, the facts store and `spend_ok` all report in
+the *body*, and a monitor watching only the status line is green through
+exactly the failure the first deploy produced. That is why
+`docs/monitoring.md` specifies two **keyword** checks against the one URL and
+not a plain HTTP check. Do not close the gap by returning 503 instead: the
+container healthcheck and `deploy.sh`'s health wait both key off that 200.
 
 `eval/baselines.json` holds run `agent-20260801-122527`, which passed 30/30.
 The 2026-08-06 column is the pre-public-deploy full run that ADR 0036 mandated,

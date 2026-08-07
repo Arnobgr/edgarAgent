@@ -37,6 +37,10 @@ urgency:
 | liveness | `"status":"ok"` | the service cannot answer — box, nginx, container, Qdrant, or an empty facts store |
 | budget | `"spend_ok":true` | the month is ≥80% spent and will go dark before the 1st |
 
+**Installed as of 2026-08-07: liveness only.** The budget one is creatable
+now — `spend_ok` shipped the same day — and until it exists the month can
+reach 80% of its cap with nothing saying so.
+
 Keyword type, not plain HTTP: a status-line check is green over
 `"status":"degraded"`, since this endpoint returns **200 either way**. That
 is deliberate — the container healthcheck and `deploy.sh`'s health wait both

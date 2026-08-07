@@ -91,8 +91,9 @@ fetches from the network when a binary is missing from the local tree. The
 date pin currently holds `postcss` at 8.5.22, which carries a moderate
 advisory fixed in 8.5.25; that version becomes eligible on 2026-08-12.
 
-Still open: the screenshot/GIF for `docs/` (needs a browser), and everything
-under "Deployment" below.
+Both of this section's open items closed on 2026-08-07: the screenshot is
+`docs/grounding-table.png`, and everything under "Deployment" below is live.
+What outlives the phase is at the foot of this file.
 
 ## Turnstile (the work item this plan used to be missing)
 
@@ -153,14 +154,43 @@ The eval sits last rather than first (decision 8) and is still what the public d
 
 ## Exit gate
 
-- A stranger with the URL sees a recorded run immediately, and within one screen *sees* verification working: coloured claims, hover-to-source, a retracted claim visible on at least one example.
-- Asking a live question works end to end, with Turnstile enforced.
-- Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile.
-- Screenshot/GIF of the grounding table saved under `docs/` (README + CV material).
+- ✅ A stranger with the URL sees a recorded run immediately, and within one screen *sees* verification working: coloured claims, hover-to-source, a retracted claim visible on at least one example.
+- ✅ Asking a live question works end to end, with Turnstile enforced (2026-08-07, through the real challenge in a browser).
+- ☐ Lighthouse sanity (no egregious performance or a11y failures); credible on a laptop, acceptable on mobile.
+- ✅ Screenshot/GIF of the grounding table saved under `docs/` (README + CV material) — `docs/grounding-table.png`.
 
 ### Inherited from Phase 4
+
+Both are done — the burst test on 2026-08-07, the eval on 2026-08-06 (it
+passed every target; `degraded_attempts: 1` is what stops it becoming a
+baseline, not a failure). They stay written out because they are why the
+public deploy was allowed to happen.
 
 - **`./scripts/burst-test.sh` against the live host.** Genuinely blocked on the vhost this phase installs. It proves nginx refuses a burst rather than the app (both return 429; the response body tells them apart), that polling stays fast, and that **the five other production services on the box keep serving throughout**. These limits live above the application, so `make test` can never see them.
 - **One full `eval-agent` on the VPS, passing against `eval/baselines.json`.** ADR 0036 makes this the gate before the public deploy. Run it with `./deploy/monthly-eval.sh` — there is no `uv` on that box and deliberately will not be. ~75 minutes, ~$0.69. **This one is not blocked on the vhost, and an earlier draft of this plan said it was.** `monthly-eval.sh` starts a one-off container on the `fie_default` network against the service's own volume and calls `answer_question()` directly; nginx is nowhere on that path. It is blocked on nothing at all, which is why decision 8 puts it last: it can be run at any moment, so it should be run at the moment its result is worth the most — over the image that ships. ADR 0038 §1 is already in that image.
 
 Both were written as Phase 4 exit criteria and neither was doable in Phase 4. They are listed here so they are not forgotten.
+
+## Open items (2026-08-07)
+
+Three things outlive the build. Each has a trigger rather than a hope, because
+"still open" without one is how an item stops being read.
+
+- **The Lighthouse pass** — the one exit-gate bullet with nothing behind it.
+  Chrome DevTools → Lighthouse, mobile preset, against
+  `https://edgaragent.pages.dev/`, which serves the recorded landing view and
+  therefore needs no live run and spends nothing. Deliberately not a
+  dependency: `npx` is banned by the npm policy above, and a devDependency for
+  a check run once is exactly the un-earned complexity `plans/00-overview.md`
+  §3.1 refuses.
+- **The budget uptime monitor.** `docs/monitoring.md` specifies **two** keyword
+  checks on `/healthz` and only the liveness one exists. `spend_ok` went live
+  on 2026-08-07, so the second can be created now — same URL, absence mode,
+  keyword `"spend_ok":true`. Until it is, the month can reach 80% of its cap
+  with nothing saying so, and the first sign will be visitors getting 429.
+- **`postcss` 8.5.22 → 8.5.25**, eligible on **2026-08-12**, when the
+  `before=2026-07-23` pin's fortnight clears the release. The advisory is
+  moderate and build-time only — postcss runs in `vite build`, and nothing of
+  it reaches the static bundle a visitor loads — which is why waiting the
+  window out is the right trade rather than an exemption. Run
+  `npm --prefix frontend audit` after, per the standing rule.
