@@ -102,7 +102,7 @@ a lot.
 is deliberate.** Debian's stock `/etc/logrotate.d/nginx` globs
 `/var/log/nginx/*.log`, which already covers them. A second config naming the
 same files makes logrotate **error** rather than rotate twice, so shipping one
-would break rotation for all six vhosts.
+would break rotation for all five vhosts.
 
 Confirm it on the box the first time, rather than trusting this paragraph:
 

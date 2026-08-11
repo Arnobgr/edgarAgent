@@ -20,6 +20,19 @@ What is already on the box, measured:
 - **fail2ban** active with only an `sshd` jail.
 - **certbot** renewing four certs, three of them on `sslip.io`.
 
+> **Correction (2026-08-11): it is five vhosts, not six, and the pool is
+> split five ways.** Re-measured on the box: `sites-enabled` holds `fie`,
+> `neighbour-a`, `neighbour-b`, `rec.neighbour-c.example` and
+> `neighbour-d`, with no `default_server` and one certificate per name.
+> The bullet above is self-contradicting on this — *four* certs before fie
+> means four vhosts before fie. **Six** is the count of docker services on the
+> box, one of which serves no vhost, and the two numbers were conflated.
+> Nothing sized here changes: `limit_conn $server_name 100` bounds
+> fie's share of the pool whatever the divisor is, and a larger share per
+> neighbour only makes the sizing safer. What changes is the blast-radius
+> sentence — fie has **four** neighbours, and "the other five projects" below
+> is right only when read as services.
+
 ## Decision
 
 **The public API is `https://api.example.com`, served by the nginx
