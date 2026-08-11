@@ -32,3 +32,6 @@ secrets/
 frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
+
+# Written by the `audit` CI job from uv.lock, then thrown away (ADR 0041).
+requirements.audit.txt

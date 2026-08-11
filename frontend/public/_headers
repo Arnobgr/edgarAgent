@@ -1,0 +1,55 @@
+# Response headers for the Cloudflare Pages origin (Phase 6, Step 2).
+#
+# Pages reads this file from the build output — `public/` is copied verbatim,
+# so no dependency and no build step is involved. Measured before it existed
+# (2026-08-07, re-measured 2026-08-11): the origin returned `referrer-policy`
+# and `x-content-type-options` and nothing else, which is the whole of the
+# Lighthouse Best Practices 77 recorded in the Phase 5 gate — four
+# Trust-and-Safety audits failing for one reason.
+#
+# **Every origin below was taken from the built bundle, not from a template.**
+# `dist/assets/*.js` and `index.html` between them reference exactly four
+# external hosts; a policy written from a blog post ships a blank page.
+#
+#   challenges.cloudflare.com  Turnstile: the api.js script and the challenge
+#                              iframe. This is the control that holds the
+#                              public path (ADR 0030), so a CSP that breaks
+#                              it disables the security it is part of.
+#   fonts.googleapis.com       the stylesheet <link> in index.html
+#   fonts.gstatic.com          the font files that stylesheet points at
+#   fie.159-69-91-118.sslip.io the API (ADR 0035). `connect-src` also needs
+#                              'self' for `recorded/*.json`, which the CDN
+#                              answers without the VPS ever seeing it
+#                              (ADR 0027).
+#
+# `style-src` carries 'unsafe-inline' and that is a real concession, recorded
+# rather than hidden: Turnstile injects inline styles for its widget and
+# Cloudflare documents the requirement. It costs less here than almost
+# anywhere else — this page has no HTML sink to inject a <style> through
+# (`src/test/output-safety.test.tsx` asserts that), and `script-src` stays
+# strict, which is the directive that matters.
+#
+# **Tested against the built bundle before it shipped**, 2026-08-11: `dist/`
+# served locally with exactly these headers, loaded in headless Chrome on
+# both routes. The landing page booted React, fetched `recorded/index.json`
+# and rendered a real run; the ask page injected the Turnstile script tag.
+# **Zero CSP violations on either route** — a blocked subresource prints
+# "Refused to …" and nothing did.
+#
+# One directive is unexercised by that test and is the one to watch:
+# `frame-src`. Turnstile never reached the point of inserting its iframe on
+# `127.0.0.1` with a sitekey registered for `edgaragent.pages.dev`, so the
+# directive rests on Cloudflare's documented requirement rather than on a
+# local observation. Confirm it on the deployed page — load `#/ask`, solve
+# the challenge, and check the console is clean — the same way
+# `docs/monitoring.md` treats logrotate: a deploy-time verification, not a
+# claim in a file.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://fie.159-69-91-118.sslip.io; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()

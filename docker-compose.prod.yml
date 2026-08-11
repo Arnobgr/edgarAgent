@@ -102,6 +102,13 @@ services:
     # Not published at all: only `fie-api` needs it, over the compose
     # network. Publishing 6333 would also collide with the Qdrant already
     # on this box.
+    environment:
+      # This container phones home by default, and the Phase 6 infra audit is
+      # what found it: `Telemetry reporting enabled, id: c5e2…` in the log
+      # since the first deploy. Qdrant sends configuration and usage counts,
+      # not vectors — but it is a third-party egress from a box whose other
+      # egress is documented to the byte, and nothing in this file said so.
+      TELEMETRY_DISABLED: "true"
     volumes:
       - fie_qdrant_storage:/qdrant/storage
     # 4,181 points x 1536 dims ~ 26 MB of vectors — generous.
@@ -110,6 +117,18 @@ services:
     pids_limit: 128
     security_opt:
       - no-new-privileges:true
+    # Missing until 2026-08-11, while `docs/security.md` claimed both
+    # containers had it. Qdrant needs no capability — it binds 6333, an
+    # unprivileged port, and writes to a volume it already owns. Verified on
+    # the box before shipping: v1.18.0 starts clean under `--cap-drop ALL`.
+    #
+    # It still runs as **root**, unlike `fie-api` (uid 10001), and that stays
+    # open deliberately. `fie_qdrant_storage` is root-owned, so a `user:` line
+    # would make the data unreadable, and `cap_drop: ALL` takes CAP_CHOWN away
+    # so the container could not fix that even as root. The fix is a host-side
+    # chown at the volume mountpoint plus a deploy step — see `docs/security.md`.
+    cap_drop:
+      - ALL
     logging: *json-logging
 
 secrets:

@@ -19,6 +19,10 @@ on:
   push:
     branches: [main, dev]
   pull_request:
+  # For the audit job only. A new advisory lands against an unchanged tree,
+  # which is precisely what a push-triggered audit never sees (ADR 0041).
+  schedule:
+    - cron: "17 6 * * 1"
 
 # A second push to the same branch makes the first run's answer worthless.
 concurrency:
@@ -33,11 +37,15 @@ env:
   # resolver change lands as a visible bump rather than as CI drifting away
   # from the image it certifies.
   UV_VERSION: "0.10.1"
+  PIP_AUDIT_VERSION: "2.9.0"
 
 jobs:
   checks:
     name: lint · typecheck · test
     runs-on: ubuntu-latest
+    # The weekly trigger exists for `audit` alone. Nothing else here can
+    # change without a push, since the dependency set is locked.
+    if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v5
 
@@ -68,9 +76,67 @@ jobs:
       - name: pytest
         run: uv run pytest
 
+  # Reports; never fails on a finding (ADR 0041). Nothing depends on this job,
+  # so it cannot block `image` or a deploy — which is the point, because
+  # `frontend/.npmrc` holds versions back on purpose (`before=2026-07-23`) and
+  # a gate here could only be satisfied by disabling that stronger control.
+  #
+  # Neither tool takes a credential, so ADR 0037 is untouched.
+  audit:
+    name: dependency advisories (reports only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+
+      # The locked *production* tree, not this runner's environment: `uvx`
+      # installs pip-audit into a venv of its own, and auditing that reports
+      # on pip-audit's dependencies and nothing of ours. `--no-dev` because
+      # the deployed image installs production dependencies only, so a
+      # dev-only advisory here is a finding about a laptop.
+      - name: python advisories
+        run: |
+          uv export --format requirements-txt --no-dev --no-emit-project \
+            -o requirements.audit.txt
+          {
+            echo '## Python — `uv.lock`, production only'
+            echo '```'
+            uvx "pip-audit@${PIP_AUDIT_VERSION}" -r requirements.audit.txt --disable-pip 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # No `npm install`: `audit` reads the committed lockfile. That is also
+      # why `ignore-scripts=true` never has to be trusted in this job — no
+      # install hook can run because no install happens.
+      - name: npm advisories
+        run: |
+          {
+            echo '## npm — `frontend/package-lock.json`'
+            echo '```'
+            npm --prefix frontend audit 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Findings belong on the run page, not only in a log nobody opens. The
+      # standing ones are triaged by *reachability* in `docs/security.md`;
+      # this step is what makes a new one visible.
+      - name: where the triage lives
+        run: |
+          echo 'Reachability verdicts: `docs/security.md`, story 6. Not gating (ADR 0041).' \
+            >> "$GITHUB_STEP_SUMMARY"
+
   secret-scan:
     name: gitleaks (full history)
     runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
     steps:
       # Full history, not the tip: the point is to catch a secret that was
       # committed and later removed, which a shallow clone cannot see.

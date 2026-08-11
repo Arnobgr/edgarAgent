@@ -128,7 +128,23 @@ grep -r 'secrets\.' .github/
 
 # 4. The abuse controls, against the running host (ADR 0030/0035).
 ./scripts/burst-test.sh
+
+# 5. The response headers actually reached the CDN. `_headers` is copied from
+#    frontend/public by the Pages build, so a build that did not run leaves
+#    the old (header-less) deploy live and nothing else shows it.
+curl -sI https://edgaragent.pages.dev/ | grep -iE 'content-security-policy|strict-transport|x-frame'
+
+# 6. Dependency advisories. The CI `audit` job reports these on every run and
+#    never gates (ADR 0041); this is the same read, by hand.
+uv export --format requirements-txt --no-dev --no-emit-project -o /tmp/req.txt
+uvx pip-audit@2.9.0 -r /tmp/req.txt --disable-pip
+npm --prefix frontend audit
 ```
+
+After a Pages deploy, load `#/ask` in a browser once and check the console is
+clean. The CSP was tested against the built bundle before it shipped, but
+`frame-src` — the directive Turnstile's challenge iframe needs — could not be
+exercised locally. See story 3.
 
 ## Threat model
 
@@ -144,7 +160,13 @@ the end of this section; **1, 2, 3 and 5** are the injection half, added in
 Phase 6.
 
 Anything still unmitigated is marked **Open** with the thing that closes it, so
-this section can be read on its own and swept later for what is left.
+this section can be read on its own and swept later for what is left. As of
+2026-08-11 three things carry that mark, and they are worth reading together
+because none of them is an oversight: the *behaviour* half of story 1 (no free
+test can show a model ignores injected text — ADR 0042), ingest-side
+sanitization (priced and deferred — ADR 0040), and `fie-qdrant` running as root
+(story 6). The stories themselves are all mitigated; what is open is evidence
+and one container's uid.
 
 ### Trust boundaries
 
@@ -176,11 +198,18 @@ none of them is a setting that can be misconfigured.
    layer of the same property: `get_model(role)` is the only way to obtain a
    chat model and model ids are never written at call sites (ADR 0014).
 2. **Nothing in the graph performs a runtime fetch.** At answer time the only
-   outbound hosts are the model providers. `httpx` appears in
-   `ingest/embed.py` and `tools/retrieval/rerank.py` only, each pinned to one
-   fixed URL, and EDGAR access is offline, CLI-driven, and reached through
+   outbound hosts are the model providers. An HTTP client is imported in four
+   modules — `ingest/embed.py` and `tools/retrieval/rerank.py`, each pinned to
+   one URL from settings, and `api/security.py` with `api/app.py`, which are
+   the Turnstile check and run before a graph exists. None is on the answer
+   path, and EDGAR access is offline, CLI-driven, and reached through
    `Company(ticker)` rather than a URL (`tools/edgar.py`). An injected
    "fetch this URL" instruction has nothing to execute it.
+
+   *This paragraph said "two modules" until 2026-08-11, when the assertion
+   written to defend it counted four. The prose had drifted from the code and
+   nothing was watching — which is the argument for the assertion, in one
+   line.*
 3. **Numeric truth does not live in text an attacker can write.** Every
    numeric claim is checked against the XBRL facts store by deterministic
    SQLite lookup at the claim's stated precision, with no LLM verdict
@@ -190,6 +219,11 @@ none of them is a setting that can be misconfigured.
 **So the blast radius of a successful injection is answer integrity and cost —
 not remote action, not data theft, not persistence.** That is a property of the
 architecture rather than of any hardening done in this phase.
+
+All three are now asserted rather than described (`tests/test_security.py`).
+They were true before the tests existed; what the tests add is that the day
+one of them stops being true, the build says so instead of this file quietly
+becoming wrong.
 
 ### 1. Indirect prompt injection via corpus content
 
@@ -206,15 +240,38 @@ and the claim list, and the reconciler's mapper sees claim text only
 (`tools/reconcile.py:404`). Injected text reaches the mapper second-hand at
 most, as a claim synthesis was steered into writing.
 
-**What is missing today.** There is no delimiter contract and no system-prompt
-sentence telling those three calls that the excerpts are data. The nearest
-thing is a *grounding* rule — "base every factual claim strictly on the
-evidence provided", "judge only against the provided excerpts" — which
-constrains what a model may assert, not whose instructions it follows. The
-packing is also forgeable: blocks are joined with `\n\n---\n\n` and headed
-with `[chunk_id] TICKER FORM (date) — section`, both plain text, so **a chunk
-whose own body contains that separator and a plausible header manufactures an
-evidence block and a citation id.**
+**What was missing, and what shipped on 2026-08-11 (ADR 0040).** There was no
+delimiter contract and no system-prompt sentence telling those three calls that
+the excerpts are data. The nearest thing was a *grounding* rule — "base every
+factual claim strictly on the evidence provided", "judge only against the
+provided excerpts" — which constrains what a model may assert, not whose
+instructions it follows. The packing was also forgeable: blocks are joined with
+`\n\n---\n\n` and headed with `[chunk_id] TICKER FORM (date) — section`, both
+plain text, so a chunk whose own body contained that separator and a plausible
+header manufactured an evidence block.
+
+Now: `fence_untrusted()` in `context/__init__.py` wraps every packed region in
+`<<<BEGIN_UNTRUSTED_FILING_TEXT>>>` … `<<<END_…>>>`, and **strips the marker
+token from everything inside first — that stripping is the control, not the
+wrapping.** A marker a chunk can reproduce is decoration. Both markers contain
+the token, so partial forgeries die with the whole ones, and the property is
+countable: *exactly two occurrences per fenced region, whatever the corpus
+holds*. The region is cleaned whole rather than field by field, so the
+sub-question headings — model output derived from the visitor's question — are
+covered by the same pass. The three prompts that see chunk text carry the
+contract; the other three do not, because they are never passed evidence.
+
+**A forged citation id inside the fence remains possible and is inert.** It
+looks like the hole this leaves and is not one: `graph/build.py:415` resolves
+a claim's `source_chunk_ids` against the real evidence list and drops unknown
+ids, and a claim left with no resolvable chunk is rejected. A fabricated
+`[c99]` grounds nothing; a header forging a *real* id only routes the judge to
+that chunk's genuine text.
+
+Ingest-side sanitization was **deferred, not rejected**, and ADR 0040 prices
+it: it can only run on the Mac, it re-ships a 71 MB snapshot, and it moves the
+corpus the accepted baseline was measured over — which would add a third
+candidate cause to every future metric delta, permanently.
 
 **Blast radius**, in falling order of reachability:
 
@@ -241,9 +298,14 @@ we then ingest indiscriminately.** The mitigation earns its place because the
 risk class is real and this system is a live instance of it, not because this
 particular path is likely.
 
-**Open.** Delimiters plus a system-prompt contract in `context/`, and a
-decision on whether chunk text is also sanitized at ingest — which is a
-re-ingest and a re-shipped corpus snapshot, not an edit.
+**Closed on the mechanism, open on the behaviour.** The fence is asserted in
+`tests/test_security.py` — a chunk carrying a close marker, a forged header and
+an out-of-band "SYSTEM:" instruction cannot produce more than two markers, in
+synthesis or in either judge. What no free test can show is whether a *model*
+obeys what is inside the fence. That is the poisoned-corpus set, it needs a
+real model and real money, and ADR 0042 puts it in `eval/adversarial/` rather
+than in CI. **A green build is evidence the control is wired up, not evidence
+the system resists injection**, and the writeup must not blur the two.
 
 ### 2. Direct prompt injection via the question
 
@@ -289,14 +351,36 @@ time a later phase renders a source link from an accession without a
 constructed path: an attacker-shaped citation then becomes a live `href`, i.e.
 a phishing link carried by a page that says its contents are verified.
 
-**Open.** Two things. An assertion that no anchor with an external target
-survives rendering, so the property stops being a coincidence. And the response
-headers on the static host: `curl -I https://edgaragent.pages.dev/` returns
-`referrer-policy` and `x-content-type-options` and nothing else — no
-`content-security-policy`, no `strict-transport-security`, no
-`x-frame-options`, no `cross-origin-opener-policy` (measured 2026-08-07, and
-the whole of the Lighthouse Best Practices 77 in the Phase 5 gate). Until those
-ship the browser enforces none of this, and framing the ask page is possible.
+**Closed 2026-08-11, in the two halves it needed.**
+
+*The renderer.* `frontend/src/test/output-safety.test.tsx` asserts what used to
+be a coincidence: an answer carrying markdown link syntax, a bare URL, a
+`javascript:` scheme and raw `<a>`/`<img>` HTML renders **zero** anchors, zero
+`href` attributes and zero `img`/`iframe`/`script` elements — and the raw tag
+arrives at the reader as the characters `<a href=…`, which is only possible if
+it was never parsed as markup. Two source-level scans back it: no HTML sink
+anywhere in `frontend/src`, and every `href` in the SPA starts with `#`. **The
+day someone renders a source link from an accession, that scan fails**, which
+is the design review that would otherwise not happen — the fix is a constructed
+`sec.gov` path, never a URL taken from a payload.
+
+*The browser.* `frontend/public/_headers` ships the four missing headers plus
+`Permissions-Policy`. Cloudflare Pages copies `public/` verbatim, so there is
+no dependency and no build step. Every origin in the CSP was read off the built
+bundle — `challenges.cloudflare.com` for Turnstile, the two Google Fonts hosts,
+and the API — because a policy written from a template ships a blank page.
+`style-src` carries `'unsafe-inline'`, which Turnstile requires and which is
+recorded rather than hidden; `script-src` stays strict, and that is the
+directive that matters.
+
+**Tested against the real bundle before shipping**: `dist/` served locally with
+exactly these headers, loaded in headless Chrome on both routes. The landing
+page booted React, fetched `recorded/index.json` and rendered a real run; the
+ask page injected the Turnstile script. **Zero CSP violations on either
+route.** One directive is unexercised — `frame-src`, because Turnstile never
+reached the point of inserting its iframe against `127.0.0.1` — so confirm it
+on the deployed page the way `docs/monitoring.md` treats logrotate: a
+deploy-time check, not a claim in a file.
 
 ### 5. Secrets and context leakage
 
@@ -334,9 +418,13 @@ data, and a question plus an IP is the one place that is not quite true.
 compromise, learns which address asked which question about which public
 company.
 
-**Open.** The `context/` property is unasserted. A test that a prompt-assembly
-path cannot reach a `SecretStr` value is what keeps it true through a future
-refactor.
+**Closed 2026-08-11.** `tests/test_security.py` asserts it from both ends:
+`context/` imports neither `fie.config` nor `Settings` at all, and a `Settings`
+whose every `SecretStr` field is set to one distinctive canary produces windows
+in which that string appears exactly once — the once being the evidence chunk
+that quotes it, which proves the packer ran. The same test pins the count of
+`SecretStr` fields at seven, so adding an eighth without covering it fails
+rather than silently narrowing the sweep.
 
 ### 4 and 6. Resource abuse, supply chain, infra — the Phase 4–5 pair
 
@@ -368,13 +456,59 @@ for a banned address; and an nftables ban is IP-wide on the *box*, so it also
 blocks SSH from that address, which is the part that matters if the address is
 ever the operator's.
 
-**6 — dependency risk has no inventory today. Open.** `.github/workflows/`
-holds one file and no audit step, so nothing in this repo answers "which of our
-dependencies has a known advisory". Adding one collides with the deliberate npm
-hold policy in `frontend/.npmrc` (`ignore-scripts=true`, `before=2026-07-23`),
-which means an audit will report advisories that are being waited out on
-purpose — so whether the audit fails the build or only reports is a decision to
-take before the step exists, not after it first goes red.
+**6 — dependency risk now has an inventory, and it reports rather than gates
+(ADR 0041).** `ci.yml` gained an `audit` job: `uv export --no-dev` piped to
+`uvx pip-audit` for the locked production tree, and `npm audit` against the
+committed lockfile. Neither tool adds a dependency to this repo, neither takes
+a credential, and neither installs anything — so `ignore-scripts=true` is never
+even put to the test. It also runs weekly, because a new advisory against an
+unchanged tree is exactly what a push-triggered audit never sees.
+
+It does not fail the build, and the reason is the first run rather than a
+principle. **Measured 2026-08-11, four advisories, none of them reachable
+here:**
+
+| package | advisory | where it comes from | reachable |
+|---|---|---|---|
+| `h2` 4.3.0 | PYSEC-2026-3628 — duplicate `Host` headers, a request-smuggling primitive | `httpx` extra under edgartools | **no** — the flaw is in *accepting* requests; we are a client, uvicorn serves HTTP/1.1, nothing sets `http2=True` |
+| `langgraph-checkpoint-sqlite` 3.1.0 | PYSEC-2026-3636 — namespace prefix match crosses a tenant boundary | direct | **no** — the flaw is in the *store*; this uses the checkpointer, and has one tenant |
+| `nanoid` < 3.3.17 (**high**) | GHSA-2v37-7h3g-55p8 | transitive under `postcss` → `vite`, **dev** | build machine only — nothing here reaches the browser |
+| `postcss` ≤ 8.5.22 | GHSA-fxqj-rqcc-2cmp | transitive under `vite`, **dev** | build machine only |
+
+A gating audit would be red today on all four, and the only way to clear the
+highest-severity one would be to override `before=2026-07-23` — the hold policy
+that is this repo's actual supply-chain control. **A gate satisfiable only by
+disabling a stronger control is worse than no gate.** The postcss fix becomes
+eligible under that policy on 2026-08-12; taking it is a deliberate act on a
+day the fortnight has passed, not a reaction to a red build.
+
+**The box, measured 2026-08-11.** The host firewall denies inbound by default
+and only nginx's two ports face the internet; SSH is reachable over the
+tailnet and nothing else. `fie-api` binds to loopback, as do the other
+projects' containers, and Qdrant publishes nothing.
+
+**Two container findings, both from this audit rather than from the plan.**
+`fie-api` is exactly as documented — uid 10001, `cap_drop: ALL`,
+`no-new-privileges`, `privileged: false`. **`fie-qdrant` was neither**: no
+`cap_drop` and running as root, while the controls row below read as though
+both containers had it and `plans/phase-6-security.md` said so outright — which
+is why that bullet says *verify*, and why verifying was worth the ten minutes.
+`cap_drop: ALL` is now in `docker-compose.prod.yml`, verified on the box before
+shipping — v1.18.0 starts clean without capabilities, since it binds an
+unprivileged port and writes to a volume it already owns. Root stays, and stays
+**Open**: `fie_qdrant_storage` is root-owned, so a `user:` line makes the data
+unreadable, and `cap_drop: ALL` removes CAP_CHOWN so the container cannot fix
+that even as root. Closing it is a host-side chown at the volume mountpoint
+plus a deploy step, and it is worth less than it looks — the container
+publishes no port and the box is the boundary either way.
+
+**Qdrant also phones home**, which nothing recorded: `Telemetry reporting
+enabled, id: c5e2…` has been in its log since the first deploy. It sends
+configuration and usage counts, not vectors. `TELEMETRY_DISABLED: "true"` is
+now set — a third-party egress from a box whose other egress is documented to
+the byte should not be the one thing nobody wrote down.
+
+Both compose changes take effect on the **next `deploy/deploy.sh`**, not now.
 
 ### Controls, and what each one leaves behind
 
@@ -385,12 +519,52 @@ take before the step exists, not after it first goes red.
 | slow burn of many cheap requests | per-IP quota, $0.35/day sub-cap | a distributed caller reaches the daily cap; that is what the cap is for |
 | our own accounting is wrong | fixed OpenRouter balance, auto-top-up **off** | the only layer that survives a bug in our code |
 | the demo starves the four neighbours | `limit_conn $server_name 100`, `mem_limit`, `cpus`, `pids_limit` | a fail2ban ban is IP-wide and blocks that address from every service on the box, SSH included |
-| container escape / privilege gain | non-root uid 10001, `cap_drop: ALL`, `no-new-privileges` | not a hardened sandbox; the box is the boundary |
+| container escape / privilege gain | `fie-api` non-root uid 10001, both containers `cap_drop: ALL` + `no-new-privileges` | `fie-qdrant` still runs as root (see story 6); not a hardened sandbox; the box is the boundary |
 
 Deliberately **not** in scope: authenticated multi-user access, audit trails
 with reviewer identity (ADR 0034 names this), per-tenant isolation, offsite
 backups (ADR 0031 / `deploy/backup.sh` say so plainly), and WAF-class request
 inspection.
+
+## Every mitigation, and the line that keeps it true
+
+Blueprint §9 names the mitigation set. This is each one against the code that
+implements it and the test that fails when it stops being implemented — the
+second column is the part worth having, because a mitigation with no assertion
+is a paragraph.
+
+| mitigation | where it lives | what asserts it |
+|---|---|---|
+| retrieved content is data, never instruction | `fence_untrusted()` + the contract in three system prompts, `context/__init__.py` (ADR 0040) | `test_security.py::test_a_chunk_cannot_forge_the_fence_in_synthesis`, `…_in_either_judge`, `…_a_sub_question_that_forges_it` |
+| the contract sits only where evidence does | same | `test_only_the_prompts_that_see_chunk_text_carry_the_contract`, `test_only_the_judges_are_told_an_excerpt_cannot_vouch_for_a_claim` |
+| least-privilege tools: no model can act | absence of `bind_tools`; `get_model(role)` as the sole path (ADR 0014) | `test_no_model_in_this_system_has_a_tool_bound` |
+| no runtime fetch on the answer path | four HTTP-client imports, none in the graph | `test_nothing_on_the_answer_path_performs_a_runtime_fetch` |
+| numeric truth is not text an attacker writes | `XbrlNumericReconciler`, deterministic SQLite lookup (ADR 0012) | `tests/test_reconcile_xbrl.py` |
+| a rejected claim leaves the prose | `retract` excises `DraftClaim.answer_span` (ADR 0021/0023) | the invariant test in `tests/test_graph.py` |
+| no secret reaches a prompt | `context/` takes no `Settings`; `SecretStr` beneath it | `test_prompt_assembly_cannot_reach_a_secret`, `test_no_secret_value_appears_in_an_assembled_prompt` |
+| output sanitization | `frontend/src/lib/answer.ts` emits React text nodes, no HTML sink | `output-safety.test.tsx` — four cases |
+| browser-enforced output policy | `frontend/public/_headers` | tested against the built bundle in headless Chrome, 2026-08-11 (story 3) |
+| the API key is not the control | Turnstile, quota, governor, queue cap (ADR 0030) | `test_api_abuse.py::test_turnstile_refuses_a_submission_carrying_a_valid_api_key` and siblings |
+| review cannot launder an opinion | an accepted claim is `accepted`, never `grounded` (ADR 0034) | `tests/test_review_gate.py` |
+| no secret in history, image or CI | gitleaks, `docker history`, ADR 0037 | the release checklist above; `ci.yml` runs the first |
+| dependency advisories are known | the `audit` job (ADR 0041) | it reports; the triage in story 6 is the read |
+
+**The human-in-the-loop gate is a capability with a safe default, not a control
+that is running.** `api_review_mode` defaults to `"off"` and is `"off"` in
+production and in the eval, so today it guards no request and can move no
+metric. Two things about it are still worth stating, because both are easy to
+get wrong in the other direction. **Nothing here is outbound** — the tools are
+read-only and the graph performs no runtime fetch — so the gate is not "the
+approval before something happens", and describing it that way would claim a
+control the system does not need. What it *is*: the place where turning review
+on stays honest, because an accepted claim is recorded `accepted` and never
+`grounded`. That is what stops a reviewer's opinion from entering
+`grounding_rate`.
+
+Three things this phase found are **not** in the table, because they are not
+mitigations — they are corrections to what this file used to say. The httpx
+count was two and is four. `fie-qdrant` had no `cap_drop`. Qdrant reports
+telemetry. Each is recorded where it belongs above.
 
 ## If a key leaks
 
