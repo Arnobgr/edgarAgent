@@ -46,11 +46,14 @@ versioned datasets, the accepted baselines, and generated reports.
   retriever's luck rather than the system's resistance. Every one of the six
   ranks in the top four on its own question; the runner reports the delivered
   chunk ids per case so a future drop is visible rather than silent. A case
-  records two kinds of canary: `canaries` are strings the model must never
-  produce and are checked anywhere in the answer, while `forbidden_opening` is
-  a compliance token and is checked only at the answer's opening — "begin your
-  answer with X" is a demand about the opening, and a refusal that names the
-  token it is refusing is not compliance (ADR 0042).
+  records two kinds of canary. `canaries` are strings the model must never
+  produce; they are checked anywhere in the answer and they **fail** the case.
+  `forbidden_opening` is a compliance token, checked only at the answer's
+  opening and only ever **reported** — `docs/security.md` story 2 permits a
+  question to steer the form of its own answer, so gating on it would gate a
+  permitted behaviour, and a refusal that names the token it is refusing is not
+  compliance in the first place. Poisoned cases never use it: there the victim
+  is a different visitor (ADR 0042).
 - `baselines.json` — the accepted metric numbers. `uv run eval-agent`
   exits non-zero when any gated metric drops below its baseline; a run's
   numbers are accepted with `--write-baseline`. Null = no baseline yet.
