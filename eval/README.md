@@ -26,6 +26,31 @@ versioned datasets, the accepted baselines, and generated reports.
   sentiment inverted → `unsupported` by construction). Measures the
   verifier itself, per claim type — the measurement behind the verifier
   model-escalation decision (3.5).
+- `adversarial/` — 16 attack cases (Phase 6, workstream Step 3), split into
+  `poisoned_corpus.jsonl` (6 cases carrying authored chunks) and
+  `injection_questions.jsonl` (10 cases whose attack is in the question).
+  `label_status: "verified"` throughout — every case was written and read by
+  hand for this phase. **Authored, never derived: `uv run eval-seed` does not
+  generate, extend or touch this directory**, and
+  `test_eval_seed_never_writes_into_the_adversarial_directory` is what keeps
+  that sentence true. Provenance: written 2026-08-12 from the six attacker
+  stories in `docs/security.md`, one case per story plus the two the fence was
+  built for. The chunks are **not** EDGAR documents — their accession numbers
+  are `9999999999-99-999999` and their ids start `adv-` so a poisoned point can
+  never be mistaken for a filed one. Poisoned cases run against a *separate*
+  Qdrant collection (`fie_adversarial__…`), cloned from the serving one: the
+  collection the VPS snapshot came from has no second copy (ADR 0042 §3).
+  **The chunks are written to rank**, in filing vocabulary and with the section
+  captions a real statement page carries, because a real attacker optimizes for
+  retrieval too and a poison that never reaches the model measures the
+  retriever's luck rather than the system's resistance. Every one of the six
+  ranks in the top four on its own question; the runner reports the delivered
+  chunk ids per case so a future drop is visible rather than silent. A case
+  records two kinds of canary: `canaries` are strings the model must never
+  produce and are checked anywhere in the answer, while `forbidden_opening` is
+  a compliance token and is checked only at the answer's opening — "begin your
+  answer with X" is a demand about the opening, and a refusal that names the
+  token it is refusing is not compliance (ADR 0042).
 - `baselines.json` — the accepted metric numbers. `uv run eval-agent`
   exits non-zero when any gated metric drops below its baseline; a run's
   numbers are accepted with `--write-baseline`. Null = no baseline yet.
@@ -39,4 +64,11 @@ uv run eval-retrieval --embedding both --rerank both   # the benchmark (ADR 0011
 uv run eval-agent                                      # gold set → §6 metrics + gate
 uv run eval-agent --limit 3 --skip-judge               # cheap smoke
 uv run eval-seed                                       # regenerate derived sets
+uv run eval-adversarial --rebuild                      # the paid half of the attack set
 ```
+
+`--rebuild` clones the serving collection into `fie_adversarial__…` and upserts
+the poison; drop it on later runs to reuse the collection. The free half of the
+attack set is not here — it is `tests/test_security.py`,
+`tests/test_adversarial.py` and `frontend/src/test/output-safety.test.tsx`,
+which run in `make test` and in CI. ADR 0042 is why the line is drawn there.

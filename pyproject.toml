@@ -33,6 +33,7 @@ dependencies = [
 fie = "fie.cli:app"
 eval-retrieval = "fie.eval.retrieval_runner:main"
 eval-agent = "fie.eval.agent_runner:main"
+eval-adversarial = "fie.eval.adversarial:main"
 eval-seed = "fie.eval.seed:main"
 
 [build-system]
