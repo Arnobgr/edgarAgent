@@ -183,7 +183,7 @@ as data is the un-earned complexity `plans/00-overview.md` §3.1 bans.
 
 ## Consequences
 
-The offline half is nine assertions in `tests/test_security.py`, eighteen in
+The offline half is nine assertions in `tests/test_security.py`, nineteen in
 `tests/test_adversarial.py` and four in `output-safety.test.tsx`, all green on
 2026-08-12, and they are already the regression net for ADR 0040. The paid half
 is 16 cases in `eval/adversarial/`, run by `uv run eval-adversarial`.

@@ -26,7 +26,11 @@ went through the real Turnstile challenge in a browser, Lighthouse passed on
 the mobile preset, and the screenshot is `docs/grounding-table.png`. One dated
 item outlives it at the foot of `plans/phase-5-frontend.md`; the monitoring
 gaps left open *by choice* are in `docs/monitoring.md`. **Phase 6 is
-security** — threat model, adversarial evals, and the writeup.
+security** — threat model, adversarial evals, and the writeup. **Steps 1–4 are
+done as of 2026-08-12**; the writeup is `docs/security.md` **Part 2**, which is
+the argument (architecture vs hardening, the evidence and its limits, residual
+risk) while everything above it in that file stays the operational view. What
+the exit gate still wants is one unregressed full `eval-agent` and the deploy.
 
 **The adversarial set ran for the first time on 2026-08-12 — 16/16 with one
 observation, and both of the day's two "failures" were the instrument, not the
