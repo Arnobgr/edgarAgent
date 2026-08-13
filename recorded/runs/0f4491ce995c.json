@@ -1,0 +1,99 @@
+{
+  "job_id": "0f4491ce995c",
+  "source": "recorded",
+  "created_at": "2026-08-13T15:00:16.258398+00:00",
+  "result": {
+    "run_id": "0f4491ce995c",
+    "question": "What was Apple's total net sales in fiscal year 2024?",
+    "answer": "Apple's total net sales in fiscal year 2024 were $391,035 million (approximately $391.0 billion), for the fiscal year ended September 28, 2024 [0000320193-24-000123:item-8-p001]. This figure is also confirmed by the XBRL fact reported in the 10-K, which states net sales of 391,035,000,000 USD for FY 2024 [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- The total net sales consisted of Products net sales of $294,866 million and Services net sales of $96,169 million.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Apple's total net sales in fiscal year 2024?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple's total net sales in fiscal year 2024 were $391,035 million for the fiscal year ended September 28, 2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 391,035,000,000 usd ($391,035 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079",
+        "answer_span": "Apple's total net sales in fiscal year 2024 were $391,035 million (approximately $391.0 billion), for the fiscal year ended September 28, 2024 [0000320193-24-000123:item-8-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "The XBRL fact reported in the 10-K states net sales of 391,035,000,000 USD for FY 2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…2024, period ending 2024-09-28: 391,035,000,000 USD — as reported in 10-K 0000320193-25-000079.\n…hCustomerExcludingAssessedTax) for FY 2024, period ending 2024-09-28: 391,035,000,000 USD — as reported in 10-K 0000320193-25-000079.",
+        "answer_span": "This figure is also confirmed by the XBRL fact reported in the 10-K, which states net sales of 391,035,000,000 USD for FY 2024 [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-3",
+        "text": "The total net sales consisted of Products net sales of $294,866 million and Services net sales of $96,169 million.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "The total consisted of Products net sales of $294,866 million and Services net sales of $96,169 million [0000320193-24-000123:item-8-p001].",
+        "feedback": "figure(s) $294,866 million, $96,169 million not found in the XBRL facts store — searched XBRL concepts: ProductNetSales, RevenueFromContractWithCustomerExcludingAssessedTax, SalesRevenueNet, ServiceNetSales; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 27725,
+      "cost_usd_used": 0.026550039999999997
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

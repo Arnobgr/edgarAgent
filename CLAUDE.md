@@ -29,8 +29,12 @@ gaps left open *by choice* are in `docs/monitoring.md`. **Phase 6 is
 security** — threat model, adversarial evals, and the writeup. **Steps 1–4 are
 done as of 2026-08-12**; the writeup is `docs/security.md` **Part 2**, which is
 the argument (architecture vs hardening, the evidence and its limits, residual
-risk) while everything above it in that file stays the operational view. What
-the exit gate still wants is one unregressed full `eval-agent` and the deploy.
+risk) while everything above it in that file stays the operational view. **The
+unregressed full `eval-agent` ran on 2026-08-13 and is the new baseline** — it
+went *up* on every metric, so the fence cost no grounding. What the exit gate
+still wants is the deploy: merge to `main`, `./deploy/deploy.sh`, and a Pages
+build, because `frontend/public/_headers` is committed but **not live** — the
+CDN still serves only `referrer-policy` and `x-content-type-options`.
 
 **The adversarial set ran for the first time on 2026-08-12 — 16/16 with one
 observation, and both of the day's two "failures" were the instrument, not the
@@ -61,25 +65,35 @@ exactly the failure the first deploy produced. That is why
 not a plain HTTP check. Do not close the gap by returning 503 instead: the
 container healthcheck and `deploy.sh`'s health wait both key off that 200.
 
-`eval/baselines.json` holds run `agent-20260801-122527`, which passed 30/30.
-The 2026-08-06 column is the pre-public-deploy full run that ADR 0036 mandated,
-executed on the box against the deployed image — **it passed every target and
-is not a baseline**, because `degraded_attempts: 1` disqualifies it (ADR 0025):
+`eval/baselines.json` holds run `agent-20260813-174221`, accepted 2026-08-13:
+30/30, `degraded_attempts: 0`, `runs_with_no_claims: 0`, every floor met and
+nothing regressed. It is the first baseline measured on the post-fence answer
+path, and the **first that is 30 verifiable runs of 30** — which is ADR 0038 §3
+closing. The 08-06 column is the pre-public-deploy run that ADR 0036 mandated,
+executed on the box against the deployed image; **it passed every target and is
+not a baseline**, because `degraded_attempts: 1` disqualifies it (ADR 0025):
 
-| | **2026-08-01** | 2026-08-06 | target |
-|---|---|---|---|
-| `grounding_rate` | **0.972** | 0.955 | ≥ 0.90 |
-| `hallucination_rate` | **0.000** | 0.000 | ≤ 0.02 |
-| `numeric_fidelity` | **0.963** | 0.924 | ≥ 0.85 |
-| `expected_fact_coverage` | **1.000** | 0.893 | ≥ 0.65 |
-| `citation_accuracy` | **0.851** | 0.828 | ≥ 0.75 floor, never ratcheted |
+| | **2026-08-13** | 2026-08-01 | 2026-08-06 | floor |
+|---|---|---|---|---|
+| `grounding_rate` | **0.980** | 0.972 | 0.955 | ≥ 0.90 |
+| `hallucination_rate` | **0.000** | 0.000 | 0.000 | ≤ 0.02, ratcheted |
+| `numeric_fidelity` | **0.989** | 0.963 | 0.924 | ≥ 0.85 |
+| `expected_fact_coverage` | **1.000** | 1.000 | 0.893 | ≥ 0.65 |
+| `citation_accuracy` | **0.867** | 0.851 | 0.828 | ≥ 0.75 |
+
+**Only `hallucination_rate` is ratcheted (ADR 0043). Every other row is a floor
+and nothing else, so the columns are readings, not thresholds.** Do not raise a
+floor toward the best column — that is the ratchet spelled differently, and
+every candidate raise sits above a reading that already happened.
 
 **Do not read the 08-06 column as decay without reading ADR 0039 first.** All
 three missing expected facts are one question (g-016, the degraded run), which
 is the whole of that metric's drop. The other two fell with their denominators
 — 199 claims against 217, 92 figures against 107 — and **one reading cannot
 separate run-to-run variance from GLM drift**. Nothing on the answer path
-changed between the two runs.
+changed between those two runs. The 08-13 column does not settle it either: it
+came after the fence changed three prompts, so it is a different system, and it
+moved *up*.
 
 Retrieval, prompts and models remain cleared — do not tune them for gate
 metrics. How the gate was reached is in ADRs 0018-0025 and in the two findings
@@ -96,21 +110,37 @@ state and the graph routes to END, so `answer_question` *returns* a degraded
 not only on exceptions, and reports `degraded_attempts` — a run with a
 non-zero count is not a baseline.
 
-**`citation_accuracy` is floored, not ratcheted, and the distinction is the
-whole of ADR 0039.** Two gates exist. `TARGETS` holds absolute floors and lists
-its members; the *baseline ratchet* (`_gate(metrics, baseline_metrics)`) has no
+**Scores are floored; only an invariant is ratcheted (ADR 0043, which finishes
+ADR 0039).** Two gates exist. `TARGETS` holds absolute floors and lists its
+members; the *baseline ratchet* (`_gate(metrics, baseline_metrics)`) has no
 list at all and gates on whatever sits in the `metrics` block of
-`baselines.json` — **membership there is the gate**, which is why
-`runs_with_no_claims` and now `citation_accuracy` are recorded *beside* that
-block. Writing a number into it enrols it. That is how a metric documented as
-non-gating failed the 2026-08-06 drift run: 0.828 against 0.851 printed
-`REGRESSION` on a delta of **0.023**, while the judge flips on about 1 in 27
-byte-identical spans and a reading therefore carries **±0.037**. It now has a
-floor of 0.75 instead, and `TARGETS` is checked on every path rather than only
-under `--write-baseline` — without that second half, un-ratcheting would have
-left a collapse to 0.40 exiting 0. Do not re-derive the diagnosis of why it
-moved in July: that change was in the *claims*, not the citations (ADR 0024,
-commit `dcef747`).
+`baselines.json` — **membership there is the gate**, and writing a number into
+it enrols it silently. `_gate` has **no tolerance**: any drop of any size prints
+`REGRESSION` and exits 1.
+
+ADR 0039 found that mechanism through `citation_accuracy` (0.828 against 0.851
+failed the 08-06 run on a delta of **0.023**, while the judge flips on about 1
+in 27 byte-identical spans, so a reading carries **±0.037**) and fixed one
+metric. **Three more were armed the same way and all three fired on that same
+run** — `grounding_rate` 0.955 against 0.972, `expected_fact_coverage` 0.893
+against 1.000, `numeric_fidelity` 0.924 against 0.963 — unread, because
+`degraded_attempts` disqualified the run first. Four red lines, zero missed
+floors.
+ADR 0043 applied the rule to all of them: one claim of 200 is 0.005, one figure
+of ~95 is ~0.011, one fact of 28 is 0.036, and the observed spread across four
+post-ADR-0023 runs is 0.078 / 0.065 / 0.250. So `_RATCHETED_PREFIXES` is now
+`("hallucination",)` — an invariant, not a score, with no noise band around
+zero — and every scored metric has a floor, the `verifier_*` six included, since
+leaving the ratchet without gaining a floor is un-watching rather than de-gating.
+`TARGETS` is checked on every path, not only under `--write-baseline`; without
+that half, un-ratcheting would leave a collapse to 0.40 exiting 0.
+
+`baselines.json` is now two blocks with two jobs: **`measured` is the whole
+reading and gates on nothing; `metrics` is the gate.** `runs_with_no_claims` and
+`citation_accuracy` live in `measured` — no longer standalone keys.
+
+Do not re-derive the diagnosis of why `citation_accuracy` moved in July: that
+change was in the *claims*, not the citations (ADR 0024, commit `dcef747`).
 
 **`hallucination_rate: 0.000` has two possible meanings** — see "Retraction is
 load-bearing".
@@ -123,13 +153,12 @@ checkpoint it ever wrote — nothing to ground, so nothing to fail, and
 `synthesize` now re-asks once and sets `error` if the second draft is also
 claimless, so such a run costs an attempt and lands in `degraded_attempts`;
 `eval-agent` reports `runs_with_no_claims` beside the metrics, ungated and
-recorded outside `metrics` in `baselines.json` so it cannot become a gate.
-**The accepted 2026-08-01 baseline is still 29 verifiable runs of 30** —
-`grounding_rate` 0.972 was measured over 29 runs' claims. **§3 was expected to
-close on 2026-08-06 and did not**: that run reached a clean 30
-(`runs_with_no_claims: 0`, the guard working nine times over) but carries
-`degraded_attempts: 1`, so it cannot be accepted and `recorded/` is still
-generated from the 08-01 run. The next clean full run supersedes both.
+recorded in the `measured` block of `baselines.json` so it cannot become a gate.
+**§3 closed on 2026-08-13**, two runs later than expected: the 08-06 run reached
+a clean 30 but carried `degraded_attempts: 1`, and the 08-13 run reached a clean
+30 with none, so it is accepted and `recorded/` is generated from it — **30 run
+files where the 08-01 export had 29**. The `2b11fa1d4f9e` answer described above
+is no longer on the recorded surface.
 
 ## Working guidelines
 
@@ -214,8 +243,11 @@ never launch it speculatively. Use `--limit N --skip-judge` for smoke checks.
 `--write-baseline` is gated since 2026-07-27 (ADR 0015): it refuses a run
 that misses the §13 `TARGETS` or dropped questions unless `--force`, and
 records `n_questions`/`n_completed` in `eval/baselines.json`. `TARGETS` is
-settled — `numeric_fidelity` 0.85 (same ADR), `expected_fact_coverage` 0.65
-(ADR 0020), now a floor well under the measured 1.000 and worth raising.
+settled and, since ADR 0043, **is the whole gate on every scored metric** —
+`numeric_fidelity` 0.85 (same ADR), `expected_fact_coverage` 0.65 (ADR 0020).
+Both sit far under the measured 1.000 and **are not worth raising**: every
+candidate raise checked on 2026-08-13 sat above a reading that had already
+happened.
 
 ## Architecture
 

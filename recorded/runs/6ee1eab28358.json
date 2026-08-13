@@ -1,0 +1,60 @@
+{
+  "job_id": "6ee1eab28358",
+  "source": "recorded",
+  "created_at": "2026-08-13T15:04:45.691582+00:00",
+  "result": {
+    "run_id": "6ee1eab28358",
+    "question": "How did Tesla's automotive gross margin evolve over the last three fiscal years, and what drove the change?",
+    "answer": "\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- ...",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How did Tesla's automotive gross margin evolve over the last three fiscal years?",
+        "rationale": "This sub-question asks for the numerical figures and trends of automotive gross margins over the specific three-year period.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What were the primary drivers of the changes in Tesla's automotive gross margin over the last three fiscal years?",
+        "rationale": "This sub-question investigates the underlying business, operational, pricing, or cost factors that caused the changes in those margins.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [],
+    "retracted": [
+      {
+        "claim_id": "claim-4-1",
+        "text": "...",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "attribution",
+        "supporting_span": null,
+        "answer_span": "...",
+        "feedback": "claim cites no retrievable evidence chunk — cite a real chunk or retract",
+        "sources": [
+          {
+            "chunk_id": "...",
+            "doc_id": "",
+            "ticker": "",
+            "form_type": "",
+            "section": "",
+            "accession_no": "",
+            "filing_date": ""
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 3,
+    "critic_iterations": 2,
+    "critic_passed": false,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 49519,
+      "cost_usd_used": 0.04729880999999999
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

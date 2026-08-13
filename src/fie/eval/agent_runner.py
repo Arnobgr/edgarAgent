@@ -84,12 +84,34 @@ _LOWER_IS_BETTER = {"hallucination_rate"}
 # more than twice the measured noise below both observations to date (0.851 on
 # 2026-08-01, 0.828 on 2026-08-06); it is deliberately coarse, because two
 # readings do not support a tighter one. Raise it as readings accumulate.
+#
+# ADR 0043 generalised that combination to every scored metric, so this table
+# is now the only gate on all of them and every threshold above is load-bearing
+# rather than informational. **None of them moved when it did**, which is the
+# point worth recording: the four post-ADR-0023 readings span 0.902-0.980 on
+# `grounding_rate`, 0.924-0.989 on `numeric_fidelity` and 0.750-1.000 on
+# `expected_fact_coverage`, so raising any floor toward the best reading would
+# put it above a run that had already happened. The ratchet was the defect; the
+# floors were not.
+#
+# The `verifier_*` entries are new in ADR 0043 and exist only because
+# un-ratcheting without them would have left six metrics with no check at all —
+# the second half of the ADR 0039 bug. They are measured over the 128 labelled
+# claims in `verifier_claims.jsonl`, where one flipped label is worth ~0.008
+# overall and ~0.016 within a claim type, so 0.95 keeps several labels of margin
+# under a reading that has been 1.000 in every run to date.
 TARGETS = {
     "hallucination_rate": 0.02,
     "numeric_fidelity": 0.85,
     "grounding_rate": 0.90,
     "expected_fact_coverage": 0.65,
     "citation_accuracy": 0.75,
+    "verifier_precision_all": 0.95,
+    "verifier_recall_all": 0.95,
+    "verifier_precision_numeric": 0.95,
+    "verifier_recall_numeric": 0.95,
+    "verifier_precision_qualitative": 0.95,
+    "verifier_recall_qualitative": 0.95,
 }
 
 
@@ -400,24 +422,47 @@ def _gate(metrics: dict[str, Any], baselines: Mapping[str, float | None]) -> lis
 # A metric belongs here only when a drop in it is evidence of a worse system
 # rather than a different reading of the same one. That is the test a noisy
 # measurement fails.
-_RATCHETED_PREFIXES = (
-    "grounding",
-    "hallucination",
-    "numeric",
-    "verifier",
-    "expected_fact_coverage",
-)
+#
+# ADR 0043 applied that test to the four families that were still here and only
+# `hallucination_rate` passed it, because it is an invariant rather than a
+# score: retraction either removed every unsupported claim from the prose or it
+# did not, and 0.000 is the only value a working system produces. Ratcheting it
+# says "never worse than the accepted run", which is stronger than the 0.02
+# floor in `TARGETS` and costs nothing, since there is no noise band around
+# zero to trip over.
+#
+# The others failed on arithmetic against runs that had already happened. One
+# claim of 200 moves `grounding_rate` by 0.005 and one figure of ~95 moves
+# `numeric_fidelity` by ~0.011, so accepting the 2026-08-13 run would have
+# ratcheted them to 0.980 and 0.989 — thresholds a single flipped claim clears
+# and a second one fails. `expected_fact_coverage` was already at 1.000 over 28
+# facts, where one missing fact is 0.036: the 2026-08-06 drift run met every
+# target and printed `REGRESSION` on it, and on `grounding_rate`, for exactly
+# that reason. ADR 0039 read those two red lines as noise on a third metric and
+# fixed only that one.
+_RATCHETED_PREFIXES = ("hallucination",)
+
+
+def _scalars(metrics: Mapping[str, Any]) -> dict[str, Any]:
+    """Every scalar in a run's metrics — the buckets and per-claim lists out."""
+    return {
+        k: v for k, v in metrics.items() if isinstance(v, int | float) and not isinstance(v, bool)
+    }
 
 
 def _ratcheted(metrics: Mapping[str, Any]) -> dict[str, Any]:
     """The subset of a run's metrics that a written baseline will gate on."""
-    return {
-        k: v
-        for k, v in metrics.items()
-        if isinstance(v, int | float)
-        and not isinstance(v, bool)
-        and k.startswith(_RATCHETED_PREFIXES)
-    }
+    return {k: v for k, v in _scalars(metrics).items() if k.startswith(_RATCHETED_PREFIXES)}
+
+
+def _measured(metrics: Mapping[str, Any]) -> dict[str, Any]:
+    """Every scalar the run produced, recorded and gating on nothing.
+
+    Deliberately not the complement of `_ratcheted`: the ratcheted number is
+    recorded here too, so one block is the whole reading and a reader comparing
+    two baselines never has to know which side of the gate a metric sat on.
+    """
+    return _scalars(metrics)
 
 
 @app.command()
@@ -553,23 +598,17 @@ def run(
                     "accepted": stamp,
                     "n_questions": metrics["n_questions"],
                     "n_completed": metrics["n_completed"],
-                    # Beside the counts, not inside `metrics` — everything in
-                    # there becomes a gate on the next run via `_gate`, and
-                    # ADR 0038 is explicit that this one must not. A count of
-                    # 3 recorded here is a baseline the reader can distrust;
-                    # a count of 3 inside `metrics` would fail the next run
-                    # for improving on it.
-                    "runs_with_no_claims": metrics["runs_with_no_claims"],
-                    # Out here for the same reason, and ADR 0039 is what it
-                    # cost to learn it a second time. The judge flips on about
-                    # 1 in 27 byte-identical spans, so a single reading
-                    # carries ±0.037 — a ratchet on that refuses runs on noise,
-                    # which is what happened to the 2026-08-06 drift run on a
-                    # delta of 0.023. Recorded, so a real move stays visible
-                    # across baselines; not ratcheted, so the monthly cron
-                    # keeps the credibility it needs to report a real one. It
-                    # is not unwatched — `TARGETS` gives it a 0.75 floor.
-                    "citation_accuracy": metrics["citation_accuracy"],
+                    # The reading, and nothing but the reading. Everything in
+                    # `metrics` becomes a gate on the next run via `_gate` —
+                    # membership there *is* the gate, which is the trap ADR
+                    # 0038 hit with `runs_with_no_claims` (a count of 3 inside
+                    # it would fail the next run for improving on it) and ADR
+                    # 0039 hit again with `citation_accuracy`. ADR 0043 stopped
+                    # deciding that per metric and put every number here, so a
+                    # real move stays visible across accepted baselines while
+                    # the gate stays where it is declared: the floors in
+                    # `TARGETS`, plus the one invariant below.
+                    "measured": _measured(metrics),
                     "metrics": _ratcheted(metrics),
                 },
                 indent=2,

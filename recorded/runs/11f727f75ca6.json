@@ -1,0 +1,201 @@
+{
+  "job_id": "11f727f75ca6",
+  "source": "recorded",
+  "created_at": "2026-08-13T15:02:12.887964+00:00",
+  "result": {
+    "run_id": "11f727f75ca6",
+    "question": "What is the trend in Apple's research and development spending over the last three fiscal years?",
+    "answer": "Apple's research and development (R&D) spending has increased steadily over the last three fiscal years. In FY 2023 (period ending September 30, 2023), Apple reported R&D expense of $29,915 million [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2023-09-30]. In FY 2024 (period ending September 28, 2024), R&D expense rose to $31,370 million [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2024-09-28]. In FY 2025 (period ending September 27, 2025), R&D expense further increased to $34,550 million [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- The year-over-year increase from FY 2023 to FY 2024 was approximately $1,455 million.\n- The year-over-year increase from FY 2024 to FY 2025 was approximately $3,180 million.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What is the trend in Apple's research and development spending over the last three fiscal years?",
+        "rationale": "The question asks for a single metric (R&D spending) over a specific time frame (the last three fiscal years), which can be answered directly in one research step.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple's research and development spending has increased steadily over the last three fiscal years.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "AAPL filed Research and development (us-gaap:ResearchAndDevelopmentExpense) for FY 2023, period ending 2023-09-30: 29,915,000,000 USD ... FY 2024, period ending 2024-09-28: 31,370,000,000 USD ... FY 2025, period ending 2025-09-27: 34,550,000,000 USD",
+        "answer_span": "Apple's research and development (R&D) spending has increased steadily over the last three fiscal years.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2023-09-30",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "In FY 2023 (period ending September 30, 2023), Apple reported R&D expense of $29,915 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 29,915,000,000 usd ($29,915 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079",
+        "answer_span": "In FY 2023 (period ending September 30, 2023), Apple reported R&D expense of $29,915 million [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2023-09-30].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2023-09-30",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "In FY 2024 (period ending September 28, 2024), R&D expense rose to $31,370 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 31,370,000,000 usd ($31,370 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079",
+        "answer_span": "In FY 2024 (period ending September 28, 2024), R&D expense rose to $31,370 million [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2024-09-28].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "In FY 2025 (period ending September 27, 2025), R&D expense further increased to $34,550 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 34,550,000,000 usd ($34,550 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "In FY 2025 (period ending September 27, 2025), R&D expense further increased to $34,550 million [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-5",
+        "text": "The year-over-year increase from FY 2023 to FY 2024 was approximately $1,455 million.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "This represents a year-over-year increase of approximately $1,455 million from FY 2023 to FY 2024 and approximately $3,180 million from FY 2024 to FY 2025, indicating an accelerating upward trend in R&D investment.",
+        "feedback": "figure(s) $1,455 million not found in the XBRL facts store — searched XBRL concepts: ChangeInAmount, IncreaseDecrease; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2023-09-30",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "The year-over-year increase from FY 2024 to FY 2025 was approximately $3,180 million.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "This represents a year-over-year increase of approximately $1,455 million from FY 2023 to FY 2024 and approximately $3,180 million from FY 2024 to FY 2025, indicating an accelerating upward trend in R&D investment.",
+        "feedback": "figure(s) $3,180 million not found in the XBRL facts store — searched XBRL concepts: ChangeInFinancialMetric, IncreaseFromFY2024ToFY2025; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 36929,
+      "cost_usd_used": 0.036750500000000005
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

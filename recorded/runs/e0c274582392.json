@@ -1,0 +1,113 @@
+{
+  "job_id": "e0c274582392",
+  "source": "recorded",
+  "created_at": "2026-08-13T15:14:15.933184+00:00",
+  "result": {
+    "run_id": "e0c274582392",
+    "question": "Compare the net income of Apple and Nvidia in their most recent fiscal years.",
+    "answer": "In their most recent fiscal years, Apple reported net income of $112,010,000,000 (approximately $112.0 billion) for fiscal year 2025, which ended September 27, 2025 [xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27]. Nvidia reported net income of $120,067,000,000 (approximately $120.1 billion) for fiscal year 2026, which ended January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25]. Nvidia's net income was higher than Apple's in their respective most recent fiscal years.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What is the net income of Apple in its most recent fiscal year?",
+        "rationale": "Independent lookup required for Apple's net income in its most recent fiscal year.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What is the net income of Nvidia in its most recent fiscal year?",
+        "rationale": "Independent lookup required for Nvidia's net income in its most recent fiscal year.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple reported net income of $112,010,000,000 for fiscal year 2025, which ended September 27, 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 112,010,000,000 usd ($112,010 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "Apple reported net income of $112,010,000,000 (approximately $112.0 billion) for fiscal year 2025, which ended September 27, 2025 [xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "Nvidia reported net income of $120,067,000,000 for fiscal year 2026, which ended January 25, 2026.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 120,067,000,000 usd ($120,067 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "Nvidia reported net income of $120,067,000,000 (approximately $120.1 billion) for fiscal year 2026, which ended January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "Nvidia's net income was higher than Apple's in their respective most recent fiscal years.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "AAPL filed Net income (us-gaap:NetIncomeLoss) for FY 2025, period ending 2025-09-27: 112,010,000,000 USD — as reported in 10-K 0000320193-25-000079.\n\n---\n\n[xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25] NVDA 10-K (2026-02-25) — XBRL facts\nNVDA filed Net income (us-gaap:NetIncomeLoss) for FY 2026, period ending 2026-01-25: 120,067,000,000 USD — as reported in 10-K 0001045810-26-000021.",
+        "answer_span": "Nvidia's net income was higher than Apple's in their respective most recent fiscal years.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 34561,
+      "cost_usd_used": 0.03233579000000001
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

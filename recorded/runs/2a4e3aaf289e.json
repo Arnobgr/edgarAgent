@@ -1,0 +1,195 @@
+{
+  "job_id": "2a4e3aaf289e",
+  "source": "recorded",
+  "created_at": "2026-08-13T14:59:16.948582+00:00",
+  "result": {
+    "run_id": "2a4e3aaf289e",
+    "question": "What was Tesla's total revenue in fiscal year 2025?",
+    "answer": "Tesla's total revenue in fiscal year 2025 was $94,827 million (approximately $94.8 billion), as reported in the Consolidated Statements of Operations in its 10-K for the year ended December 31, 2025 [0001628280-26-003952:item-8-p007]. This total comprised automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007]. The XBRL-tagged revenue fact for FY 2025 confirms the same figure of 94,827,000,000 USD [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Tesla's total revenue in fiscal year 2025?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Tesla's total revenue in fiscal year 2025 was $94,827 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 94,827,000,000 usd ($94,827 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "Tesla's total revenue in fiscal year 2025 was $94,827 million (approximately $94.8 billion), as reported in the Consolidated Statements of Operations in its 10-K for the year ended December 31, 2025 [0001628280-26-003952:item-8-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-8-p007",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "Automotive sales contributed $65,821 million to Tesla's fiscal year 2025 revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Automotive sales) [dimensioned=true] = 65,821,000,000 usd ($65,821 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "This total comprised automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-8-p007",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "Automotive regulatory credits contributed $1,993 million to Tesla's fiscal year 2025 revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Automotive regulatory credits) [dimensioned=true] = 1,993,000,000 usd ($1,993 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "This total comprised automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-8-p007",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-4",
+        "text": "Automotive leasing contributed $1,712 million to Tesla's fiscal year 2025 revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Automotive leasing) [dimensioned=true] = 1,712,000,000 usd ($1,712 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "This total comprised automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-8-p007",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-5",
+        "text": "Energy generation and storage revenue contributed $12,771 million to Tesla's fiscal year 2025 revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Energy generation and storage segment) [dimensioned=true] = 12,771,000,000 usd ($12,771 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "This total comprised automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-8-p007",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-6",
+        "text": "Services and other revenue contributed $12,530 million to Tesla's fiscal year 2025 revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services and other) [dimensioned=true] = 12,530,000,000 usd ($12,530 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "This total comprised automotive sales of $65,821 million, automotive regulatory credits of $1,993 million, automotive leasing of $1,712 million, energy generation and storage revenue of $12,771 million, and services and other revenue of $12,530 million [0001628280-26-003952:item-8-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-8-p007",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-7",
+        "text": "The XBRL-tagged revenue fact for Tesla's FY 2025 confirms a figure of 94,827,000,000 USD.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…ed Revenues (us-gaap:Revenues) for FY 2025, period ending 2025-12-31: 94,827,000,000 USD — as reported in 10-K 0001628280-26-003952.",
+        "answer_span": "The XBRL-tagged revenue fact for FY 2025 confirms the same figure of 94,827,000,000 USD [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 14728,
+      "cost_usd_used": 0.014428229999999997
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

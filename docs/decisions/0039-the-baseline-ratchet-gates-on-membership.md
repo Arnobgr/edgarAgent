@@ -1,7 +1,12 @@
 # ADR 0039 — The baseline ratchet gates on membership, so a noisy metric must not be a member
 
 **Date:** 2026-08-06 · **Phase:** 5 · **Status:** accepted — implemented
-2026-08-06 · **Extends:** ADR 0015 (`--write-baseline` is gated), ADR 0024
+2026-08-06; **widened by ADR 0043 on 2026-08-13**, which applies this
+decision's own rule to the three metrics still in the ratchet. The mechanism
+below is unchanged and remains the reference for it; what is superseded is the
+scope — this ADR fixed `citation_accuracy` and left the same defect armed
+elsewhere, including on two metrics that had already fired on the very run
+analysed here. · **Extends:** ADR 0015 (`--write-baseline` is gated), ADR 0024
 (what moved `citation_accuracy` in July), ADR 0036 (the monthly drift run),
 ADR 0038 (a count recorded beside `metrics`, never inside it)
 

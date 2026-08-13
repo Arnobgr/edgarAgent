@@ -1,0 +1,465 @@
+{
+  "job_id": "bcacef0e6354",
+  "source": "recorded",
+  "created_at": "2026-08-13T15:03:50.635409+00:00",
+  "result": {
+    "run_id": "bcacef0e6354",
+    "question": "How has Nvidia's data center business contributed to its revenue growth across its last three fiscal years?",
+    "answer": "Nvidia's data center business has been the primary driver of its revenue growth across the last three fiscal years (FY2024, FY2025, and FY2026). The company's total revenue grew from $60.9 billion in FY2024 [xbrl:0001045810-26-000021:us-gaap:Revenues:2024-01-28] to $130.5 billion in FY2025 [xbrl:0001045810-26-000021:us-gaap:Revenues:2025-01-26] and then to $215.9 billion in FY2026 [xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25].\n\n**FY2024 (ended January 28, 2024):** Total revenue was $60.9 billion, up 126% from $26.97 billion in FY2023 [0001045810-24-000029:item-7-p011]. Data Center revenue for the third quarter of FY2024 alone was $14.51 billion, up 279% from a year ago [0001045810-23-000227:part-i--item-2-p008].\n\n**FY2025 (ended January 26, 2025):** Total revenue was $130.5 billion, up 114% from $60.9 billion in FY2024 [0001045810-25-000023:item-7-p010]. Revenue from Data Center computing grew 162%, driven primarily by demand for the Hopper computing platform, while Data Center networking grew 51%, driven by Ethernet for AI revenue including the Spectrum-X platform [0001045810-25-000023:item-7-p010]. For the first nine months of FY2025, Data Center revenue reached $79.6 billion, compared to $29.1 billion in the same period of FY2024 [0001045810-24-000316:part-i--item-1-p021].\n\n**FY2026 (ended January 25, 2026):** Total revenue was $215.9 billion, up 65% from $130.5 billion in FY2025 [0001045810-26-000021:item-7-p008]. The Compute & Networking segment generated $193.5 billion, up 67% year-on-year, driven by major platform shifts in accelerated computing and AI [0001045810-26-000021:item-7-p008]. Revenue from Data Center computing grew 59%, driven by demand for the Blackwell computing platform, while Data Center networking grew 142%, driven by NVLink compute fabric for GB200 and GB300 systems and growth of Ethernet and InfiniBand platforms [0001045810-26-000021:item-7-p008]. The company noted that Blackwell architectures represented the majority of Data Center revenue in FY2026 [0001045810-26-000021:item-7-p001].\n\nAcross all three fiscal years, the Data Center business—housed within the Compute & Networking segment—was consistently identified as the primary driver of revenue growth, fueled by demand for AI training and inference, large language models, and generative AI applications. The platform transitioned from Hopper (FY2024–FY2025) to Blackwell (FY2026), sustaining the growth trajectory.\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- The Compute & Networking segment generated $47.4 billion in revenue in FY2024, up 215% year-on-year, driven by higher Data Center revenue from Compute GPU shipments of the NVIDIA Hopper GPU computing platform.\n- The Compute & Networking segment generated $116.2 billion in FY2025, up 145% year-on-year, driven by strong demand for accelerated computing and AI solutions.",
+    "sub_questions": [
+      {
+        "id": "sq2-1",
+        "text": "How has Nvidia's data center business contributed to its revenue growth across its last three fiscal years?",
+        "rationale": "This is a single-part question asking about the contribution of Nvidia's data center business to revenue growth over its last three fiscal years, which requires analyzing the data center revenue and overall revenue figures across that period in a unified manner.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-4-1",
+        "text": "Nvidia's total revenue was $60.9 billion in FY2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 60,922,000,000 usd ($60,922 million) for FY 2024, period ending 2024-01-28, 10-K acc 0001045810-26-000021",
+        "answer_span": "The company's total revenue grew from $60.9 billion in FY2024 [xbrl:0001045810-26-000021:us-gaap:Revenues:2024-01-28]",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Revenues:2024-01-28",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-2",
+        "text": "Nvidia's total revenue was $130.5 billion in FY2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 130,497,000,000 usd ($130,497 million) for FY 2025, period ending 2025-01-26, 10-K acc 0001045810-26-000021",
+        "answer_span": "to $130.5 billion in FY2025 [xbrl:0001045810-26-000021:us-gaap:Revenues:2025-01-26]",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Revenues:2025-01-26",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-3",
+        "text": "Nvidia's total revenue was $215.9 billion in FY2026.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 215,938,000,000 usd ($215,938 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "and then to $215.9 billion in FY2026 [xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-4",
+        "text": "Total revenue in FY2024 was $60.9 billion, up 126% from $26.97 billion in FY2023.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 60,922,000,000 usd ($60,922 million) for FY 2024, period ending 2024-01-28, 10-K acc 0001045810-26-000021\nXBRL ratio us-gaap:Revenues (Networking) / us-gaap:Revenues (Singapore) = 8,575,000,000 / 6,831,000,000 = 1.2553 for FY 2024, acc 0001045810-25-000023\nXBRL us-gaap:Revenues (Revenue) = 26,974,000,000 usd ($26,974 million) for FY 2023, period ending 2023-01-29, 10-K acc 0001045810-25-000023",
+        "answer_span": "Total revenue was $60.9 billion, up 126% from $26.97 billion in FY2023 [0001045810-24-000029:item-7-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000029:item-7-p011",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-6",
+        "text": "Data Center revenue for the third quarter of FY2024 was $14.51 billion, up 279% from a year ago.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Data Center) [dimensioned=true] = 14,514,000,000 usd ($14,514 million) for Q3 2024, period ending 2023-10-29, 10-Q acc 0001045810-24-000316\nXBRL change us-gaap:Revenues (Data Center): 14,514,000,000 usd ($14,514 million) (Q3 2024) vs 3,833,000,000 usd ($3,833 million) (Q3 2023) = +278.66%, acc 0001045810-24-000316",
+        "answer_span": "Data Center revenue for the third quarter of FY2024 alone was $14.51 billion, up 279% from a year ago [0001045810-23-000227:part-i--item-2-p008].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-23-000227:part-i--item-2-p008",
+            "doc_id": "NVDA-10-Q-0001045810-23-000227",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001045810-23-000227",
+            "filing_date": "2023-11-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-7",
+        "text": "Total revenue in FY2025 was $130.5 billion, up 114% from $60.9 billion in FY2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 130,497,000,000 usd ($130,497 million) for FY 2025, period ending 2025-01-26, 10-K acc 0001045810-26-000021\nXBRL ratio us-gaap:Revenues (Operating Segments) / us-gaap:Revenues (Compute) = 116,193,000,000 / 102,196,000,000 = 1.1370 for FY 2025, acc 0001045810-26-000021\nXBRL us-gaap:Revenues (Revenue) = 60,922,000,000 usd ($60,922 million) for FY 2024, period ending 2024-01-28, 10-K acc 0001045810-26-000021",
+        "answer_span": "Total revenue was $130.5 billion, up 114% from $60.9 billion in FY2024 [0001045810-25-000023:item-7-p010].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-7-p010",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-9",
+        "text": "Revenue from Data Center computing grew 162% in FY2025, driven primarily by demand for the Hopper computing platform.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL change us-gaap:Revenues (Compute): 102,196,000,000 usd ($102,196 million) (FY 2025) vs 38,950,000,000 usd ($38,950 million) (FY 2024) = +162.38%, acc 0001045810-26-000021",
+        "answer_span": "Revenue from Data Center computing grew 162%, driven primarily by demand for the Hopper computing platform, while Data Center networking grew 51%, driven by Ethernet for AI revenue including the Spectrum-X platform [0001045810-25-000023:item-7-p010].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-7-p010",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-10",
+        "text": "Data Center networking grew 51% in FY2025, driven by Ethernet for AI revenue including the Spectrum-X platform.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL change us-gaap:Revenues (Networking): 12,990,000,000 usd ($12,990 million) (FY 2025) vs 8,575,000,000 usd ($8,575 million) (FY 2024) = +51.49%, acc 0001045810-26-000021",
+        "answer_span": "Revenue from Data Center computing grew 162%, driven primarily by demand for the Hopper computing platform, while Data Center networking grew 51%, driven by Ethernet for AI revenue including the Spectrum-X platform [0001045810-25-000023:item-7-p010].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-7-p010",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-11",
+        "text": "For the first nine months of FY2025, Data Center revenue reached $79.6 billion, compared to $29.1 billion in the same period of FY2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Data Center) [dimensioned=true] = 79,606,000,000 usd ($79,606 million) for YTD9 2025, period ending 2024-10-27, 10-Q acc 0001045810-25-000230\nXBRL us-gaap:Revenues (Data Center) [dimensioned=true] = 29,121,000,000 usd ($29,121 million) for YTD9 2024, period ending 2023-10-29, 10-Q acc 0001045810-24-000316",
+        "answer_span": "For the first nine months of FY2025, Data Center revenue reached $79.6 billion, compared to $29.1 billion in the same period of FY2024 [0001045810-24-000316:part-i--item-1-p021].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000316:part-i--item-1-p021",
+            "doc_id": "NVDA-10-Q-0001045810-24-000316",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0001045810-24-000316",
+            "filing_date": "2024-11-20"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-12",
+        "text": "Total revenue in FY2026 was $215.9 billion, up 65% from $130.5 billion in FY2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 215,938,000,000 usd ($215,938 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021\nXBRL change us-gaap:Revenues (Revenue): 215,938,000,000 usd ($215,938 million) (FY 2026) vs 130,497,000,000 usd ($130,497 million) (FY 2025) = +65.47%, acc 0001045810-26-000021\nXBRL us-gaap:Revenues (Revenue) = 130,497,000,000 usd ($130,497 million) for FY 2025, period ending 2025-01-26, 10-K acc 0001045810-26-000021",
+        "answer_span": "Total revenue was $215.9 billion, up 65% from $130.5 billion in FY2025 [0001045810-26-000021:item-7-p008].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p008",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-13",
+        "text": "The Compute & Networking segment generated $193.5 billion in FY2026, up 67% year-on-year, driven by major platform shifts in accelerated computing and AI.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Operating Segments) [dimensioned=true] = 193,479,000,000 usd ($193,479 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021\nXBRL change us-gaap:Revenues (Operating Segments): 193,479,000,000 usd ($193,479 million) (FY 2026) vs 116,193,000,000 usd ($116,193 million) (FY 2025) = +66.52%, acc 0001045810-26-000021",
+        "answer_span": "The Compute & Networking segment generated $193.5 billion, up 67% year-on-year, driven by major platform shifts in accelerated computing and AI [0001045810-26-000021:item-7-p008].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p008",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-14",
+        "text": "Revenue from Data Center computing grew 59% in FY2026, driven by demand for the Blackwell computing platform.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL change us-gaap:Revenues (Taiwan): 42,345,000,000 usd ($42,345 million) (FY 2026) vs 102,196,000,000 usd ($102,196 million) (FY 2025) = -58.56%, acc 0001045810-26-000021",
+        "answer_span": "Revenue from Data Center computing grew 59%, driven by demand for the Blackwell computing platform, while Data Center networking grew 142%, driven by NVLink compute fabric for GB200 and GB300 systems and growth of Ethernet and InfiniBand platforms [0001045810-26-000021:item-7-p008].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p008",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-15",
+        "text": "Data Center networking grew 142% in FY2026, driven by NVLink compute fabric for GB200 and GB300 systems and growth of Ethernet and InfiniBand platforms.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL change us-gaap:Revenues (Networking): 31,376,000,000 usd ($31,376 million) (FY 2026) vs 12,990,000,000 usd ($12,990 million) (FY 2025) = +141.54%, acc 0001045810-26-000021",
+        "answer_span": "Revenue from Data Center computing grew 59%, driven by demand for the Blackwell computing platform, while Data Center networking grew 142%, driven by NVLink compute fabric for GB200 and GB300 systems and growth of Ethernet and InfiniBand platforms [0001045810-26-000021:item-7-p008].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p008",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-16",
+        "text": "Blackwell architectures represented the majority of Data Center revenue in FY2026.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Our Blackwell architectures represented the majority of our Data Center revenue.",
+        "answer_span": "The company noted that Blackwell architectures represented the majority of Data Center revenue in FY2026 [0001045810-26-000021:item-7-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p001",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-17",
+        "text": "The Data Center business was consistently identified as the primary driver of revenue growth across FY2024, FY2025, and FY2026, fueled by demand for AI training and inference, large language models, and generative AI applications.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "Across all three fiscal years, the Data Center business—housed within the Compute & Networking segment—was consistently identified as the primary driver of revenue growth, fueled by demand for AI training and inference, large language models, and generative AI applications.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000029:item-7-p011",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          },
+          {
+            "chunk_id": "0001045810-25-000023:item-7-p010",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          },
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p008",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-18",
+        "text": "The platform transitioned from Hopper (FY2024–FY2025) to Blackwell (FY2026), sustaining the growth trajectory.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Compute grew 266% due to higher shipments of the NVIDIA Hopper GPU computing platform... Revenue from Data Center computing grew 162% driven primarily by demand for our Hopper computing platform... Revenue from Data Center computing grew 59% driven by demand for our Blackwell computing platform. Graphics revenue – The year over year increase was driven by sales of our Blackwell architecture.",
+        "answer_span": "The platform transitioned from Hopper (FY2024–FY2025) to Blackwell (FY2026), sustaining the growth trajectory.",
+        "feedback": "The provided excerpts mention Hopper for FY2024 and FY2025 (e.g., 'higher shipments of the NVIDIA Hopper GPU computing platform' for FY2024, 'demand for our Hopper computing platform' for FY2025) and Blackwell for FY2026 ('driven by demand for our Blackwell computing platform' and 'Graphics revenue – The year over year increase was driven by sales of our Blackwell architecture'), and show strong growth across these fiscal years. Therefore, the claim is fully supported.",
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000029:item-7-p011",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          },
+          {
+            "chunk_id": "0001045810-25-000023:item-7-p010",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          },
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p008",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-4-5",
+        "text": "The Compute & Networking segment generated $47.4 billion in revenue in FY2024, up 215% year-on-year, driven by higher Data Center revenue from Compute GPU shipments of the NVIDIA Hopper GPU computing platform.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "The Compute & Networking segment, which houses the Data Center business, generated $47.4 billion in revenue, up 215% year-on-year, driven by higher Data Center revenue from Compute GPU shipments of the NVIDIA Hopper GPU computing platform for training and inference of large language models, recommendation engines, and generative AI applications [0001045810-24-000029:item-7-p011].",
+        "feedback": "figure(s) $47.4 billion, 215% not found in the XBRL facts store — searched XBRL concepts: RevenueFromContractWithCustomerExcludingAssessedTax, SalesRevenueNet, SegmentReportingRevenue; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000029:item-7-p011",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-8",
+        "text": "The Compute & Networking segment generated $116.2 billion in FY2025, up 145% year-on-year, driven by strong demand for accelerated computing and AI solutions.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "The Compute & Networking segment generated $116.2 billion, up 145% year-on-year, driven by strong demand for accelerated computing and AI solutions [0001045810-25-000023:item-7-p010].",
+        "feedback": "figure(s) $116.2 billion, 145% not found in the XBRL facts store — searched XBRL concepts: ComputeAndNetworkingSegmentRevenue, RevenueFromContractWithCustomerExcludingAssessedTax, SegmentReportingInformationRevenue; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-7-p010",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 3,
+    "critic_iterations": 2,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 108946,
+      "cost_usd_used": 0.10438233
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

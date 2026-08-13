@@ -10,8 +10,10 @@ from pydantic import SecretStr
 
 from fie.config import Settings
 from fie.eval.agent_runner import (
+    _RATCHETED_PREFIXES,
     TARGETS,
     _gate,
+    _measured,
     _ratcheted,
     _run_gold,
     declined_unanswerables,
@@ -384,8 +386,58 @@ def test_citation_accuracy_is_floored_not_ratcheted() -> None:
 
     sample = {"citation_accuracy": 0.83, "grounding_rate": 0.95, "n_completed": 30}
     assert "citation_accuracy" not in _ratcheted(sample)
-    assert "grounding_rate" in _ratcheted(sample)
 
     accepted = json.loads((EVAL_DIR / "baselines.json").read_text())
     assert "citation_accuracy" not in accepted["metrics"]
-    assert accepted["citation_accuracy"] == pytest.approx(0.851, abs=0.001)
+    assert accepted["measured"]["citation_accuracy"] == pytest.approx(0.867, abs=0.001)
+
+
+def test_only_an_invariant_is_ratcheted_and_every_score_has_a_floor() -> None:
+    """ADR 0043. ADR 0039 fixed one metric and left the same defect armed on
+    three more, because the ratchet has no list — it gates on whatever the
+    written `metrics` block happens to hold.
+
+    The arithmetic is what settled it. One claim of 200 is 0.005 of
+    `grounding_rate`, one figure of ~95 is ~0.011 of `numeric_fidelity`, and
+    one fact of 28 is 0.036 of `expected_fact_coverage`, so accepting a good
+    run pins each of them within a claim or two of the next run's reading. The
+    2026-08-06 drift run is the proof rather than the prediction: it met every
+    target and still printed `REGRESSION`.
+
+    `hallucination_rate` stays, because it is not a score. Retraction either
+    removed every unsupported claim from the prose or it did not.
+
+    Both halves are asserted again, for the reason ADR 0039 gives: a metric
+    that leaves the ratchet without gaining a floor is not de-gated, it is
+    unwatched. The second assertion is the one that would have caught this
+    bug in July — every scored metric named in the report has an entry here."""
+    assert _RATCHETED_PREFIXES == ("hallucination",)
+
+    reading = {
+        "grounding_rate": 0.980,
+        "numeric_fidelity": 0.989,
+        "expected_fact_coverage": 1.0,
+        "hallucination_rate": 0.0,
+        "verifier_recall_qualitative": 1.0,
+    }
+    assert _ratcheted(reading) == {"hallucination_rate": 0.0}
+    assert _measured(reading) == reading
+
+    # A run one claim, one figure and one fact worse than the accepted
+    # baseline. Under the old prefixes this exited 1 on three counts.
+    next_run = {
+        "grounding_rate": 0.975,
+        "numeric_fidelity": 0.978,
+        "expected_fact_coverage": 0.964,
+        "hallucination_rate": 0.0,
+        "verifier_recall_qualitative": 1.0,
+    }
+    assert _gate(next_run, _ratcheted(reading)) == []
+    assert _gate(next_run, TARGETS) == []
+
+    # ...and a collapse still fails, which is what the floors are for.
+    assert _gate({"grounding_rate": 0.40}, TARGETS) == [
+        "grounding_rate: 0.400 below baseline 0.900"
+    ]
+    for name in reading:
+        assert name in TARGETS

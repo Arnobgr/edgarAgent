@@ -1,0 +1,318 @@
+{
+  "job_id": "ee8b50acabe1",
+  "source": "recorded",
+  "created_at": "2026-08-13T15:21:53.145961+00:00",
+  "result": {
+    "run_id": "ee8b50acabe1",
+    "question": "What are the main regulatory risks Tesla discloses about its driver-assistance and Full Self-Driving features?",
+    "answer": "Tesla discloses several main regulatory risks related to its driver-assistance and Full Self-Driving (FSD) features:\n\n1. **Evolving and restrictive self-driving laws globally.** Laws pertaining to self-driving vehicles are evolving globally and in some cases may create restrictions on features or vehicle designs that Tesla develops [0001628280-25-003063:item-1-p011]. While there are currently no federal U.S. regulations pertaining specifically to self-driving vehicles or self-driving equipment, NHTSA has published recommended guidelines and retains the authority to investigate and/or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads [0001628280-25-003063:item-1-p011].\n\n2. **Patchwork of state-level restrictions in the U.S.** Certain U.S. states have legal restrictions on the operation, registration, or licensure of self-driving vehicles, and many other states are considering them, increasing the legal complexity with respect to self-driving vehicles in the U.S. [0001628280-25-003063:item-1-p011].\n\n3. **ECE market design restrictions.** In markets that follow the regulations of the United Nations Economic Commission for Europe (\"ECE markets\"), some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely [0001628280-25-003063:item-1-p012]. Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in those markets [0001628280-25-003063:item-1-p012].\n\n4. **Uncertain regulation in China and other key markets.** Other key markets, including China, continue to consider self-driving regulation, and any implemented regulations may differ materially from the U.S. and ECE markets, which may further increase the legal complexity of self-driving vehicles and limit or prevent certain features [0001628280-25-003063:item-1-p012].\n\n5. **NHTSA Standing General Order and crash reporting.** Tesla is subject to NHTSA's Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems [0001628280-25-003063:item-1-p011]. Collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged are often the subject of significant public attention [0001628280-26-003952:item-1a-p013].\n\n6. **Product liability claims and regulatory scrutiny.** Tesla has experienced, and expects to continue to face, claims and regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies it is pioneering [0001628280-26-003952:item-1a-p013]. An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period [0001628280-26-003952:item-1a-p013]. Tesla generally self-insures against the risk of product liability claims for vehicle exposure, meaning claims will likely have to be paid from company funds [0001628280-26-003952:item-1a-p013].\n\n7. **Foreign regulations may prevent rollout of new features.** Tesla's vehicles sold outside the U.S. are subject to foreign compliance, safety, environmental, and other regulations, some of which impact or prevent the rollout of new vehicle features [0001628280-25-003063:item-1-p011].\n\n8. **Compliance with evolving regulations generally.** Tesla identifies compliance with various regulations and laws applicable to its operations and products, which may evolve from time to time, as a risk factor that could cause actual results to differ materially from forward-looking statements [0001628280-25-018851:ex-99-press-release-p013].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What are the main regulatory risks Tesla discloses about its driver-assistance and Full Self-Driving features?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Laws pertaining to self-driving vehicles are evolving globally and in some cases may create restrictions on features or vehicle designs that Tesla develops.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Generally, laws pertaining to self-driving vehicles are evolving globally, and in some cases may create restrictions on features or vehicle designs that we develop.",
+        "answer_span": "Laws pertaining to self-driving vehicles are evolving globally and in some cases may create restrictions on features or vehicle designs that Tesla develops [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "There are currently no federal U.S. regulations pertaining specifically to self-driving vehicles or self-driving equipment, but NHTSA has published recommended guidelines and retains the authority to investigate and/or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "While there are currently no federal U.S. regulations pertaining specifically to self-driving vehicles or self-driving equipment, NHTSA has published recommended guidelines on self-driving vehicles, apart from the FMVSS and manufacturer reporting obligations, and retains the authority to investigate and/or take action on the safety or compliance of any vehicle, equipment or features operating on public roads.",
+        "answer_span": "While there are currently no federal U.S. regulations pertaining specifically to self-driving vehicles or self-driving equipment, NHTSA has published recommended guidelines and retains the authority to investigate and/or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "Certain U.S. states have legal restrictions on the operation, registration, or licensure of self-driving vehicles, and many other states are considering them, increasing the legal complexity with respect to self-driving vehicles in the U.S.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Certain U.S. states also have legal restrictions on the operation, registration or licensure of self-driving vehicles, and many other states are considering them. This regulatory patchwork increases the legal complexity with respect to self-driving vehicles in the U.S.",
+        "answer_span": "Certain U.S. states have legal restrictions on the operation, registration, or licensure of self-driving vehicles, and many other states are considering them, increasing the legal complexity with respect to self-driving vehicles in the U.S. [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-4",
+        "text": "In ECE markets, some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "In markets that follow the regulations of the United Nations Economic Commission for Europe (“ECE markets”), some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely.",
+        "answer_span": "In markets that follow the regulations of the United Nations Economic Commission for Europe (\"ECE markets\"), some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely [0001628280-25-003063:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-5",
+        "text": "Other applicable laws, both current and proposed, in ECE markets may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in those markets.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in the markets where they apply.",
+        "answer_span": "Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in those markets [0001628280-25-003063:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-6",
+        "text": "Other key markets, including China, continue to consider self-driving regulation, and any implemented regulations may differ materially from the U.S. and ECE markets, which may further increase the legal complexity of self-driving vehicles and limit or prevent certain features.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Other key markets, including China, continue to consider self-driving regulation. Any implemented regulations may differ materially from the U.S. and ECE markets, which may further increase the legal complexity of self-driving vehicles and limit or prevent certain features.",
+        "answer_span": "Other key markets, including China, continue to consider self-driving regulation, and any implemented regulations may differ materially from the U.S. and ECE markets, which may further increase the legal complexity of self-driving vehicles and limit or prevent certain features [0001628280-25-003063:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-7",
+        "text": "Tesla is subject to NHTSA's Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "We are also required to comply with other federal laws administered by NHTSA, including ... a Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems...",
+        "answer_span": "Tesla is subject to NHTSA's Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-8",
+        "text": "Collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged are often the subject of significant public attention.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Such collisions, whether involving Robotaxi vehicles or customer vehicles with driver assistance features engaged, are often subject of significant public attention, especially in light of NHTSA’s Standing General Order requiring reports regarding certain crashes involving vehicles with advanced driver assistance or autonomous driving systems.",
+        "answer_span": "Collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged are often the subject of significant public attention [0001628280-26-003952:item-1a-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p013",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-9",
+        "text": "Tesla has experienced, and expects to continue to face, claims and regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies it is pioneering.",
+        "claim_type": "forward_looking",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "attribution",
+        "supporting_span": "We have experienced, and we expect to continue to face, claims and regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies that we are pioneering.",
+        "answer_span": "Tesla has experienced, and expects to continue to face, claims and regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies it is pioneering [0001628280-26-003952:item-1a-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p013",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-10",
+        "text": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period.",
+        "answer_span": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period [0001628280-26-003952:item-1a-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p013",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-11",
+        "text": "Tesla generally self-insures against the risk of product liability claims for vehicle exposure, meaning claims will likely have to be paid from company funds.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "In most jurisdictions, we generally self-insure against the risk of product liability claims for vehicle exposure, meaning that any product liability claims will likely have to be paid from company funds and not by insurance.",
+        "answer_span": "Tesla generally self-insures against the risk of product liability claims for vehicle exposure, meaning claims will likely have to be paid from company funds [0001628280-26-003952:item-1a-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p013",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-12",
+        "text": "Tesla's vehicles sold outside the U.S. are subject to foreign compliance, safety, environmental, and other regulations, some of which impact or prevent the rollout of new vehicle features.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Our vehicles sold outside of the U.S. are subject to similar foreign compliance, safety, environmental and other regulations. Many of those regulations are different from those applicable in the U.S. and may require redesign and/or retesting. Some of those regulations impact or prevent the rollout of new vehicle features.",
+        "answer_span": "Tesla's vehicles sold outside the U.S. are subject to foreign compliance, safety, environmental, and other regulations, some of which impact or prevent the rollout of new vehicle features [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-13",
+        "text": "Tesla identifies compliance with various regulations and laws applicable to its operations and products, which may evolve from time to time, as a risk factor that could cause actual results to differ materially from forward-looking statements.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "our compliance with various regulations and laws applicable to our operations and products, which may evolve from time to time",
+        "answer_span": "Tesla identifies compliance with various regulations and laws applicable to its operations and products, which may evolve from time to time, as a risk factor that could cause actual results to differ materially from forward-looking statements [0001628280-25-018851:ex-99-press-release-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p013",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 25680,
+      "cost_usd_used": 0.022035319999999997
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

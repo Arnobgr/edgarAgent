@@ -14,7 +14,10 @@ reranking, and numerically verified against a local XBRL facts store. Two eval
 layers (`eval/`) measure retrieval and the end-to-end §6 metrics;
 `uv run eval-agent` is the regression gate. Phase 3's exit gate passed 30/30
 on 2026-08-01 — `grounding_rate` 0.972, `hallucination_rate` 0.000,
-`numeric_fidelity` 0.963, `expected_fact_coverage` 1.000.
+`numeric_fidelity` 0.963, `expected_fact_coverage` 1.000. The accepted baseline
+is now the 2026-08-13 run, measured after Phase 6 changed the synthesis and
+judge prompts: 0.980 / 0.000 / 0.989 / 1.000, and the first one that is 30
+verifiable runs of 30.
 
 Phase 4 wraps that engine in a service: a FastAPI surface with an async job
 model, a human-in-the-loop review gate, layered abuse controls, a container,
