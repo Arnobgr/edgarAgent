@@ -60,8 +60,17 @@ export interface Block {
   /** Heading depth, or the number on an ordered item. 0 otherwise. */
   level: number;
   /** Offsets into the body of the block's *content*, with any list bullet or
-   *  heading hashes excluded — so a claim span, which never quotes the marker,
-   *  lines up with them. */
+   *  heading hashes excluded, so a claim span lines up with them.
+   *
+   *  A span *may* quote the marker: four claims in one run of the 2026-08-13
+   *  corpus open with `1. `, where the 08-01 corpus had none, so the older
+   *  wording here ("a claim span never quotes the marker") was an observation
+   *  about one export rather than a property. Excluding the marker is still
+   *  right — the list renders its own number, so highlighting the digits would
+   *  paint structure the model did not claim. Nothing trims the span: it is
+   *  located by a plain `indexOf` over the body and its placement *does* cover
+   *  the marker, but atoms are clipped to `start`..`end` here, so the marker
+   *  is never emitted and the highlight begins at the item's content. */
   start: number;
   end: number;
 }

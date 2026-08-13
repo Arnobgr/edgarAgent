@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LANDING_RUN, SPANLESS_RUN, recordedRun, recordedRuns } from "../test/fixtures";
+import { LANDING_RUN, recordedRun, recordedRuns } from "../test/fixtures";
 import type { GroundingRow } from "../types/api";
 import {
   RETRACTED_HEADER,
@@ -54,7 +54,7 @@ describe("splitAnswer", () => {
     const carrying = recordedRuns().filter((p) => p.result.answer.includes(RETRACTED_HEADER));
     // The header is part of the answer contract, not an occasional artifact:
     // if this count reaches zero the split has stopped being exercised.
-    expect(carrying.length).toBe(6);
+    expect(carrying.length).toBe(9);
     for (const payload of carrying) {
       expect(layoutAnswer(payload.result.answer, payload.result.grounding).body).not.toContain(
         RETRACTED_HEADER,
@@ -79,15 +79,23 @@ describe("layoutAnswer", () => {
         layout.placements.length + layout.spanless.length + layout.unlocated.length,
       ).toBe(payload.result.grounding.length);
     }
-    // 217 grounding rows in the accepted baseline: 211 `grounded` and 6
-    // `partial`. All but six are locatable, and all six of those sit in one
-    // run, whose prose cannot be highlighted at all.
-    expect(placed + spanless + unlocated).toBe(217);
-    expect(placed).toBe(211);
-    expect(spanless).toBe(6);
-    // No grounding row lost its sentence to another claim's excision in this
-    // baseline. It is a live defect (ADR 0021 point 3), so this asserts the
-    // corpus is clean of it rather than that it cannot happen.
+    // 200 grounding rows in the accepted 2026-08-13 baseline: 196 `grounded`
+    // and 4 `partial`. Every one of them is locatable — the 08-01 corpus had
+    // six spanless rows, all in a single run whose prose could not be
+    // highlighted at all, and that run has no counterpart here. Assert it
+    // rather than assume it: `spanless` reaching zero is what let
+    // `UNMARKABLE_RUN_ID` be deleted instead of re-pointed, and a future
+    // baseline can put it back.
+    expect(placed + spanless + unlocated).toBe(200);
+    expect(placed).toBe(200);
+    expect(spanless).toBe(0);
+    // No *delivered* grounding row lost its sentence to another claim's
+    // excision. That is not the same as the defect being extinct: ADR 0021
+    // point 3 fired twice in this very baseline, in the landing run, and the
+    // graph logged both — but a claim it hits is dropped from the grounding
+    // table rather than left in it, so it reaches the reader as a retraction
+    // and never as an unmarkable row. This asserts the table the reader gets
+    // is clean, not that the defect cannot happen.
     expect(unlocated).toBe(0);
   });
 
@@ -95,12 +103,23 @@ describe("layoutAnswer", () => {
     // The thesis of the product as an assertion: what is highlighted is the
     // claim's `answer_span` and nothing either side of it. Markers are the
     // only difference, because they are consumed on the way to the screen.
+    //
+    // A leading list marker is one of them, and it took the 08-13 corpus to
+    // find out: four claims in `5d7e650d2379` quote `1. ` at the head of their
+    // span, where the 08-01 corpus had none. The list renders its own number,
+    // so the highlight starts at the item's content — the marker is consumed
+    // exactly like `**` and the citation brackets, and normalising it here
+    // keeps the assertion about the *sentence* rather than about Markdown.
     for (const payload of recordedRuns()) {
       const { grounding, answer } = payload.result;
       for (const claim of grounding) {
         if (!claim.answer_span) continue;
         const shown = highlighted(claim.claim_id, answer, grounding);
-        expect(shown).toBe(claim.answer_span.replace(/\*\*/g, "").replace(/[[\]]/g, ""));
+        const expected = claim.answer_span
+          .replace(/^\s*(?:\d+\.|[-*])\s+/, "")
+          .replace(/\*\*/g, "")
+          .replace(/[[\]]/g, "");
+        expect(shown).toBe(expected);
       }
     }
   });
@@ -128,11 +147,19 @@ describe("layoutAnswer", () => {
     expect(layout.unlocated.map((r) => r.claim_id)).toEqual(["c3"]);
   });
 
-  it("reports the one recorded run whose prose cannot be highlighted", () => {
-    const payload = recordedRun(SPANLESS_RUN);
-    const layout = layoutAnswer(payload.result.answer, payload.result.grounding);
+  it("reports a whole run whose prose cannot be highlighted", () => {
+    // The 08-01 corpus contained such a run and the 08-13 one does not, so
+    // this is now built rather than fetched. Keeping it matters more than the
+    // fixture did: the view still has a branch for the case, synthesis can
+    // still emit a draft with no spans, and a baseline that reintroduces one
+    // must not be the first time the path is exercised.
+    const answer = "Revenue rose. Margin fell.";
+    const layout = layoutAnswer(answer, [
+      row({ claim_id: "c1", answer_span: "" }),
+      row({ claim_id: "c2", answer_span: "" }),
+    ]);
     expect(layout.placements).toEqual([]);
-    expect(layout.spanless.length).toBe(payload.result.grounding.length);
+    expect(layout.spanless.map((r) => r.claim_id)).toEqual(["c1", "c2"]);
   });
 });
 

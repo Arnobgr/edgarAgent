@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { RETRACTED_HEADER } from "../lib/answer";
-import { LANDING_RUN, SPANLESS_RUN, recordedRun } from "../test/fixtures";
+import { LANDING_RUN, recordedRun } from "../test/fixtures";
 import { AnswerProse } from "./AnswerProse";
 
 function renderRun(jobId: string) {
@@ -32,7 +32,9 @@ describe("AnswerProse", () => {
   });
 
   it("does not print the retraction section the answer appends to itself", () => {
-    const payload = recordedRun("32d18b0d4184");
+    // The landing run carries the header, so this needs no second id to go
+    // stale when `recorded/` is regenerated (ADR 0043).
+    const payload = recordedRun(LANDING_RUN);
     expect(payload.result.answer).toContain(RETRACTED_HEADER);
     render(
       <AnswerProse
@@ -57,22 +59,56 @@ describe("AnswerProse", () => {
 
     const mark = screen
       .getAllByRole("button")
-      .find((element) => element.textContent?.includes("The FY 2025 decline"));
+      .find((element) => element.textContent?.includes("R&D expense further increased"));
     expect(mark).toBeDefined();
     await user.hover(mark!);
 
     const popover = await screen.findByRole("dialog", { name: /claim verification/i });
     expect(within(popover).getByText(/XBRL reconciliation/)).toBeInTheDocument();
     expect(within(popover).getByText(numeric!.sources[0]!.accession_no)).toBeInTheDocument();
-    expect(within(popover).getByText(/TSLA 10-K/)).toBeInTheDocument();
+    expect(within(popover).getByText(/AAPL 10-K/)).toBeInTheDocument();
   });
 
   it("says so plainly when a run recorded no spans, rather than guessing", async () => {
-    const { result } = renderRun(SPANLESS_RUN);
+    // Built rather than fetched since ADR 0043: the 08-13 corpus has no run
+    // whose prose cannot be marked. The branch is still in the view, so the
+    // test stays and stops depending on a corpus that may or may not supply
+    // a subject.
+    render(
+      <AnswerProse
+        answer="Apple (AAPL) carries the largest total assets of the three."
+        grounding={[
+          {
+            claim_id: "c1",
+            text: "Apple carries the largest total assets",
+            claim_type: "numeric",
+            status: "grounded",
+            verdict: "grounded",
+            method: "numeric_reconciliation",
+            supporting_span: "Total assets $364,980",
+            answer_span: "",
+            feedback: null,
+            sources: [],
+          },
+          {
+            claim_id: "c2",
+            text: "of the three companies compared",
+            claim_type: "qualitative",
+            status: "grounded",
+            verdict: "grounded",
+            method: "semantic",
+            supporting_span: "the three issuers",
+            answer_span: "",
+            feedback: null,
+            sources: [],
+          },
+        ]}
+        lit={null}
+        onLit={() => undefined}
+      />,
+    );
     expect(screen.queryAllByRole("button")).toHaveLength(0);
-    expect(
-      screen.getByText(new RegExp(`${result.grounding.length} claims could not be marked`)),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/2 claims could not be marked/)).toBeInTheDocument();
     // The prose is still shown in full — only the marking is withheld.
     expect(screen.getByText(/Apple \(AAPL\) carries the largest total assets/)).toBeInTheDocument();
   });

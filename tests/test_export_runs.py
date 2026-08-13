@@ -8,6 +8,7 @@ back out of a checkpoint the engine actually wrote.
 """
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,10 @@ from fie.state import (
     SynthesisOutput,
 )
 from tests.fakes import StructuredFakeModel, StubRetriever, make_chunks, make_graph
+
+# The checked-out repository, not a fixture: the assertion at the foot of this
+# file is about the files that actually ship.
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 QUESTION = "What were Apple's total net sales?"
 SOURCE = "(In millions) Total net sales were $ 391,035 for fiscal 2024, up 2%."
@@ -234,3 +239,31 @@ def test_a_baseline_with_no_accepted_run_fails_loudly(tmp_path: Path) -> None:
     (tmp_path / "baselines.json").write_text(json.dumps({"metrics": {}}))
     with pytest.raises(RuntimeError, match="records no accepted run"):
         accepted_run_ids(tmp_path)
+
+
+def test_the_landing_run_the_spa_hardcodes_is_actually_exported() -> None:
+    """`recorded/` is regenerated whenever a new baseline is accepted, and
+    every run id changes with it — so the id the SPA lands a stranger on can
+    stop existing without one line of code changing.
+
+    That happened on 2026-08-13 (ADR 0043) and nothing failed: Cloudflare
+    Pages answers a missing asset with the SPA shell under HTTP 200, so the
+    page fetched `index.html`, tried to parse it as a run payload, and broke
+    in the browser. A status code proved nothing, which is the same trap
+    `/healthz` is documented for.
+
+    The frontend suite catches it too, and does not count: CI runs no vitest
+    step and `make test` is pytest only, so this is the assertion that is
+    actually executed before a deploy."""
+    source = (REPO_ROOT / "frontend" / "src" / "lib" / "recorded.ts").read_text()
+    match = re.search(r'LANDING_RUN_ID\s*=\s*"([0-9a-f]+)"', source)
+    assert match, "recorded.ts no longer declares LANDING_RUN_ID the way this test reads it"
+    landing = match.group(1)
+
+    index = json.loads((REPO_ROOT / "recorded" / "index.json").read_text())
+    exported = {run["job_id"] for run in index["runs"]}
+    assert landing in exported, (
+        f"LANDING_RUN_ID {landing} is not in recorded/index.json — re-point it after "
+        "regenerating recorded/, or the landing page 200s onto the SPA shell"
+    )
+    assert (REPO_ROOT / "recorded" / "runs" / f"{landing}.json").exists()

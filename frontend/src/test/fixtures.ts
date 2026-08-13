@@ -2,8 +2,9 @@
  * The recorded runs, as fixtures.
  *
  * The plan's "fixtures are free" note is the point: `recorded/runs/*.json` is
- * 29 payloads in the exact shape the live API returns, produced by
- * `fie export-runs` from the checkpoints of the accepted 2026-08-01 baseline.
+ * 30 payloads in the exact shape the live API returns, produced by
+ * `fie export-runs` from the checkpoints of the accepted 2026-08-13 baseline
+ * (ADR 0043; the 08-01 export was 29, one run short of the gold set).
  * A hand-written fixture would be a guess about the contract; these are the
  * contract, so a backend change surfaces here rather than in a browser.
  *
@@ -41,4 +42,4 @@ export function recordedRun(jobId: string): RunPayload {
 
 // Re-exported from the app rather than restated, so a test and the view can
 // never disagree about which run a stranger lands on.
-export { LANDING_RUN_ID as LANDING_RUN, UNMARKABLE_RUN_ID as SPANLESS_RUN } from "../lib/recorded";
+export { LANDING_RUN_ID as LANDING_RUN } from "../lib/recorded";

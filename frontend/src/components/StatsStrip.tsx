@@ -2,7 +2,13 @@ import { count, usd } from "../lib/format";
 import type { RunPayload } from "../types/api";
 
 const SOURCE_NOTE: Record<RunPayload["source"], string> = {
-  recorded: "Recorded run — answered on 1 August 2026 and shipped with this page",
+  // The date is the accepted baseline's, so it moves whenever `export-runs`
+  // regenerates `recorded/` from a newer one — 2026-08-13 replaced the 08-01
+  // set (ADR 0043). `payload.created_at` is right there and would never go
+  // stale, but every recorded run shares one date by construction and a strip
+  // that renders it per run invites the reader to compare thirty identical
+  // timestamps. One sentence, updated with the baseline.
+  recorded: "Recorded run — answered on 13 August 2026 and shipped with this page",
   cached: "Cached — this question was answered before, and the stored answer was returned",
   live: "Live run — computed for this request",
 };
