@@ -1,0 +1,22 @@
+# <type>(<scope>): <summary>   ← imperative, ≤50 chars, no trailing period
+#
+# ── Subject rules ──────────────────────────────────────────────────
+# type   feat fix docs refactor perf test build ci chore revert
+# scope  graph eval api frontend retrieval ingest llm guardrails
+#        context state deploy security docs (optional, but preferred)
+# summary  imperative mood: "add", not "added"/"adds"
+#          completes: "If applied, this commit will <summary>"
+#
+# ── Body (wrap at 72) ──────────────────────────────────────────────
+# Explain WHY, not what — the diff already shows what. State the
+# problem this fixes, the reasoning, and anything non-obvious a future
+# reader would need. This repo values dense, specific bodies: name the
+# runs, counts, files, and traps. Blank line between subject and body.
+#
+
+
+# ── Footer ─────────────────────────────────────────────────────────
+# Reference ADRs / issues:  Refs: ADR 0043   |   Closes #12
+# Breaking change:          BREAKING CHANGE: <what and how to migrate>
+#
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
