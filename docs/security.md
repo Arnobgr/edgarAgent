@@ -534,6 +534,13 @@ disabling a stronger control is worse than no gate.** The postcss fix becomes
 eligible under that policy on 2026-08-12; taking it is a deliberate act on a
 day the fortnight has passed, not a reaction to a red build.
 
+**Taken 2026-08-23 (ADR 0041, amendment).** The two npm rows are now clear:
+`before=` moved to **2026-08-09** — a fortnight back from that day, so the
+window was preserved rather than waived — and the tree took postcss **8.5.26**
+and nanoid **3.3.18**, both newer than the fixes named above, which had been
+superseded while the hold ran. `npm audit` reports 0. The two Python rows stand
+as written; their pins are unchanged.
+
 **The box, measured 2026-08-11.** The host firewall denies inbound by default
 and only nginx's two ports face the internet; SSH is reachable over the
 tailnet and nothing else. `fie-api` binds to loopback, as do the other

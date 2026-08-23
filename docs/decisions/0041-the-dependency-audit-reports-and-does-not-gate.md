@@ -88,6 +88,27 @@ mechanism.** 8.5.25 is eligible from 2026-08-12; taking it needs `before=`
 moved and an `npm install`, which is a deliberate act on a day the fortnight
 has passed, not a reaction to a red build.
 
+### Amendment, 2026-08-23 — the bump, taken
+
+Both npm rows of the table above are cleared. `before=` moved to
+**2026-08-09**, a fortnight back from the day the bump was taken, so the window
+is preserved rather than suspended for the occasion; `npm update postcss
+nanoid` then resolved **postcss 8.5.26** and **nanoid 3.3.18**. `npm audit`
+reports 0, and `npm run check` is green.
+
+Two details are worth keeping. **The versions are not the ones this ADR named**
+— 8.5.26 and 3.3.18 landed on 08-06 and 08-07, after the text above was
+written, so the hold delivered a newer fix than the one being waited for rather
+than the specific release. And **eleven days passed between eligibility and the
+bump**, which is the mechanism behaving correctly: nothing red was showing, so
+nothing forced the day. A hold that must be taken the moment it clears is a
+deadline, and a deadline is what this decision refused to build.
+
+The Python rows are untouched: `uv.lock` still pins `h2` 4.3.0 and
+`langgraph-checkpoint-sqlite` 3.1.0, both unreachable here for the reasons in
+the table. Whether a *new* advisory has landed against that tree is the weekly
+`audit` job's answer, not this amendment's — it was not re-run by hand.
+
 ## Honest limits
 
 - **Severity is the advisory's, reachability is ours, and only the second one

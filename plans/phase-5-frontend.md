@@ -88,8 +88,9 @@ ids change wholesale when a baseline is accepted.
 and `before=2026-07-23` — nothing published inside a two-week window is ever
 resolved. Use `npm --prefix frontend run <script>`, never `npx`: npx silently
 fetches from the network when a binary is missing from the local tree. The
-date pin currently holds `postcss` at 8.5.22, which carries a moderate
-advisory fixed in 8.5.25; that version becomes eligible on 2026-08-12.
+date pin held `postcss` at 8.5.22 until 2026-08-23, when the hold moved to
+`before=2026-08-09` and took 8.5.26 (see the open item at the foot of this
+file).
 
 Both of this section's open items closed on 2026-08-07: the screenshot is
 `docs/grounding-table.png`, and everything under "Deployment" below is live.
@@ -185,3 +186,13 @@ pending are in `docs/monitoring.md` under "What is not watched".
   it reaches the static bundle a visitor loads — which is why waiting the
   window out is the right trade rather than an exemption. Run
   `npm --prefix frontend audit` after, per the standing rule.
+
+  **Closed 2026-08-23**, eleven days after eligibility rather than on the day,
+  and the delay is the policy working rather than a slip: the hold is a window,
+  not a deadline. `before=` moved to **2026-08-09** — a fortnight back from the
+  day it was taken, so the window still holds — and `npm update postcss nanoid`
+  took **postcss 8.5.26** (published 08-06) and **nanoid 3.3.18** (08-07), both
+  the newest release inside the window rather than the versions this item
+  predicted. `npm --prefix frontend audit` reports **0 vulnerabilities**, and
+  `npm --prefix frontend run check` is green: 24 tests, and `vite build` still
+  produces one JS chunk and one CSS chunk.
