@@ -43,3 +43,45 @@ The repo's front page for a technical reviewer (many will read *only* this):
 - Coverage target met per the triage; error-handling and logging sweeps done with diffs to show.
 - README complete; a cold clean-checkout quickstart works as written.
 - Full eval suite green — unchanged or improved vs the Phase 6 baseline.
+
+## Carried in from Phase 6 (2026-08-23)
+
+**ADR 0044 is committed and is not visible anywhere a visitor looks.** The fix
+— a change amount that the mapping could not place recomputes from the facts
+the claim *cited* — is `b7a5d05` on `dev`, verified three ways: the unit test
+fails with the hook removed, a replay of the real run `11f727f75ca6` against
+the real corpus turns both claims from `unsupported` to `grounded`, and
+`eval-agent --limit 3 --skip-judge` came back 3/3 clean
+(`agent-20260823-204731`, `degraded_attempts: 0`). None of that reaches the
+deployed surface, for two independent reasons, and they need two different
+acts:
+
+- **The landing page is static CDN JSON, not the API.** `recorded/` was
+  generated from the 08-13 baseline (ADR 0027), so the two struck-through R&D
+  delta claims on run `11f727f75ca6` stay struck through no matter what the
+  VPS serves. Only a new accepted baseline → `fie export-runs` → a Pages build
+  changes them.
+- **The API answers from the image, and the image publishes from `main` only.**
+  `dev` publishes nothing. A live `POST /v1/ask` keeps retracting these deltas
+  until `main` carries the change and `deploy.sh` has run.
+
+**Ordering, if the new baseline is measured on the box.**
+`./deploy/monthly-eval.sh` runs against the *deployed* image by design (ADR
+0036), so the deploy has to come first or the run measures the system without
+the fix in it. A local `uv run eval-agent` has no such constraint.
+
+**The `LANDING_RUN_ID` trap applies to whatever regenerates `recorded/`.**
+Every run id changes, `frontend/src/lib/recorded.ts` hard-codes one, and
+Cloudflare Pages answers a missing asset with the SPA shell under **200** — so
+the page breaks in the browser with every check green.
+`test_the_landing_run_the_spa_hardcodes_is_actually_exported` is the guard and
+it lives in pytest because CI runs no frontend step.
+
+**A full run cannot prove this fix worked, and that is not a reason to skip
+it.** Two of the twelve retractions across 212 claims in the 30-run baseline
+were of this shape, so the expected move in `grounding_rate` is about +0.01 —
+an order of magnitude under the 0.078 spread ADR 0043 measured across four
+unchanged-system runs. The evidence that the fix works is the unit test and
+the replay; the full run's job is the Phase 7 exit gate's own bullet (green,
+unchanged or improved), plus producing a baseline clean enough to export
+(`degraded_attempts: 0`, ADR 0025).
