@@ -31,10 +31,24 @@ done as of 2026-08-12**; the writeup is `docs/security.md` **Part 2**, which is
 the argument (architecture vs hardening, the evidence and its limits, residual
 risk) while everything above it in that file stays the operational view. **The
 unregressed full `eval-agent` ran on 2026-08-13 and is the new baseline** — it
-went *up* on every metric, so the fence cost no grounding. What the exit gate
-still wants is the deploy: merge to `main`, `./deploy/deploy.sh`, and a Pages
-build, because `frontend/public/_headers` is committed but **not live** — the
-CDN still serves only `referrer-policy` and `x-content-type-options`.
+went *up* on every metric, so the fence cost no grounding. **The exit gate
+closed on 2026-08-13**: `main` carries the gate change and the deploy went out
+the same day (image `sha-e7789b3`, `/healthz` all-true), and the Pages build
+made `frontend/public/_headers` live — six headers where the CDN used to serve
+two, CSP included and measured against the deployed bundle. One item outlived
+it by ten days and is now closed too: the npm hold, taken 2026-08-23 (ADR 0041,
+amendment).
+
+**A regenerated `recorded/` changes every run id, and one of them is
+hard-coded.** `frontend/src/lib/recorded.ts` names the run a stranger lands
+on. Accepting the 08-13 baseline made the old id stop existing and **nothing
+failed** — Cloudflare Pages answers a missing asset with the SPA shell under
+**200**, so the page parsed `index.html` as a run payload and broke in the
+browser while every check stayed green. This is the `/healthz` trap on the
+other host. `test_the_landing_run_the_spa_hardcodes_is_actually_exported` in
+`tests/test_export_runs.py` is the guard, and it is in pytest rather than
+vitest on purpose: **CI runs no frontend step**, so a vitest assertion would
+not have caught it.
 
 **The adversarial set ran for the first time on 2026-08-12 — 16/16 with one
 observation, and both of the day's two "failures" were the instrument, not the

@@ -77,3 +77,17 @@ Prove it, don't claim it (this is the phase's exit evidence).
 - The three decisions in Step 2 are recorded as ADRs (0040 onward), not settled in passing.
 - **The Phase 3 eval is unregressed — against the accepted `agent-20260801-122527` baseline, judged by the rules that now exist.** `TARGETS` are absolute floors, checked on every path. The *baseline ratchet* is a separate gate with no member list: it gates on whatever sits in the `metrics` block of `baselines.json`, so **writing a number there enrols it** (ADR 0039). A run with non-zero `degraded_attempts` is not a baseline (ADR 0025). The full run costs ~75 minutes and real money — use `--limit N --skip-judge` while iterating and run it **once**, at the end, after the changes have settled.
 - **If this phase re-ingests, that comparison changes meaning.** The 08-01 baseline was measured over the current corpus; sanitizing chunks moves the corpus underneath it, and a dip is then inseparable from model drift. Decide before touching the chunker, not after — Step 2's first bullet is where that trade is written out.
+
+## The gate, closed 2026-08-13
+
+Every bullet above is met. Where the answer differs from what the bullet expected, the difference is the part worth reading:
+
+- **The offline half runs in `make test`** — `tests/test_security.py` and the abuse cases in `tests/test_api_abuse.py`. **It does not all run in CI, and the bullet above says it does.** `frontend/src/test/output-safety.test.tsx` holds four of the mechanism cases and **CI has no frontend step at all**, so those four run only by hand. ADR 0042 §1 asserts otherwise and is wrong on that sentence; `docs/security.md` counts them among the free evidence. Fixing it is a choice between adding a vitest job and correcting two documents, and it is open.
+- **The paid half ran once**, 2026-08-12: 16/16, report `eval/reports/adversarial-20260812-094531.json`, kept with `git add -f`. All six poisoned cases passed with the poison confirmed in the evidence channel, so none passed by never being retrieved.
+- `docs/security.md` Part 2 is the writeup; the mitigation-to-code map is its "Every mitigation, and the line that keeps it true" table.
+- **The three Step 2 decisions are ADRs 0040, 0041 and 0042.** Two more were earned on the way: **0043** (only an invariant is ratcheted) and the amendment on 0041.
+- **The eval is unregressed and the baseline moved.** The run was compared against `agent-20260801-122527` as this gate asks, went *up* on every metric, and was then accepted as `agent-20260813-174221` — 30/30, `degraded_attempts: 0`. The comparison this bullet mandated is what exposed the ratchet defect ADR 0043 fixes.
+- **Nothing re-ingested**, so the last bullet never applied. ADR 0040 kept the corpus where it was and put the fence at prompt time.
+- **The infra bullet's "do the postcss bump" instruction was not done in this phase and should not have been.** ADR 0041 decided the audit reports rather than gates, which makes the bump a dated act rather than a phase task; it was taken on **2026-08-23** and is recorded at the foot of `plans/phase-5-frontend.md`, where the item has always lived.
+
+**The deploy is the part the gate did not name.** The gate change and the headers reached production on 2026-08-13 — image `sha-e7789b3` on the box, and a Pages build that took `frontend/public/_headers` live. A committed `_headers` file is not a deployed one, and only the second is a control.
