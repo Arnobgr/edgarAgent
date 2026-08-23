@@ -762,3 +762,124 @@ def test_date_day_is_not_an_obligation_in_cited_text_path(store: IngestStore) ->
         [chunk],
     )
     assert outcome.verdict == "grounded"
+
+
+# --- ADR 0044: a delta recomputed from the facts the claim cited ---
+
+
+def rnd_store(tmp_path: Path) -> IngestStore:
+    """Apple's R&D expense for FY2023-FY2025, as one 10-K reports all three."""
+    s = IngestStore(tmp_path / "ingest.db")
+    s.replace_facts(
+        "0000320193-25-000079",
+        [
+            make_fact(
+                ticker="AAPL",
+                concept="us-gaap:ResearchAndDevelopmentExpense",
+                label="Research and development",
+                value=value,
+                fiscal_year=year,
+                period_start=start,
+                period_end=end,
+                accession_no="0000320193-25-000079",
+            )
+            for value, year, start, end in (
+                (29_915_000_000.0, 2023, "2022-09-25", "2023-09-30"),
+                (31_370_000_000.0, 2024, "2023-10-01", "2024-09-28"),
+                (34_550_000_000.0, 2025, "2024-09-29", "2025-09-27"),
+            )
+        ],
+    )
+    return s
+
+
+def xbrl_chunk(period_end: str) -> EvidenceChunk:
+    """An injected fact chunk, shaped as `fact_lookup._as_evidence` builds it."""
+    concept = "us-gaap:ResearchAndDevelopmentExpense"
+    return EvidenceChunk(
+        chunk_id=f"xbrl:0000320193-25-000079:{concept}:{period_end}",
+        doc_id="AAPL-10-K-0000320193-25-000079",
+        ticker="AAPL",
+        form_type="10-K",
+        section="XBRL facts",
+        text="AAPL filed Research and development — as reported in 10-K.",
+        metadata={
+            "accession_no": "0000320193-25-000079",
+            "period_end": period_end,
+            "chunk_type": "xbrl",
+            "concept": concept,
+        },
+    )
+
+
+def nonsense_mapping(value: float) -> FactMappingOutput:
+    """What the mapper actually returned for a subject-less delta claim: the
+    change itself as a concept, because the claim text never says what
+    changed (run 11f727f75ca6, ADR 0044)."""
+    return FactMappingOutput(
+        candidates=[
+            FactCandidate(
+                value=value,
+                concept_terms=["ChangeInAmount", "IncreaseDecrease"],
+                fiscal_year=2024,
+                unit="usd",
+            )
+        ]
+    )
+
+
+def test_delta_grounds_from_the_cited_facts_when_the_mapping_is_useless(tmp_path: Path) -> None:
+    """The claim names no concept, so the mapper cannot name one either — but
+    it cited both operands, and their difference is exact (ADR 0044)."""
+    reconciler = XbrlNumericReconciler(
+        rnd_store(tmp_path), FakeMapper(nonsense_mapping(1_455_000_000.0))
+    )
+    outcome = reconciler.reconcile(
+        "The year-over-year increase from FY 2023 to FY 2024 was approximately $1,455 million.",
+        [xbrl_chunk("2023-09-30"), xbrl_chunk("2024-09-28")],
+    )
+    assert outcome.verdict == "grounded"
+    assert outcome.supporting_span is not None
+    assert "ResearchAndDevelopmentExpense" in outcome.supporting_span
+    # The later period reads first, so the span reads as the increase it states.
+    assert outcome.supporting_span.index("31,370") < outcome.supporting_span.index("29,915")
+
+
+def test_a_wrong_delta_over_the_same_cited_facts_stays_unsupported(tmp_path: Path) -> None:
+    """The concept comes from the citation; the arithmetic still comes from
+    the store. A figure that is not the difference must not ground."""
+    reconciler = XbrlNumericReconciler(
+        rnd_store(tmp_path), FakeMapper(nonsense_mapping(2_000_000_000.0))
+    )
+    outcome = reconciler.reconcile(
+        "The year-over-year increase from FY 2023 to FY 2024 was approximately $2,000 million.",
+        [xbrl_chunk("2023-09-30"), xbrl_chunk("2024-09-28")],
+    )
+    assert outcome.verdict == "unsupported"
+
+
+def test_a_delta_over_facts_the_claim_did_not_cite_stays_unsupported(tmp_path: Path) -> None:
+    """FY2025 minus FY2024 is 3,180 and is in the store, but this claim cited
+    the FY2023/FY2024 pair. Citing is what grounds."""
+    reconciler = XbrlNumericReconciler(
+        rnd_store(tmp_path), FakeMapper(nonsense_mapping(3_180_000_000.0))
+    )
+    outcome = reconciler.reconcile(
+        "The year-over-year increase was approximately $3,180 million.",
+        [xbrl_chunk("2023-09-30"), xbrl_chunk("2024-09-28")],
+    )
+    assert outcome.verdict == "unsupported"
+
+
+def test_non_xbrl_chunks_leave_the_path_untouched(tmp_path: Path) -> None:
+    """The new path reads injected fact chunks only; a prose citation behaves
+    exactly as it did before."""
+    reconciler = XbrlNumericReconciler(
+        rnd_store(tmp_path), FakeMapper(nonsense_mapping(1_455_000_000.0))
+    )
+    outcome = reconciler.reconcile(
+        "The year-over-year increase from FY 2023 to FY 2024 was approximately $1,455 million.",
+        [make_chunk(ticker="AAPL")],
+    )
+    assert outcome.verdict == "unsupported"
+    assert outcome.feedback is not None and "$1,455 million" in outcome.feedback

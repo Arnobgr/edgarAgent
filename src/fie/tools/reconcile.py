@@ -306,9 +306,11 @@ class XbrlNumericReconciler:
     claim's stated precision. Ratio and year-over-year change percentages
     recompute from operand facts named by the mapping; a percent consistent
     with verified figures in its own claim grounds by recomputation too
-    (ADR 0018). Figures with no fact match fall back to cell-matching
-    against cited *table* chunks (display provenance); still unmatched →
-    unsupported, with feedback naming what was searched.
+    (ADR 0018). A change amount the mapping could not place recomputes from
+    the facts the claim *cited*, which needs no mapping at all (ADR 0044).
+    Figures with no fact match fall back to cell-matching against cited
+    *table* chunks (display provenance); still unmatched → unsupported,
+    with feedback naming what was searched.
     """
 
     def __init__(
@@ -358,6 +360,8 @@ class XbrlNumericReconciler:
         table_chunks = [c for c in chunks if c.metadata.get("chunk_type") == "table"]
         for number in figures:
             span = self._match_fact(number, candidates, tickers, searched)
+            if span is None:
+                span = self._match_cited_difference(number, chunks)
             if span is None and table_chunks:
                 span = self._fallback._find_match(number, table_chunks)
             if span is None:
@@ -510,6 +514,84 @@ class XbrlNumericReconciler:
                         continue
                     if abs(abs(abs(a.value) - abs(b.value)) - number.value) <= number.tolerance:
                         return _difference_span(a, b)
+        return None
+
+    def _cited_facts(self, chunks: list[EvidenceChunk]) -> list[Fact]:
+        """The filed facts a claim cited, resolved from its XBRL chunks.
+
+        An injected fact chunk carries its concept, period end and accession
+        (`tools/fact_lookup.py`), so the store row behind it is recoverable
+        without asking a model anything. Each chunk yields at most one fact,
+        and the non-dimensioned row wins: `query_facts` already sorts
+        headline totals ahead of segment breakdowns."""
+        facts: list[Fact] = []
+        for chunk in chunks:
+            if chunk.metadata.get("chunk_type") != "xbrl":
+                continue
+            concept = chunk.metadata.get("concept")
+            period_end = chunk.metadata.get("period_end")
+            if not isinstance(concept, str) or not isinstance(period_end, str):
+                continue
+            rows = self._store.query_facts(
+                tickers=[chunk.ticker],
+                concept_terms=[concept],
+                period_end=period_end,
+                limit=20,
+            )
+            accession = chunk.metadata.get("accession_no")
+            exact = [f for f in rows if f.concept == concept and f.accession_no == accession]
+            if exact:
+                facts.append(exact[0])
+        return facts
+
+    def _match_cited_difference(
+        self, number: ParsedNumber, chunks: list[EvidenceChunk]
+    ) -> str | None:
+        """Ground a change amount from the two facts the claim itself cited.
+
+        `_match_difference` can only search the concept the mapping names,
+        and `_map_claim` shows the mapper the claim text and nothing else. A
+        claim that states a delta without naming what changed — "the
+        year-over-year increase from FY 2023 to FY 2024 was approximately
+        $1,455 million" — therefore gives it nothing to work from, and it
+        answers with concepts that do not exist (`ChangeInAmount`,
+        `IncreaseFromFY2024ToFY2025`). Both operands sat in the claim's own
+        citations the whole time. Reading the concept off the cited chunks
+        instead of out of a model removes the guess, and it makes the
+        citation load-bearing: the claim grounds against what it cited rather
+        than against whatever else the store holds (ADR 0044).
+
+        This does not loosen the grounding rule. The concept only selects;
+        the values and the subtraction still come from the facts store, so a
+        delta that is not the difference of two filed figures still fails.
+        Percent changes stay with `_match_ratio` — the shape was never
+        measured on this path and is not assumed."""
+        if number.is_percent:
+            return None
+        facts = self._cited_facts(chunks)
+        for index, first in enumerate(facts):
+            for second in facts[index + 1 :]:
+                # Like subtracts from like, the same gate `_match_difference`
+                # applies, plus the unit: two cited facts of one concept can
+                # differ only by period, or the difference means nothing.
+                if (first.ticker, first.concept, first.label, first.unit) != (
+                    second.ticker,
+                    second.concept,
+                    second.label,
+                    second.unit,
+                ):
+                    continue
+                if first.period_end == second.period_end:
+                    continue
+                delta = abs(abs(first.value) - abs(second.value))
+                if abs(delta - number.value) > number.tolerance:
+                    continue
+                later, earlier = (
+                    (first, second)
+                    if (first.period_end or "") >= (second.period_end or "")
+                    else (second, first)
+                )
+                return _difference_span(later, earlier)
         return None
 
     def _match_ratio(
