@@ -10,7 +10,7 @@ from typing import Any
 from fie.eval.metrics import hallucination_rate
 from fie.graph import GraphLimits
 from fie.graph.build import RETRACTED_HEADER
-from fie.graph.retract import MIN_OVERLAP, best_overlap
+from fie.graph.retract import MIN_OVERLAP, best_overlap, excise_claims
 from fie.state import (
     CriticOutput,
     DraftClaim,
@@ -677,6 +677,90 @@ async def test_a_draft_still_claimless_after_the_repair_fails_the_run() -> None:
     # never the raw structured output, so the prose is the only evidence of
     # what the model actually did.
     assert run_result.answer == SPAN_ANSWER
+
+
+async def test_span_repair_that_errors_keeps_the_original_draft() -> None:
+    """The repair is one bounded re-ask. If that call itself raises, the
+    original draft stands — its unquoted claims keep an empty span and fall
+    back to token overlap at retract — rather than the run failing (ADR 0023)."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    # Call 1 is the draft, quoting nothing → repair fires; call 2 is the repair
+    # and it raises → the original draft is kept.
+    synthesis = StructuredFakeModel(outputs=[_spanned_output(quote=False)], fail_calls={2})
+    reconciler = SpyReconciler(
+        ReconcileOutcome(verdict="grounded", supporting_span="NUM", feedback=None)
+    )
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        reconciler=reconciler,
+        qualitative=grounded_judge(),
+        critic=StructuredFakeModel(default_output=CriticOutput(passed=True)),
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert len(synthesis.calls) == 2, "the repair was attempted exactly once"
+    assert state.error is None, "a failed repair keeps the draft; it does not fail the run"
+    assert not any(c.answer_span and c.answer_span in SPAN_ANSWER for c in state.claims)
+
+
+async def test_span_repair_that_does_not_improve_keeps_the_original() -> None:
+    """The retry is kept only when it quotes strictly better; a repair that is
+    no better than the draft is discarded and the original stands (ADR 0023)."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    # Draft and repair both quote nothing → the repair is no improvement.
+    synthesis = StructuredFakeModel(
+        outputs=[_spanned_output(quote=False), _spanned_output(quote=False)]
+    )
+    reconciler = SpyReconciler(
+        ReconcileOutcome(verdict="grounded", supporting_span="NUM", feedback=None)
+    )
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        reconciler=reconciler,
+        qualitative=grounded_judge(),
+        critic=StructuredFakeModel(default_output=CriticOutput(passed=True)),
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert len(synthesis.calls) == 2, "the repair was attempted exactly once"
+    assert state.error is None
+    assert not any(c.answer_span and c.answer_span in SPAN_ANSWER for c in state.claims)
+
+
+async def test_a_claimless_re_ask_that_errors_fails_the_run() -> None:
+    """The claimless re-ask is bounded at one. If it raises, the original
+    claimless draft is kept and the run fails downstream (ADR 0038/0025) — the
+    same outcome as a second claimless draft, reached by a different path."""
+    retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE, "c2": QUAL_SOURCE}))
+    synthesis = StructuredFakeModel(outputs=[_claimless_output()], fail_calls={2})
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(retriever=retriever, synthesis=synthesis, critic=critic)
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert len(synthesis.calls) == 2, "the re-ask is bounded at one"
+    assert state.error is not None and "no claims" in state.error
+
+
+def test_best_overlap_of_an_empty_claim_is_zero() -> None:
+    """A claim whose text is empty has no tokens to match, so it overlaps
+    nothing — the fallback returns 0.0 rather than dividing by zero."""
+    assert best_overlap("Apple reported strong revenue growth.", "") == 0.0
+
+
+def test_excise_claims_skips_blank_claim_text() -> None:
+    """A blank claim text carries nothing to locate, so the token-overlap
+    fallback leaves the draft's sentences in place."""
+    draft = "Apple reported growth. Services expanded."
+    out = excise_claims(draft, ["", "   "])
+    assert "Apple reported growth." in out and "Services expanded." in out
 
 
 STRANDED_CLAIM = "Apple's Vision Pro segment expanded substantially during the fiscal period"

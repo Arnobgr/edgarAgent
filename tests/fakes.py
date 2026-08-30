@@ -45,6 +45,10 @@ class StructuredFakeModel(BaseChatModel):
     default_output: Any = None
     calls: list[Any] = Field(default_factory=list)
     fail_times: int = 0
+    # 1-indexed call numbers that raise, for failing a *specific* call (e.g. a
+    # node's repair re-ask on call 2 while its first call succeeds), which
+    # `fail_times` — which fails the earliest calls — cannot express.
+    fail_calls: set[int] = Field(default_factory=set)
     delay_seconds: float = 0.0
 
     @property
@@ -65,6 +69,8 @@ class StructuredFakeModel(BaseChatModel):
             self.calls.append(value)
             if self.delay_seconds:
                 await asyncio.sleep(self.delay_seconds)
+            if len(self.calls) in self.fail_calls:
+                raise RuntimeError(f"fake failure on call {len(self.calls)}")
             if self.fail_times > 0:
                 self.fail_times -= 1
                 raise RuntimeError("transient fake failure")

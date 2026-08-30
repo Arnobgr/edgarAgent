@@ -49,6 +49,16 @@ def test_tracker_unknown_model_counts_tokens_but_no_cost() -> None:
     assert tracker.cost_usd_used == 0.0
 
 
+def test_tracker_skips_a_generation_with_no_usage() -> None:
+    """A provider response can carry a generation with no usage metadata; it is
+    skipped, not counted, so a partial response cannot crash the callback."""
+    tracker = BudgetTracker(max_tokens=1000, max_cost_usd=1.0, prices=PRICES)
+    result = LLMResult(generations=[[ChatGeneration(message=AIMessage(content="no usage"))]])
+    tracker.on_llm_end(result, run_id=uuid4())
+    assert tracker.tokens_used == 0
+    assert tracker.cost_usd_used == 0.0
+
+
 def test_tracker_exceeded_on_either_cap() -> None:
     tracker = BudgetTracker(max_tokens=100, max_cost_usd=1.0, prices=PRICES)
     tracker.record(101, 0, "")
@@ -159,6 +169,20 @@ async def test_guarded_aborts_before_node_when_over_budget() -> None:
     update = await wrapped(EngineState(question="q"), _config())
     assert "budget exceeded" in (update["error"] or "")
     assert update["run_budget"].tokens_used == 11
+
+
+async def test_guarded_catches_budget_raised_inside_a_node() -> None:
+    """A budget abort that fires *during* a node (not the pre-node check)
+    still lands as an error on the state, not an exception — the graph routes
+    it to END the same way a pre-node abort does."""
+
+    async def node(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
+        raise BudgetExceededError("spent it mid-node")
+
+    wrapped = guarded("verify", node, tracker=BudgetTracker(100, 1.0), timeout_seconds=1.0)
+    update = await wrapped(EngineState(question="q"), _config())
+    assert "budget exceeded" in (update["error"] or "")
+    assert "spent it mid-node" in (update["error"] or "")
 
 
 async def test_guarded_times_out_slow_node() -> None:

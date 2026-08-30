@@ -45,6 +45,7 @@ dev = [
     "mypy>=2.3.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.15.22",
 ]
 
@@ -75,3 +76,21 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+# These modules only run against live external services (EDGAR, the embedding
+# API, Qdrant) or are eval measurement CLIs driven by `uv run eval-*` and
+# `deploy/monthly-eval.sh`. The unit suite takes no network and needs no keys
+# (see CONVENTIONS), so they cannot execute here — they are covered by the
+# eval/ingest runs, not by pytest. Excluded so the reported number measures the
+# offline-testable surface. The offline stages they wrap (parse/chunk/facts)
+# are tested directly; the load-bearing graph/guardrails/reconcile/state logic
+# is not omitted and sits at ~100%.
+omit = [
+    "src/fie/eval/retrieval_runner.py",
+    "src/fie/eval/seed.py",
+    "src/fie/eval/perturb.py",
+    "src/fie/ingest/fetch.py",
+    "src/fie/ingest/embed.py",
+    "src/fie/tools/edgar.py",
+]

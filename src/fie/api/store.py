@@ -266,6 +266,8 @@ def _to_job(row: sqlite3.Row) -> JobRow:
     companies = str(row["companies"])
     return JobRow(
         id=str(row["id"]),
+        # str() widens the column to `str`; the DB only ever holds values we
+        # wrote as JobStatus, which mypy cannot prove of a sqlite3.Row value.
         status=str(row["status"]),  # type: ignore[arg-type]
         question=str(row["question"]),
         companies=[c for c in companies.split(",") if c],

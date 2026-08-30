@@ -82,7 +82,7 @@ async def ainvoke_with_retry[T](
                 exc_info=True,
             )
             await asyncio.sleep(delay)
-    raise AssertionError("unreachable")
+    raise AssertionError("unreachable")  # pragma: no cover — the loop returns or raises
 
 
 def guarded[S: SupportsError](
