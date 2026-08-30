@@ -1,6 +1,7 @@
 # ADR 0001 — Model routing defaults
 
-**Date:** 2026-07-17 · **Phase:** 0 · **Status:** accepted
+**Date:** 2026-07-17 · **Phase:** 0 · **Status:** accepted (the `synthesis`/`critic`
+default below is superseded by ADR 0045 — GLM 5.2 — since the Phase 7 cost A/B closed)
 
 ## Decision
 
@@ -34,6 +35,10 @@ params, per current Anthropic API requirements.
 
 ## Revisit
 
-Phase 7 reruns the eval set with synthesis on `claude-sonnet-5`; if metrics
-hold, the cheaper routing becomes the default. Verifier roles escalate to the
-frontier model only where Phase 3's measured precision/recall demands it.
+**Resolved (ADR 0045, 2026-08-30).** The Phase 7 cost A/B ran and closed on
+`z-ai/glm-5.2` for `synthesis`/`critic`, not `claude-sonnet-5`: GLM 5.2 held the
+gold-set floors at a fraction of the Anthropic price ($0.95/$2.98 per M vs
+Opus $5/$25, Sonnet $3/$15), so the cheaper routing became the default. The
+planned live Sonnet experiment is dropped. `eval_judge` stays on `claude-sonnet-5`
+(the measuring stick). Verifier roles escalate to the frontier model only where
+Phase 3's measured precision/recall demands it.

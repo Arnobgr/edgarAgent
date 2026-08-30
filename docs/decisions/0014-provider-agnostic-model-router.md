@@ -57,7 +57,9 @@ optional generation knobs `max_tokens`, `temperature`, `thinking`.
   `z-ai/glm-5.2-20260616` as the challenger arm; `eval_judge` stays on
   `claude-sonnet-5` as the fixed measuring stick for the exit gate. `main`/`dev`
   keep the Sonnet baseline. Challenger prices are registered in `model_prices`
-  so `budget_max_cost_usd` still counts the spend.
+  so `budget_max_cost_usd` still counts the spend. *(Resolved by ADR 0045,
+  2026-08-30: the A/B closed on GLM 5.2; it is now the accepted `synthesis`/`critic`
+  default on `dev`/`main`, and `eval_judge` remains on `claude-sonnet-5`.)*
 - **Model choice must be frozen before the canonical baseline run** (exit-gate
   step 4): the baseline becomes the Phase-4 CI regression gate, and any later
   model swap forces a re-baseline.

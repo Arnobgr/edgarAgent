@@ -12,8 +12,8 @@ Real math from real data — Langfuse has per-node token/cost for every run sinc
 
 1. **Measure:** from the full gold-set eval run, extract per-role token usage (input/output split) and derive **cost per analyst question** — mean and p90 — broken down by node (decompose / research×n / synthesize / verify×claims / critic), plus loop-iteration overhead.
 2. **Model the alternatives** (same token counts, different unit prices — state pricing as of the note's date):
-   - Synthesis/critic on `claude-opus-4-8` ($5/$25 per M tokens) vs `claude-sonnet-5` ($3/$15) vs everything-on-frontier vs everything-on-cheap.
-   - **Run, don't just model, the one live experiment that matters:** the full eval set with synthesis on `claude-sonnet-5`. If eval metrics hold, the cheaper routing wins and *becomes* the default — that's the blueprint's own logic (complexity and cost both earned against the output). Record the metric deltas either way.
+   - Synthesis/critic on `z-ai/glm-5.2` ($0.95/$2.98 per M tokens, the chosen default) vs `claude-opus-4-8` ($5/$25) vs `claude-sonnet-5` ($3/$15) vs everything-on-frontier vs everything-on-cheap.
+   - **The routing is decided — GLM 5.2, cost A/B closed (ADR 0045).** The experiments that chose it are run; the planned live `claude-sonnet-5` synthesis experiment is dropped. This note *documents* that outcome — the A/B metric deltas and the cost-per-question math — rather than running a new experiment. The blueprint's own logic applies: complexity and cost both earned against the output, and the cheaper route held the metrics.
 3. **Verifier routing confirmation:** restate the Phase 3 measured verifier P/R per claim type and the escalation decision it produced; include the cost of the escalated path.
 4. **Close with the fluency paragraph** the blueprint asks for: cost per question at chosen routing, how it scales with sub-questions/claims per question, and the build-vs-buy framing (OpenRouter for price-shopping mechanical calls, Anthropic direct for high-stakes; Langfuse self-hosted vs LangSmith SaaS — the licensing/data-control tradeoff, stated interview-ready per blueprint §6).
 
@@ -39,7 +39,7 @@ The repo's front page for a technical reviewer (many will read *only* this):
 
 ## Exit gate
 
-- Cost note complete with measured (not estimated) per-question costs and the sonnet-vs-opus synthesis experiment recorded; routing config matches the note's conclusion.
+- Cost note complete with measured (not estimated) per-question costs and the closed cost A/B recorded (GLM 5.2 vs the Anthropic arms, ADR 0045); routing config matches the note's conclusion.
 - Coverage target met per the triage; error-handling and logging sweeps done with diffs to show.
 - README complete; a cold clean-checkout quickstart works as written.
 - Full eval suite green — unchanged or improved vs the Phase 6 baseline.

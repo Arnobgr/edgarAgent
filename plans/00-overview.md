@@ -56,7 +56,7 @@ Roles, not hardcoded models — every role is a config slot in `src/fie/llm/`:
 
 | Role | Default model | Access path | Why |
 |---|---|---|---|
-| `synthesis`, `critic` | `claude-opus-4-8` | Anthropic (native SDK / `langchain-anthropic`), adaptive thinking | High-stakes: the draft answer and the quality gate. $5/$25 per M tokens. `claude-sonnet-5` ($3/$15) is the cost-tuning alternative, evaluated in Phase 7. |
+| `synthesis`, `critic` | `z-ai/glm-5.2` | OpenRouter (OpenAI-compatible endpoint) | High-stakes: the draft answer and the quality gate. Chosen over `claude-opus-4-8` ($5/$25) and `claude-sonnet-5` ($3/$15) — held the gold-set floors at $0.95/$2.98 per M, so the Phase 7 cost A/B closed on it (ADR 0045). |
 | `decompose`, `claim-extract`, `verify-qualitative`, `verify-forward` | cheap model via OpenRouter (start: a flash-class model, e.g. `google/gemini-2.5-flash`) | OpenRouter OpenAI-compatible endpoint | High-volume mechanical steps; exact pick revisited against the eval set. |
 | numeric reconciliation | none (deterministic tool) | — | Exact XBRL lookup. |
 

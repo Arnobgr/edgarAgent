@@ -66,17 +66,16 @@ class Settings(BaseSettings):
     # editing its spec — provider independence is a config property, not a
     # code change (ADR 0014).
     #
-    # Reasoning roles (synthesis/critic) and the eval judge run on Anthropic;
-    # for this cheaper Phase-3 pass they are Sonnet (the operator's call, 2026-07;
-    # production default is Opus). Mechanical roles run on a cheap OpenRouter
-    # model. To A/B an open model on synthesis/critic, flip their spec to
-    # `provider="openrouter"` with the OpenRouter id — nothing else changes.
+    # Reasoning roles (synthesis/critic) run on GLM 5.2 via OpenRouter — the
+    # accepted default since the cost A/B closed on it (ADR 0045): it held the
+    # gold-set floors at a fraction of the Anthropic price. The eval judge stays
+    # on Anthropic (it is the measuring stick, not a production role). Mechanical
+    # roles run on a cheap OpenRouter model. Any role moves provider by editing
+    # its spec — nothing else changes (ADR 0014).
     models: dict[str, ModelSpec] = Field(
         default={
-            # CHALLENGER ARM (branch feat/router-provider-agnostic): synthesis
-            # and critic run on GLM 5.2 via OpenRouter for the cost A/B. Revert
-            # both to ModelSpec(provider="anthropic", model="claude-sonnet-5")
-            # to restore the Sonnet baseline.
+            # synthesis and critic run on GLM 5.2 via OpenRouter — the accepted
+            # default since the cost A/B closed on it (ADR 0045).
             "synthesis": ModelSpec(provider="openrouter", model="z-ai/glm-5.2-20260616"),
             "critic": ModelSpec(provider="openrouter", model="z-ai/glm-5.2-20260616"),
             # Citation-accuracy LLM judge (eval only, blueprint §6). Kept on a
@@ -186,8 +185,9 @@ class Settings(BaseSettings):
             # checkpoints from earlier runs still resolve.
             "gemini-3.5-flash-lite": (0.30, 2.50),
             "gemini-2.5-flash": (0.30, 2.50),
-            # OpenRouter challengers for the synthesis/critic A/B (ADR 0014).
-            # Substring-matched against the id in callbacks, e.g.
+            # OpenRouter model prices (ADR 0014). glm-5.2 is the synthesis/critic
+            # default (ADR 0045); the rest were A/B challengers, kept for cost
+            # comparison. Substring-matched against the id in callbacks, e.g.
             # "z-ai/glm-5.2-20260616" → "glm-5.2".
             "glm-5.2": (0.95, 2.98),
             "grok-4.5": (2.0, 6.0),

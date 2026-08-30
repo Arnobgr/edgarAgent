@@ -385,10 +385,10 @@ matters: OpenRouter → `function_calling` (some open models fence `json_schema`
 output in markdown); Anthropic **with thinking on** → `json_schema` (the
 default forced-tool-calling path is explicitly not guaranteed under thinking).
 
-Roles currently on the GLM challenger arm for the cost A/B — `synthesis` and
-`critic` point at `z-ai/glm-5.2-20260616`; revert both to
-`ModelSpec(provider="anthropic", model="claude-sonnet-5")` for the Sonnet
-baseline. `eval_judge` stays on a strong stable model: it is the measuring
+`synthesis` and `critic` run on GLM 5.2 (`z-ai/glm-5.2-20260616`) — the accepted
+default since the cost A/B closed on it (ADR 0045): it held the gold-set floors
+at a fraction of the Anthropic price. The planned Sonnet synthesis experiment is
+dropped. `eval_judge` stays on a strong stable model: it is the measuring
 stick. `fact_lookup` (question → the figures to look up) and `query_rewrite`
 (analyst phrasing → filing vocabulary) are their own cheap roles rather than
 reuses of `fact_mapping`, so a Langfuse trace separates what research looked
