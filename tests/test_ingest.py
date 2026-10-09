@@ -3,14 +3,21 @@
 import itertools
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
+import edgar
 import pytest
+from pydantic import SecretStr
 
+from fie.config import Settings
+from fie.ingest import pipeline
 from fie.ingest.chunk import chunk_filing, split_with_overlap
+from fie.ingest.fetch import AcquiredFiling
 from fie.ingest.parse import ParsedFiling, ParsedTable, extract_tables, fiscal_period_label
 from fie.ingest.store import (
     STATUS_ACQUIRED,
     STATUS_CHUNKED,
+    STATUS_FAILED,
     Fact,
     IngestStore,
     ManifestRow,
@@ -409,3 +416,54 @@ def test_mid_sentence_item_references_do_not_split() -> None:
     ) * 20
     sections = {"Item 7": text}
     assert resplit_mangled_sections(sections) is sections
+
+
+# --- Pipeline: a failure stays with its filing ---
+
+
+def test_a_failed_filing_is_isolated_and_retried_on_the_next_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One filing that cannot be acquired must not cost the others, and the
+    re-run that resumability promises must retry it — and only it. EDGAR is a
+    network dependency with its own rate limits, so a partial ingest is the
+    normal case, not the exceptional one."""
+    filings = [
+        SimpleNamespace(accession_no=acc, form="10-K", filing_date="2026-01-29")
+        for acc in ("acc-good", "acc-bad")
+    ]
+    acquired: list[str] = []
+
+    def acquire(filing: SimpleNamespace, *, ticker: str, raw_dir: Path) -> AcquiredFiling:
+        acquired.append(filing.accession_no)
+        if filing.accession_no == "acc-bad":
+            raise ConnectionError("EDGAR reset the connection")
+        return AcquiredFiling(
+            parsed=make_filing(accession_no=filing.accession_no),
+            facts=[],
+            raw_path=str(raw_dir / filing.accession_no),
+            checksum="sha",
+        )
+
+    monkeypatch.setattr(pipeline, "enumerate_filings", lambda ticker, years: filings)
+    monkeypatch.setattr(pipeline, "acquire_filing", acquire)
+    monkeypatch.setattr(edgar, "set_identity", lambda identity: None)
+    settings = Settings(
+        _env_file=None,
+        anthropic_api_key=SecretStr("x"),
+        data_dir=tmp_path,
+        edgar_identity="Test Runner test@example.com",
+    )
+
+    first = pipeline.run_ingest(settings, tickers=["TSLA"], years=1, skip_embed=True)
+    store = IngestStore(settings.ingest_db_path)
+    bad, good = store.get_manifest("acc-bad"), store.get_manifest("acc-good")
+    store.close()
+    assert bad is not None and bad.status == STATUS_FAILED
+    assert "EDGAR reset the connection" in (bad.detail or "")
+    assert good is not None and good.status == STATUS_CHUNKED
+    assert first.acquired == 1 and len(first.failures) == 1
+
+    acquired.clear()
+    pipeline.run_ingest(settings, tickers=["TSLA"], years=1, skip_embed=True)
+    assert acquired == ["acc-bad"]

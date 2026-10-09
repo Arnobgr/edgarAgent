@@ -124,6 +124,30 @@ async def test_a_failing_run_marks_the_job_failed(api_settings: Settings) -> Non
         assert status["error"] == "RuntimeError: model exploded"
 
 
+async def test_a_run_that_returns_an_error_is_failed_and_never_cached(
+    api_settings: Settings,
+) -> None:
+    """A guardrail abort does not raise — `answer_question` returns a
+    degraded `RunResult` carrying `error` (ADR 0025). That must still be a
+    `failed` job, which the SPA renders as "did not finish" without fetching
+    the result, and it must not enter the answer cache, or the next visitor
+    asking the same question would be served the aborted draft as an answer."""
+    aborted = make_result(error="node 'verify' timed out after 180s")
+    engine = FakeEngine(results=[aborted, make_result()])
+    async with api_client(create_app(api_settings, run_fn=engine)) as client:
+        first = (
+            await client.post("/v1/questions", json={"question": "Anything?"}, headers=AUTH)
+        ).json()["job_id"]
+        status = await wait_for_status(client, first, headers=AUTH, until={"failed"})
+        assert status["error"] == "node 'verify' timed out after 180s"
+
+        again = await client.post("/v1/questions", json={"question": "Anything?"}, headers=AUTH)
+        second = again.json()["job_id"]
+        await wait_for_status(client, second, headers=AUTH, until={"succeeded"})
+
+    assert len(engine.calls) == 2
+
+
 async def test_every_log_line_of_a_job_carries_the_job_not_the_request(
     api_settings: Settings,
 ) -> None:

@@ -7,6 +7,8 @@ retracted (never silently dropped) once iterations are exhausted.
 
 from typing import Any
 
+import pytest
+
 from fie.eval.metrics import hallucination_rate
 from fie.graph import GraphLimits
 from fie.graph.build import RETRACTED_HEADER
@@ -315,6 +317,32 @@ async def test_budget_abort_ends_run_with_partial_error_state() -> None:
     assert synthesis.calls == []  # no LLM call was made over budget
     assert state.draft_answer is None
     assert state.run_budget.tokens_used == 11
+
+
+async def test_a_judge_that_keeps_failing_fails_the_run_rather_than_skipping_the_claim() -> None:
+    """A verifier call that is still failing after its retries is not
+    absorbed into a verdict: it raises out of the run. The alternatives are
+    both worse — counting the claim grounded launders an unchecked sentence,
+    and leaving it unverified delivers one. Raising means the API marks the
+    job `failed` and stores no result, and the eval retries the question as
+    a lost attempt (ADR 0025). Nothing unverified reaches a reader."""
+    synthesis = StructuredFakeModel(
+        outputs=[SynthesisOutput(answer="A draft.", claims=[any_claim()])]
+    )
+    judge = StructuredFakeModel(
+        default_output=JudgeOutput(verdict="grounded", supporting_span="span"), fail_times=99
+    )
+    critic = StructuredFakeModel(outputs=[CriticOutput(passed=True)])
+    graph = make_graph(
+        retriever=StubRetriever(make_chunks()),
+        synthesis=synthesis,
+        qualitative=judge,
+        critic=critic,
+    )
+
+    with pytest.raises(RuntimeError, match="transient fake failure"):
+        await graph.ainvoke(EngineState(question=QUESTION))
+    assert critic.calls == []
 
 
 async def test_critic_failure_loops_back_to_synthesize_once() -> None:
