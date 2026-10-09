@@ -1,6 +1,5 @@
 """Typed eval datasets (versioned JSONL under `eval/`)."""
 
-import json
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
@@ -110,6 +109,7 @@ class LabeledClaim(BaseModel):
 
 
 def load_jsonl[ModelT: BaseModel](path: Path, model: type[ModelT]) -> list[ModelT]:
+    """One validated model per non-blank line."""
     rows = []
     for line in path.read_text().splitlines():
         if line.strip():
@@ -118,11 +118,6 @@ def load_jsonl[ModelT: BaseModel](path: Path, model: type[ModelT]) -> list[Model
 
 
 def save_jsonl(path: Path, rows: Sequence[BaseModel]) -> None:
+    """The inverse of `load_jsonl`, creating the parent directory."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("".join(row.model_dump_json() + "\n" for row in rows))
-
-
-def load_baselines(path: Path) -> dict[str, float | None]:
-    data = json.loads(path.read_text())
-    metrics: dict[str, float | None] = data.get("metrics", {})
-    return metrics

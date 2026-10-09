@@ -131,10 +131,6 @@ class IpQuota:
         self._limit = daily_limit
         self._clock = clock
 
-    def remaining(self, ip: str) -> int:
-        used = self._store.ip_submissions(self._clock().date().isoformat(), ip)
-        return max(0, self._limit - used)
-
     def take(self, ip: str) -> bool:
         """Consume one submission. False when the IP is already at its limit.
 

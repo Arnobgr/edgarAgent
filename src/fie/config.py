@@ -47,6 +47,8 @@ class ModelSpec(BaseModel):
 
 
 class Settings(BaseSettings):
+    """Every setting the system reads. Nothing else touches `os.environ`."""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # --- API keys (from .env / environment) ---
@@ -116,8 +118,6 @@ class Settings(BaseSettings):
     # --- Corpus (decision 3.1: TSLA/AAPL/NVDA, EDGAR-only, last 3 FYs) ---
     corpus_tickers: list[str] = Field(default=["TSLA", "AAPL", "NVDA"])
     ingest_years: int = 3
-    # Phase 2 naive-corpus knob, still used by `fetch_recent_filings`.
-    quarterly_filings: int = 4
 
     # --- Ingestion (Phase 3, workstream A) ---
     # Manifest + XBRL facts store; raw/parsed/chunk caches live under data_dir.
@@ -281,6 +281,8 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """The process-wide settings, from the compose secrets directory when it
+    is mounted (production) and from `.env` otherwise."""
     if COMPOSE_SECRETS_DIR.is_dir():
         return Settings(_secrets_dir=COMPOSE_SECRETS_DIR)
     return Settings()

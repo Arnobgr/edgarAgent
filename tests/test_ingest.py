@@ -467,3 +467,21 @@ def test_a_failed_filing_is_isolated_and_retried_on_the_next_run(
     acquired.clear()
     pipeline.run_ingest(settings, tickers=["TSLA"], years=1, skip_embed=True)
     assert acquired == ["acc-bad"]
+
+
+def test_ingest_without_an_edgar_identity_fails_before_any_network(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SEC requires a real name and email in the user agent and refuses
+    noreply addresses, and the repo carries no personal data, so the default
+    is empty. An empty identity must stop the run before EDGAR is contacted,
+    not after a 403."""
+
+    def contacted(ticker: str, years: int) -> list[SimpleNamespace]:
+        raise AssertionError("EDGAR was contacted without an identity")
+
+    monkeypatch.setattr(pipeline, "enumerate_filings", contacted)
+    settings = Settings(_env_file=None, anthropic_api_key=SecretStr("x"), data_dir=tmp_path)
+
+    with pytest.raises(RuntimeError, match="EDGAR_IDENTITY is not set"):
+        pipeline.run_ingest(settings, tickers=["TSLA"], years=1, skip_embed=True)

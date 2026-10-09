@@ -218,13 +218,6 @@ class ApiStore:
 
     # --- Per-IP quota ---
 
-    def ip_submissions(self, day: str, ip: str) -> int:
-        with self._lock:
-            row = self._conn.execute(
-                "SELECT submissions FROM ip_quota WHERE day = ? AND ip = ?", (day, ip)
-            ).fetchone()
-        return int(row["submissions"]) if row else 0
-
     def bump_ip(self, day: str, ip: str) -> int:
         with self._lock:
             cursor = self._conn.execute(

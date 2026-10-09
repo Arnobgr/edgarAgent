@@ -36,6 +36,7 @@ class TraceHandle:
 
 
 def new_run_id() -> str:
+    """Twelve hex characters: the run id, thread id and job id are one value."""
     return uuid4().hex[:12]
 
 

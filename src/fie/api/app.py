@@ -72,6 +72,7 @@ class Services:
 
 
 def services(request: Request) -> Services:
+    """The dependencies `create_app` injected, as the routes see them."""
     return cast(Services, request.app.state.services)
 
 
@@ -175,6 +176,9 @@ def create_app(
     run_fn: RunFn | None = None,
     clock: Callable[[], datetime] = utcnow,
 ) -> FastAPI:
+    """Build the service around injected dependencies, the way `build_graph`
+    builds the run: tests pass a fake `run_fn` and a fixed `clock`, so the
+    whole surface, abuse controls included, runs with no network and no keys."""
     resolved = settings or get_settings()
     _check_startup_config(resolved)
     configure_logging(json_logs=resolved.api_log_json)
@@ -298,6 +302,8 @@ def create_app(
 
 
 async def require_api_key(request: Request) -> None:
+    """Gate every `/v1` route on `X-API-Key`. On the public path that
+    identifies the caller and does not control it (ADR 0030)."""
     if not api_key_valid(request.headers.get("X-API-Key"), services(request).settings):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or missing X-API-Key"

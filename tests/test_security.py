@@ -143,16 +143,19 @@ def test_no_model_in_this_system_has_a_tool_bound() -> None:
 def test_nothing_on_the_answer_path_performs_a_runtime_fetch() -> None:
     """The second bounding fact. At answer time the only outbound hosts are
     the model providers; an injected "fetch this URL" has nothing to execute
-    it. An HTTP client is allowed in four modules, each pinned to one URL that
-    comes from settings, and EDGAR access is offline and CLI-driven.
+    it. An HTTP client is allowed in four modules, each pinned to fixed
+    endpoints, and EDGAR access is offline and CLI-driven.
 
-    None of the four is on the answer path: two are ingest and retrieval
-    infrastructure, and two are the Turnstile check, which runs before a run
-    exists. The first version of this list said two modules, copying the claim
-    in `docs/security.md`; the assertion is here because the prose had already
-    drifted from the code once."""
+    One of the four is on the answer path — the embedder posts each research
+    query to a fixed embeddings URL, which makes it a model provider, not a
+    fetch. The reranker is off in production, and the other two are the
+    Turnstile check, which runs before a run exists. The first version of this
+    list said two modules, copying the claim in `docs/security.md`; the
+    assertion is here because the prose had already drifted from the code
+    once — and the comments below said the embedder spoke to Qdrant until
+    2026-10-09, which is the same drift one level down."""
     allowed = {
-        SRC / "ingest" / "embed.py",  # Qdrant, from settings.qdrant_url
+        SRC / "ingest" / "embed.py",  # the embeddings endpoint, a constant per provider
         SRC / "tools" / "retrieval" / "rerank.py",  # the reranker endpoint
         SRC / "api" / "security.py",  # Turnstile siteverify
         SRC / "api" / "app.py",  # constructs the shared client for the above

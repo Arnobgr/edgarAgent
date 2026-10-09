@@ -206,11 +206,18 @@ none of them is a setting that can be misconfigured.
 2. **Nothing in the graph performs a runtime fetch.** At answer time the only
    outbound hosts are the model providers. An HTTP client is imported in four
    modules — `ingest/embed.py` and `tools/retrieval/rerank.py`, each pinned to
-   one URL from settings, and `api/security.py` with `api/app.py`, which are
-   the Turnstile check and run before a graph exists. None is on the answer
-   path, and EDGAR access is offline, CLI-driven, and reached through
-   `Company(ticker)` rather than a URL (`tools/edgar.py`). An injected
+   one provider endpoint written in the code, and `api/security.py` with
+   `api/app.py`, which are the Turnstile check and run before a graph exists.
+   The embedder *is* on the answer path — every research branch embeds its
+   query — but it posts that query to a fixed embeddings URL, so it is a model
+   provider, not a fetch. EDGAR access is offline, CLI-driven, and reached
+   through `Company(ticker)` rather than a URL (`ingest/fetch.py`). An injected
    "fetch this URL" instruction has nothing to execute it.
+
+   *Until 2026-10-09 this paragraph said none of the four was on the answer
+   path and that the URLs came from settings. Neither was true of the
+   embedder. The conclusion did not depend on either claim, but they were
+   stated as facts in the security argument, so they were corrected.*
 
    *This paragraph said "two modules" until 2026-08-11, when the assertion
    written to defend it counted four. The prose had drifted from the code and

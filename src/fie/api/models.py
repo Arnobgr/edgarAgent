@@ -28,6 +28,8 @@ RunPhase = Literal[
 
 
 class QuestionRequest(BaseModel):
+    """The body of `POST /v1/questions`."""
+
     question: str = Field(min_length=1)
     companies: list[str] = Field(default_factory=list)
     # Minted by the Turnstile widget on the frontend. Absent on the tailnet
@@ -36,6 +38,8 @@ class QuestionRequest(BaseModel):
 
 
 class JobAccepted(BaseModel):
+    """A `202`: the job id to poll and whether the answer cache served it."""
+
     job_id: str
     status: JobStatus
     source: RunSource
@@ -61,6 +65,8 @@ class Progress(BaseModel):
 
 
 class JobStatusResponse(BaseModel):
+    """What polling `GET /v1/jobs/{id}` returns while a run is in flight."""
+
     job_id: str
     status: JobStatus
     question: str

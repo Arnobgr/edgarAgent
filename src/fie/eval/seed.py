@@ -134,4 +134,5 @@ def _seed_queries(parsed_dir: Path, max_sections: int) -> list[RetrievalQuery]:
 
 
 def main() -> None:
+    """Console entry point for `eval-seed`."""
     app()

@@ -55,7 +55,18 @@ target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# D1xx: every public module, class and function in `src` says why it exists.
+# The pydocstyle *formatting* rules are off on purpose: this repo's docstrings
+# open with a summary that wraps when the rationale needs it (D205/D209), and
+# they explain decisions rather than command (D401). Enforcing those would
+# rewrite ~250 docstrings to satisfy a style nobody reads for. Methods (D102)
+# and `__init__` (D107) are off too — a method's class carries the why, and a
+# docstring that restates a signature is the kind this repo does not write.
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "D100", "D101", "D103", "D104", "D419"]
+
+[tool.ruff.lint.per-file-ignores]
+# A test's name is its docstring; the ones that need more already have one.
+"tests/**" = ["D"]
 
 [tool.mypy]
 # Without the plugin, mypy builds pydantic `__init__`s from dataclass_transform,
@@ -78,8 +89,8 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-# These modules only run against live external services (EDGAR, the embedding
-# API, Qdrant) or are eval measurement CLIs driven by `uv run eval-*` and
+# These modules only run against a live external service (EDGAR) or are eval
+# measurement CLIs driven by `uv run eval-*` and
 # `deploy/monthly-eval.sh`. The unit suite takes no network and needs no keys
 # (see CONVENTIONS), so they cannot execute here — they are covered by the
 # eval/ingest runs, not by pytest. Excluded so the reported number measures the
@@ -91,6 +102,4 @@ omit = [
     "src/fie/eval/seed.py",
     "src/fie/eval/perturb.py",
     "src/fie/ingest/fetch.py",
-    "src/fie/ingest/embed.py",
-    "src/fie/tools/edgar.py",
 ]

@@ -643,4 +643,5 @@ def run(
 
 
 def main() -> None:
+    """Console entry point for `eval-agent`."""
     app()

@@ -468,4 +468,5 @@ def run(
 
 
 def main() -> None:
+    """Console entry point for `eval-adversarial`."""
     app()

@@ -59,6 +59,8 @@ class RecordedIndex(BaseModel):
 
 @dataclass(frozen=True)
 class ExportReport:
+    """What `fie export-runs` did, for the CLI to print."""
+
     written: list[Path] = field(default_factory=list)
     skipped: list[tuple[str, str]] = field(default_factory=list)
     pruned: list[Path] = field(default_factory=list)

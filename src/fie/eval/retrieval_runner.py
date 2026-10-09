@@ -155,6 +155,7 @@ def evaluate_figures(
 def write_figure_report(
     results: list[FigureVariantResult], queries: list[FigureQuery], out_dir: Path
 ) -> Path:
+    """Write the figure-delivery arms as JSON and Markdown; return the JSON path."""
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     payload = {
@@ -238,6 +239,7 @@ def _build_retriever(settings: Settings, embedding: str, rerank: bool) -> Retrie
 def write_report(
     results: list[VariantResult], queries: list[RetrievalQuery], out_dir: Path
 ) -> Path:
+    """Write the retrieval arms as JSON and Markdown; return the JSON path."""
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     seed_count = sum(1 for q in queries if q.label_status == "seed")
@@ -334,4 +336,5 @@ def run(
 
 
 def main() -> None:
+    """Console entry point for `eval-retrieval`."""
     app()
