@@ -176,9 +176,10 @@ class Settings(BaseSettings):
             # Substring matching means 4-8 does NOT cover 5 — both are listed.
             "claude-opus-5": (5.0, 25.0),
             "claude-opus-4-8": (5.0, 25.0),
-            # List price. Sonnet 5 is on introductory pricing (2.0/10.0)
-            # through 2026-08-31, so this over-reports cost until then.
-            "claude-sonnet-5": (3.0, 15.0),
+            # The introductory 2.0/10.0 outlived its 2026-08-31 end date and is
+            # the list price as of 2026-10-06. Also covers sonnet-5-5 by
+            # substring, which is priced the same.
+            "claude-sonnet-5": (2.0, 10.0),
             # Priced identically to the 2.5-flash it replaced, so the
             # generation jump costs nothing. 2.5 stays listed: substring
             # matching means the newer id does not cover the older one, and
@@ -188,8 +189,10 @@ class Settings(BaseSettings):
             # OpenRouter model prices (ADR 0014). glm-5.2 is the synthesis/critic
             # default (ADR 0045); the rest were A/B challengers, kept for cost
             # comparison. Substring-matched against the id in callbacks, e.g.
-            # "z-ai/glm-5.2-20260616" → "glm-5.2".
-            "glm-5.2": (0.95, 2.98),
+            # "z-ai/glm-5.2-20260616" → "glm-5.2". What OpenRouter charges as of
+            # 2026-10-09; it was 0.95/2.98 when the 08-13 baseline ran, so that
+            # run's recorded costs are at the old price.
+            "glm-5.2": (0.057, 4.30),
             "grok-4.5": (2.0, 6.0),
             "qwen3.7-max": (1.48, 4.43),
             "kimi-k3": (3.0, 15.0),

@@ -182,7 +182,7 @@ async def test_a_run_that_raised_is_still_charged_to_the_governor(
         await wait_for_status(client, job_id, headers=AUTH, until={"failed"})
 
         spend = await client.get("/v1/admin/spend", headers=AUTH)
-        assert spend.json()["day_usd"] == pytest.approx(0.95 + 2.98)
+        assert spend.json()["day_usd"] == pytest.approx(0.057 + 4.30)
         assert spend.json()["exhausted"] is True
 
 

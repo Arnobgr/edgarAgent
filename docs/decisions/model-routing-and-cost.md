@@ -8,7 +8,9 @@ ADR 0032 (Langfuse Cloud in production), ADR 0045 (GLM 5.2 for synthesis/critic)
 
 On the accepted baseline (`agent-20260813-174221`, 30/30, every floor met) an
 analyst question costs **$0.036 on average, $0.025 at the median and $0.070 at
-p90**; the most expensive of the 30 cost $0.104. Three quarters of that is
+p90**; the most expensive of the 30 cost $0.104. Those are the prices the run
+was charged. GLM 5.2 has since been repriced, and the same tokens at the
+2026-10-09 price cost **$0.021 on average and $0.052 at p90**. Three quarters of that is
 synthesis. What drives it is **how many times the answer gets drafted**, not
 how big the question is: a run that verifies cleanly on its first draft costs
 $0.016, and one that loops back costs $0.057.
@@ -58,10 +60,13 @@ decompose 0.7%. Retract makes no LLM call. Numeric verdicts are a SQLite
 lookup, and the model's only part in them is mapping claims to concepts
 (ADR 0012), which is why verification costs **$0.0008 per claim**.
 
-Synthesis is input-bound: about 20k tokens of packed evidence go in and about
-2.7k come out. At GLM's prices the input is 70% of the synthesis bill. Any
-change to what `context/` packs therefore moves cost more than a change to
-the model's output length would.
+Synthesis reads about 20k tokens of packed evidence and writes about 2.7k.
+Which side of that dominates the bill depends on the price, and the price has
+moved. At the $0.95/$2.98 this run was charged, input was 70% of the synthesis
+bill. At the $0.057/$4.30 OpenRouter charges on 2026-10-09, it is 9%. **On
+today's prices, output length is the lever and evidence packing is nearly
+free.** A conclusion about where to cut that does not name its price date is
+not one.
 
 ## What scales the cost
 
@@ -96,13 +101,14 @@ small integer.
 
 Same per-role token counts, different unit prices (per million tokens,
 input/output). Anthropic prices are Anthropic's direct list prices as of
-2026-10-06. OpenRouter prices are from its public models endpoint on
-2026-10-09.
+2026-10-06. GLM prices are what OpenRouter charges on 2026-10-09; the rest
+are from its public models endpoint on the same date.
 
 | Routing | Reasoning roles | Mechanical roles | Mean $/q | p90 $/q | × chosen |
 |---|---|---|---|---|---|
 | **Chosen** (prices as charged) | GLM 5.2 $0.95/$2.98 | Flash-Lite $0.30/$2.50 | **0.036** | **0.070** | 1.0 |
-| Chosen, at today's OpenRouter list | GLM 5.2 $0.06/$4.20 | Flash-Lite $0.30/$2.50 | 0.021 | 0.051 | 0.6 |
+| **Chosen, at the 2026-10-09 charge** | GLM 5.2 $0.057/$4.30 | Flash-Lite $0.30/$2.50 | **0.021** | **0.052** | 0.6 |
+| GLM 5.3 (untested) | $0.0312/$4.40 | Flash-Lite | 0.021 | 0.051 | 0.6 |
 | Sonnet 5.5 (or Sonnet 5) | $2/$10 | Flash-Lite | 0.079 | 0.149 | 2.2 |
 | Opus 5.5 | $4/$20 | Flash-Lite | 0.151 | 0.291 | 4.2 |
 | Opus 5 / 4.8 (the ADR 0001 default) | $5/$25 | Flash-Lite | 0.187 | 0.361 | 5.2 |
@@ -204,8 +210,8 @@ Two corrections to the record:
 **OpenRouter for the routes where price is the point; Anthropic direct where
 it is not.** Every reasoning and mechanical role goes through OpenRouter,
 because those are the calls worth price-shopping. That is how a four-arm
-comparison (GLM, Sonnet, Opus, Grok) was a config change (ADR 0014). It is also why GLM's listed input price can fall from $0.95 to
-$0.06 without a line of code changing. The one Anthropic role is the eval
+comparison (GLM, Sonnet, Opus, Grok) was a config change (ADR 0014). It is also why GLM's input price could fall from $0.95 to
+$0.057 without a line of code changing. The one Anthropic role is the eval
 judge, which is called natively because it is the measuring stick, and because
 an Anthropic model on OpenRouter's OpenAI-compatible path is the
 structured-output failure ADR 0014 bans.
@@ -224,8 +230,9 @@ SaaS outage cannot turn the service red.
 filings costs $0.025 at the median and $0.036 on average, under $0.11 in the
 worst case of 30. About $0.016 of it is the first pass, and each redraft that
 verification forces adds about $0.034. Three quarters goes to one role,
-synthesis, and that role is input-bound, so what `context/` packs matters
-more than which model reads it. Numeric truth costs almost nothing, because it
+synthesis. At today's prices its output is 90% of its bill, so how much it
+writes, and how often it is made to redraft, matters more than how much
+evidence it reads. Numeric truth costs almost nothing, because it
 is a SQLite lookup rather than a model's opinion. Routing is per role and is
 config: reasoning on an open model at a fifth to a tenth of the frontier price,
 mechanical work on a flash-tier model, and the judge on Anthropic. That held
@@ -235,12 +242,16 @@ asked for it.
 
 ## Follow-ups this note found
 
-- **`model_prices` is stale in two places.** Sonnet 5 is listed at $3/$15
-  (actual $2/$10, so the judge's spend is over-reported). GLM 5.2 is at
-  $0.95/$2.98, and OpenRouter now lists $0.06/$4.20. The tracker therefore
-  over-counts GLM input about 16×, and that tracker is what feeds the public
-  spend governor. Check the OpenRouter billing dashboard before changing it: a
-  listed route price is not always the price the routed provider charges.
+- **`model_prices` was stale in two places — fixed 2026-10-09.** Sonnet 5
+  was listed at $3/$15 (actual $2/$10). GLM 5.2 was at $0.95/$2.98, and
+  OpenRouter charges $0.057/$4.30, confirmed on the billing side. The tracker
+  feeds the public spend governor, so this changes what the caps admit: the
+  daily $0.35 now covers about 17 average questions, up from 9. The
+  run-cap headroom over the worst of the 30 runs rises from 2.4× to 3.8×.
+- **GLM 5.3 is priced below 5.2** ($0.0312/$4.40). At this token profile it
+  saves nothing measurable ($0.0206 against $0.0209), because the bill is now
+  output-bound and its output price is higher. A 5.3 arm would be a quality
+  test, not a cost one.
 - **Haiku 5.5 is now cheaper than Flash-Lite** ($0.10/$0.50 against
   $0.30/$2.50) and would cut about $0.005 a question. Quality on those roles is
   unmeasured, and CLAUDE.md says models are cleared and not to be tuned for
