@@ -3,7 +3,7 @@
 Two candidates, benchmarked head-to-head on the retrieval eval set
 (decision 3.4): `voyage-finance-2` (finance-tuned) vs OpenAI
 `text-embedding-3-small` (general baseline). Thin httpx REST clients — no
-vendor SDKs — with batching and 429 backoff. Voyage distinguishes
+vendor SDKs — with batching and backoff on transient failures. Voyage distinguishes
 document vs query embeddings (`input_type`); OpenAI does not.
 """
 
@@ -64,15 +64,33 @@ class _RestEmbedder:
         raise NotImplementedError
 
     def _post(self, payload: dict[str, object]) -> dict[str, object]:
+        """POST with backoff on what is transient: 429, any 5xx, and a
+        connection that failed outright.
+
+        This client is on the answer path, not only in ingest — every research
+        branch embeds its query — and a branch whose call raises reports its
+        sub-question exhausted. So a single provider 503 used to cost a branch
+        its evidence. A *timeout* is not retried: at 120s a second hang would
+        outlive the public node timeout, which aborts the run anyway."""
         for attempt in range(_MAX_ATTEMPTS):
-            response = self._client.post(self._url, json=payload)
-            if response.status_code == 429 and attempt < _MAX_ATTEMPTS - 1:
-                delay = _BACKOFF_BASE_SECONDS * 2**attempt
-                logger.warning("embeddings rate-limited; retrying in %.0fs", delay)
-                time.sleep(delay)
-                continue
-            response.raise_for_status()
-            return dict(response.json())
+            last = attempt == _MAX_ATTEMPTS - 1
+            try:
+                response = self._client.post(self._url, json=payload)
+            except httpx.TimeoutException:
+                raise
+            except httpx.TransportError as exc:
+                if last:
+                    raise
+                reason = f"connection failed ({type(exc).__name__})"
+            else:
+                transient = response.status_code == 429 or response.status_code >= 500
+                if not transient or last:
+                    response.raise_for_status()
+                    return dict(response.json())
+                reason = f"HTTP {response.status_code}"
+            delay = _BACKOFF_BASE_SECONDS * 2**attempt
+            logger.warning("embeddings call failed: %s; retrying in %.0fs", reason, delay)
+            time.sleep(delay)
         raise RuntimeError("unreachable")  # pragma: no cover
 
 
