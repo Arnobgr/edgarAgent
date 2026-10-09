@@ -4,6 +4,7 @@ not per-node) and the timeout/budget wrapper applied to every graph node."""
 import asyncio
 import logging
 import random
+import time
 from collections.abc import Awaitable
 from typing import Any, Protocol
 
@@ -94,27 +95,53 @@ def guarded[S: SupportsError](
 ) -> NodeFn[S]:
     """Wrap a node with the guardrails every node gets: short-circuit when the
     run is already in an error state, refuse to start over budget, bound wall
-    time, and stamp the current budget usage into the state."""
+    time, and stamp the current budget usage into the state.
+
+    It is also where every node transition is logged, once, in one shape —
+    the one place every node passes through, so no node can forget to. The
+    job's `job_id`/`trace_id` ride along from the log context the job
+    registry binds, which is what lets two interleaved runs be told apart."""
+
+    def transition(outcome: str, started: float) -> None:
+        elapsed = time.monotonic() - started
+        logger.info(
+            "node %s: %s in %.1fs",
+            name,
+            outcome,
+            elapsed,
+            extra={
+                "node": name,
+                "outcome": outcome,
+                "duration_ms": round(elapsed * 1000),
+                "tokens_used": tracker.tokens_used,
+                "cost_usd_used": round(tracker.cost_usd_used, 6),
+            },
+        )
 
     async def wrapped(state: S, config: RunnableConfig) -> dict[str, Any]:
         if state.error is not None:
             return {}
+        started = time.monotonic()
         if tracker.exceeded:
+            transition("over_budget", started)
             message = f"run aborted before node {name!r}: budget exceeded — {tracker.describe()}"
             return {"error": message, "run_budget": tracker.snapshot()}
         try:
             async with asyncio.timeout(timeout_seconds):
                 update = await fn(state, config)
         except TimeoutError:
+            transition("timeout", started)
             return {
                 "error": f"node {name!r} timed out after {timeout_seconds:g}s",
                 "run_budget": tracker.snapshot(),
             }
         except BudgetExceededError as exc:
+            transition("over_budget", started)
             return {
                 "error": f"run aborted in node {name!r}: budget exceeded — {exc}",
                 "run_budget": tracker.snapshot(),
             }
+        transition("error" if update.get("error") else "ok", started)
         update.setdefault("run_budget", tracker.snapshot())
         return update
 

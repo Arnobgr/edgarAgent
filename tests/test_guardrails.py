@@ -206,3 +206,46 @@ async def test_guarded_stamps_budget_into_update() -> None:
     update = await wrapped(EngineState(question="q"), _config())
     assert update["draft_answer"] == "hi"
     assert update["run_budget"].tokens_used == 10
+
+
+@pytest.mark.parametrize(
+    ("node_fn", "timeout", "outcome"),
+    [
+        ("ok", 1.0, "ok"),
+        ("error", 1.0, "error"),
+        ("slow", 0.05, "timeout"),
+        ("budget", 1.0, "over_budget"),
+    ],
+)
+async def test_guarded_logs_one_transition_per_node_with_its_outcome(
+    caplog: pytest.LogCaptureFixture, node_fn: str, timeout: float, outcome: str
+) -> None:
+    """One event per node transition, in one shape, from the one wrapper every
+    node passes through — so the fields are queryable and no node can forget."""
+
+    async def node(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
+        if node_fn == "slow":
+            await asyncio.sleep(0.5)
+        if node_fn == "budget":
+            raise BudgetExceededError("spent")
+        return {"error": "claimless"} if node_fn == "error" else {}
+
+    tracker = BudgetTracker(100, 1.0)
+    tracker.record(7, 3)
+    wrapped = guarded("verify", node, tracker=tracker, timeout_seconds=timeout)
+    with caplog.at_level("INFO", logger="fie.guardrails.execution"):
+        await wrapped(EngineState(question="q"), _config())
+
+    [event] = [r for r in caplog.records if hasattr(r, "node")]
+    assert (event.node, event.outcome, event.tokens_used) == ("verify", outcome, 10)
+    assert event.duration_ms >= 0
+
+
+async def test_guarded_logs_nothing_for_a_node_it_skips(caplog: pytest.LogCaptureFixture) -> None:
+    async def node(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
+        return {}
+
+    wrapped = guarded("verify", node, tracker=BudgetTracker(100, 1.0), timeout_seconds=1.0)
+    with caplog.at_level("INFO", logger="fie.guardrails.execution"):
+        await wrapped(EngineState(question="q", error="already failed"), _config())
+    assert not [r for r in caplog.records if hasattr(r, "node")]

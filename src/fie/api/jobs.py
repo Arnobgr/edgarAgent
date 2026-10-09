@@ -19,11 +19,13 @@ import logging
 from collections.abc import Awaitable
 from typing import Protocol
 
+import structlog
 from langchain_core.callbacks import BaseCallbackHandler
 
 from fie.api.governor import AnswerCache, SpendGovernor
 from fie.api.store import ApiStore, JobStatus
 from fie.guardrails import BudgetTracker
+from fie.observability import trace_id_for
 from fie.state import ReviewDecision, RunResult
 
 logger = logging.getLogger(__name__)
@@ -107,6 +109,13 @@ class JobRegistry:
         question: str | None,
         review_decisions: list[ReviewDecision] | None,
     ) -> None:
+        # The task runs in a copy of the launching request's log context, so
+        # without this every line of the run would carry the POST's
+        # `request_id` and `path` and none would carry the job. Clearing it
+        # touches only this task's copy. The request's own line already names
+        # the job id it returned, so the submission stays correlated.
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(job_id=job_id, trace_id=trace_id_for(job_id))
         # A meter, not a cap: the caps live inside `answer_question`, and the
         # tracker it builds is only reachable through a returned RunResult.
         # An exception has no RunResult and the tokens were still bought, so

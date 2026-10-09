@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import httpx
+import structlog
 from fastapi import FastAPI
 from langchain_core.callbacks import BaseCallbackHandler, CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
@@ -274,7 +275,12 @@ class FakeEngine:
         extra_callbacks: list[BaseCallbackHandler],
     ) -> RunResult:
         self.calls.append(
-            {"question": question, "run_id": run_id, "review_decisions": review_decisions}
+            {
+                "question": question,
+                "run_id": run_id,
+                "review_decisions": review_decisions,
+                "log_context": structlog.contextvars.get_contextvars(),
+            }
         )
         self.concurrent += 1
         self.peak_concurrent = max(self.peak_concurrent, self.concurrent)

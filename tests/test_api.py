@@ -21,6 +21,7 @@ from fie.api.models import RunPayload
 from fie.api.progress import _phase
 from fie.api.store import ApiStore
 from fie.config import Settings
+from fie.observability import trace_id_for
 from fie.state import GroundingRow, RunResult
 from tests.conftest import API_KEY
 from tests.fakes import FakeEngine, api_client, make_result, wait_for_status
@@ -121,6 +122,24 @@ async def test_a_failing_run_marks_the_job_failed(api_settings: Settings) -> Non
         ).json()["job_id"]
         status = await wait_for_status(client, job_id, headers=AUTH, until={"failed"})
         assert status["error"] == "RuntimeError: model exploded"
+
+
+async def test_every_log_line_of_a_job_carries_the_job_not_the_request(
+    api_settings: Settings,
+) -> None:
+    """The job task starts in a copy of the POST's log context. Left alone,
+    every engine line would carry that request's `request_id` and `path` and
+    no line would carry the job — two interleaved runs could not be told
+    apart in `docker logs`."""
+    engine = FakeEngine()
+    async with api_client(create_app(api_settings, run_fn=engine)) as client:
+        job_id = (
+            await client.post("/v1/questions", json={"question": "Anything?"}, headers=AUTH)
+        ).json()["job_id"]
+        await wait_for_status(client, job_id, headers=AUTH, until={"succeeded"})
+
+    context = engine.calls[0]["log_context"]
+    assert context == {"job_id": job_id, "trace_id": trace_id_for(job_id)}
 
 
 # --- Authentication ---

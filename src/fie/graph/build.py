@@ -238,6 +238,18 @@ def build_graph(
                     BranchResult(sub_question_id=sub_question.id, ok=False, detail=str(exc))
                 ]
             }
+        logger.info(
+            "research %s: %d chunk(s) retrieved, %d filed figure(s) injected",
+            sub_question.id,
+            len(chunks),
+            len(facts),
+            extra={
+                "sub_question_id": sub_question.id,
+                "query": search,
+                "chunks": len(chunks),
+                "facts": len(facts),
+            },
+        )
         tagged = [
             c.model_copy(update={"sub_question_id": sub_question.id}) for c in [*facts, *chunks]
         ]

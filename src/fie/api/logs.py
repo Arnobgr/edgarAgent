@@ -24,6 +24,9 @@ def configure_logging(*, json_logs: bool, level: int = logging.INFO) -> None:
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
+        # `extra={...}` on a stdlib call becomes fields, not lost attributes:
+        # the node-transition events (`guarded`) are only queryable as data.
+        structlog.stdlib.ExtraAdder(),
         structlog.processors.TimeStamper(fmt="iso", utc=True),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
