@@ -54,7 +54,7 @@ describe("splitAnswer", () => {
     const carrying = recordedRuns().filter((p) => p.result.answer.includes(RETRACTED_HEADER));
     // The header is part of the answer contract, not an occasional artifact:
     // if this count reaches zero the split has stopped being exercised.
-    expect(carrying.length).toBe(9);
+    expect(carrying.length).toBe(6);
     for (const payload of carrying) {
       expect(layoutAnswer(payload.result.answer, payload.result.grounding).body).not.toContain(
         RETRACTED_HEADER,
@@ -79,20 +79,19 @@ describe("layoutAnswer", () => {
         layout.placements.length + layout.spanless.length + layout.unlocated.length,
       ).toBe(payload.result.grounding.length);
     }
-    // 200 grounding rows in the accepted 2026-08-13 baseline: 196 `grounded`
-    // and 4 `partial`. Every one of them is locatable — the 08-01 corpus had
-    // six spanless rows, all in a single run whose prose could not be
-    // highlighted at all, and that run has no counterpart here. Assert it
-    // rather than assume it: `spanless` reaching zero is what let
-    // `UNMARKABLE_RUN_ID` be deleted instead of re-pointed, and a future
-    // baseline can put it back.
-    expect(placed + spanless + unlocated).toBe(200);
-    expect(placed).toBe(200);
-    expect(spanless).toBe(0);
+    // The accepted 2026-10-10 baseline has 217 grounding rows: 210 `grounded`
+    // and 7 `partial`. Three are spanless, all in g-002 (`716e05bc2d5c`). The
+    // model omitted the optional `answer_span` field there (ADR 0046), so that
+    // run's prose cannot be highlighted at all. The 08-13 corpus had none, and
+    // the 08-01 corpus had six, likewise all in one run. Assert the count
+    // rather than assume it: it moves with every baseline.
+    expect(placed + spanless + unlocated).toBe(217);
+    expect(placed).toBe(214);
+    expect(spanless).toBe(3);
     // No *delivered* grounding row lost its sentence to another claim's
     // excision. That is not the same as the defect being extinct: ADR 0021
-    // point 3 fired twice in this very baseline, in the landing run, and the
-    // graph logged both — but a claim it hits is dropped from the grounding
+    // point 3 fired once in this very baseline, in g-030, and the graph
+    // logged it. A claim it hits is dropped from the grounding
     // table rather than left in it, so it reaches the reader as a retraction
     // and never as an unmarkable row. This asserts the table the reader gets
     // is clean, not that the defect cannot happen.

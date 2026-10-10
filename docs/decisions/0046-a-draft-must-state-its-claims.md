@@ -1,7 +1,7 @@
 # ADR 0046 — A draft must state its claims: `claims` is a required field
 
 **Date:** 2026-10-10 · **Phase:** 7 · **Status:** accepted, implemented
-2026-10-10, **unmeasured until the next full eval** · **Extends:** ADR 0038
+2026-10-10, **measured the same day** (see *Measured*) · **Extends:** ADR 0038
 (an answer with no claims is a failed run), ADR 0025 (a degraded attempt
 disqualifies a baseline)
 
@@ -117,11 +117,33 @@ With the default restored, the first test fails.
   could not explain it, because only the mapped claims were checkpointed. An
   omitted key fits that case exactly, but its raw output is gone and Langfuse
   Cloud no longer holds August.
-- **Adjacent, not addressed.** Inside claims that are present,
+- **Adjacent, not addressed here.** Inside claims that are present,
   `source_chunk_ids` is absent in 136 of 920, and `answer_span` in 9. Neither
   is silent. A claim with no cited chunk is ruled `unsupported` with feedback
   that drives a loop-back, and a missing span falls back to token overlap
-  (ADR 0023), which is logged. Making them required would change how claims
-  are verified rather than fix a contract bug, so it is a separate decision.
+  (ADR 0023), which is logged. *Corrected below:* the first draft of this ADR
+  called making them required "a separate decision" because it would change
+  verification. It would not; it is the same contract bug.
 - The id-shape fingerprint names no provider. OpenRouter's Activity page for
   2026-10-09 15:00–17:00 UTC would name it.
+
+## Measured
+
+Run `agent-20261010-102654` on image `8b26d55`, the same morning, became the
+accepted baseline: 30/30, `degraded_attempts: 0`, `runs_with_no_claims: 0`.
+
+- **The retry never fired.** The run logged no `claims` validation errors.
+  The `call_<24 hex>` backend served 37 of the 58 traced synthesis calls and
+  **included `claims` in all 37**, against 50 omissions in 84 calls before the
+  change. Listing the field as required appears to be what that backend obeys.
+  A provider-side change in the same half hour cannot be excluded, because the
+  last omission was at 09:23Z and the run started at 09:53Z.
+- **The same defect, one level down, cost a question.** In g-014 the same
+  backend omitted `source_chunk_ids` from all six claims in four consecutive
+  drafts. The prose cited the right XBRL facts inline, but the claims cited
+  nothing, so all six correct figures were retracted. Those are all three
+  missing expected facts (coverage 0.893). Across the run, that backend
+  omitted the key in 51 of 277 claims; every other backend in 3 of 176. g-002
+  lost its `answer_span`s the same way, and its prose cannot be highlighted.
+  Making both `DraftClaim` fields required is the obvious next step. It is not
+  taken here, because it changes the answer path and needs its own eval.

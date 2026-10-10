@@ -1,0 +1,164 @@
+{
+  "job_id": "cd9b7ccd3f77",
+  "source": "recorded",
+  "created_at": "2026-10-10T09:54:45.321223+00:00",
+  "result": {
+    "run_id": "cd9b7ccd3f77",
+    "question": "What was Apple's total net sales in fiscal year 2024?",
+    "answer": "Apple's total net sales for fiscal year 2024 were $391,035 million (approximately $391.0 billion), for the fiscal year ended September 28, 2024 [0000320193-24-000123:item-8-p001]. This figure is corroborated by the XBRL fact filed with the SEC, which reports Net sales of 391,035,000,000 USD for FY 2024 [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28], and by the press release accompanying the 10-K, which also shows total net sales of $391,035 million for the twelve months ended September 28, 2024 [0000320193-24-000120:ex-99-press-release-p002]. The total was composed of Products net sales of $294,866 million and Services net sales of $96,169 million [0000320193-24-000123:item-8-p001]. This represented an approximately 2% increase from fiscal year 2023's total net sales of $383,285 million [0000320193-24-000123:item-7-p001]. Fiscal year 2024 spanned 52 weeks, ending on September 28, 2024 [0000320193-24-000123:item-8-p004].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Apple's total net sales in fiscal year 2024?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Apple's total net sales for fiscal year 2024 were $391,035 million for the fiscal year ended September 28, 2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 391,035,000,000 usd ($391,035 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079",
+        "answer_span": "Apple's total net sales for fiscal year 2024 were $391,035 million (approximately $391.0 billion), for the fiscal year ended September 28, 2024 [0000320193-24-000123:item-8-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "The XBRL fact filed with the SEC reports Net sales of 391,035,000,000 USD for Apple's FY 2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…hCustomerExcludingAssessedTax) for FY 2024, period ending 2024-09-28: 391,035,000,000 USD — as reported in 10-K 0000320193-25-000079.",
+        "answer_span": "This figure is corroborated by the XBRL fact filed with the SEC, which reports Net sales of 391,035,000,000 USD for FY 2024 [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28], and by the press release accompanying the 10-K, which also shows total net sales of $391,035 million for the twelve months ended September 28, 2024 [0000320193-24-000120:ex-99-press-release-p002].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "The press release accompanying Apple's 10-K shows total net sales of $391,035 million for the twelve months ended September 28, 2024.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 391,035,000,000 usd ($391,035 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079",
+        "answer_span": "This figure is corroborated by the XBRL fact filed with the SEC, which reports Net sales of 391,035,000,000 USD for FY 2024 [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28], and by the press release accompanying the 10-K, which also shows total net sales of $391,035 million for the twelve months ended September 28, 2024 [0000320193-24-000120:ex-99-press-release-p002].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000120:ex-99-press-release-p002",
+            "doc_id": "AAPL-8-K-0000320193-24-000120",
+            "ticker": "AAPL",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000320193-24-000120",
+            "filing_date": "2024-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-4",
+        "text": "Apple's fiscal year 2024 total net sales were composed of Products net sales of $294,866 million and Services net sales of $96,169 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 294,866,000,000 usd ($294,866 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 96,169,000,000 usd ($96,169 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079",
+        "answer_span": "The total was composed of Products net sales of $294,866 million and Services net sales of $96,169 million [0000320193-24-000123:item-8-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-5",
+        "text": "Apple's fiscal year 2024 total net sales represented an approximately 2% increase from fiscal year 2023's total net sales of $383,285 million.",
+        "claim_type": "numeric",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 383,285,000,000 usd ($383,285 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079",
+        "answer_span": "This represented an approximately 2% increase from fiscal year 2023's total net sales of $383,285 million [0000320193-24-000123:item-7-p001].",
+        "feedback": "figure(s) 2% not found in the XBRL facts store — searched XBRL concepts: NetSales, RevenueFromContractWithCustomerExcludingAssessedTax, SalesRevenueNet; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-7-p001",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-6",
+        "text": "Apple's fiscal year 2024 spanned 52 weeks, ending on September 28, 2024.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The Company’s fiscal years 2024 and 2022 spanned 52 weeks each, whereas fiscal year 2023 spanned 53 weeks.",
+        "answer_span": "Fiscal year 2024 spanned 52 weeks, ending on September 28, 2024 [0000320193-24-000123:item-8-p004].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000123:item-8-p004",
+            "doc_id": "AAPL-10-K-0000320193-24-000123",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-24-000123",
+            "filing_date": "2024-11-01"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 15487,
+      "cost_usd_used": 0.010953839999999998
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

@@ -1,0 +1,360 @@
+{
+  "job_id": "fbd99767fbeb",
+  "source": "recorded",
+  "created_at": "2026-10-10T10:10:28.482998+00:00",
+  "result": {
+    "run_id": "fbd99767fbeb",
+    "question": "Compare how Tesla and Nvidia describe supply chain concentration risks in their filings.",
+    "answer": "**Tesla** frames supply chain concentration primarily around **single-source supplier dependency and geographic sourcing diversity**. Tesla states that its products use \"thousands of parts that are sourced from hundreds of suppliers across the world\" but acknowledges that \"some of our procured components and systems are sourced from single suppliers\" [0001628280-25-003063:item-1-p009]. It describes active mitigation strategies: qualifying multiple suppliers \"where it is sensible to do so,\" maintaining \"safety stock for key parts and assemblies and die banks for components with lengthy procurement lead times\" [0001628280-25-003063:item-1-p009]. In its risk factors, Tesla warns that single-source direct suppliers expose it to \"multiple potential sources of component shortages\" and that \"the unavailability of any component or supplier could result in production delays, idle manufacturing facilities, product design changes and loss of access to important technology\" [0001628280-26-003952:item-1a-p003]. Tesla also highlights tariff and trade-policy exposure, noting that \"U.S. trade policy alterations in 2025, including heightened import tariffs and subsequent retaliatory measures, have impacted our supply chain costs\" [0001628280-26-003952:item-1a-p003], and describes efforts to ensure \"each component is sourced from at least two countries of origin\" [0001628280-25-018851:ex-99-press-release-p005].\n\n**Nvidia** frames supply chain concentration primarily around **geographic concentration in the Asia-Pacific region and capacity-commitment risk with third-party manufacturers**. Nvidia states that its supply chain \"is currently concentrated in the Asia-Pacific region\" and that it works to \"enhance the resiliency and redundancy\" of it, but warns that \"new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business\" [0001045810-25-000023:item-1-p017]. Nvidia emphasizes long manufacturing lead times, noting it is \"not provided guaranteed wafer, component or capacity supply\" and that extended lead times may exceed 12 months [0001045810-25-000116:part-ii--item-1a-p001]. Nvidia also acknowledges component-level availability risk, stating that \"supply constraints or availability issues with respect to any one component have had and may have a broader revenue impact\" and that its \"ability to sell certain products has been and could be impeded if components necessary for the finished products are not available from third parties\" [0001045810-25-000116:part-ii--item-1a-p001]. To secure supply, Nvidia describes paying \"premiums,\" providing \"deposits,\" and entering \"long-term supply agreements and capacity commitments,\" while acknowledging it \"may still be unable to secure sufficient commitments for capacity\" [0001045810-25-000116:part-ii--item-1a-p001].\n\n**Key differences:** Tesla's disclosure centers on supplier-level concentration (single-sourcing) and tariff/trade-policy disruption, with explicit mitigation tactics like dual-country sourcing and safety stock. Nvidia's disclosure centers on regional geographic concentration (Asia-Pacific) and capacity-commitment risk with contract manufacturers, with export controls as the primary threat to alternative manufacturing locations. Both companies acknowledge that they may be unable to quickly or fully secure alternative supply if disruptions occur, and both address component-level availability risk—Tesla through the lens of single-source suppliers and Nvidia through the lens of single-component constraints within its complex data center platform strategy.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How does Tesla describe supply chain concentration risks in its filings?",
+        "rationale": "Examines Tesla's specific disclosures regarding supply chain concentration risks in its SEC filings.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "How does Nvidia describe supply chain concentration risks in its filings?",
+        "rationale": "Examines Nvidia's specific disclosures regarding supply chain concentration risks in its SEC filings.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Tesla states that its products use thousands of parts sourced from hundreds of suppliers across the world but acknowledges that some components and systems are sourced from single suppliers.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Our products use thousands of parts that are sourced from hundreds of suppliers across the world... As is the case for some automotive companies, some of our procured components and systems are sourced from single suppliers.",
+        "answer_span": "Tesla states that its products use \"thousands of parts that are sourced from hundreds of suppliers across the world\" but acknowledges that \"some of our procured components and systems are sourced from single suppliers\" [0001628280-25-003063:item-1-p009].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p009",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "Tesla describes qualifying multiple suppliers where sensible and maintaining safety stock for key parts and die banks for components with lengthy procurement lead times as mitigation strategies.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Where multiple sources are available for certain key components, we work to qualify multiple suppliers for them where it is sensible to do so in order to minimize potential production risks due to disruptions in their supply. We also mitigate risk by maintaining safety stock for key parts and assemblies and die banks for components with lengthy procurement lead times.",
+        "answer_span": "It describes active mitigation strategies: qualifying multiple suppliers \"where it is sensible to do so,\" maintaining \"safety stock for key parts and assemblies and die banks for components with lengthy procurement lead times\" [0001628280-25-003063:item-1-p009].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p009",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "Tesla warns that single-source direct suppliers expose it to multiple potential sources of component shortages and that the unavailability of any component or supplier could result in production delays, idle manufacturing facilities, product design changes and loss of access to important technology.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Our products contain thousands of parts purchased globally from hundreds of suppliers, including single-source direct suppliers, which exposes us to multiple potential sources of component shortages. ... The unavailability of any component or supplier could result in production delays, idle manufacturing facilities, product design changes and loss of access to important technology and tools for producing and supporting our products",
+        "answer_span": "In its risk factors, Tesla warns that single-source direct suppliers expose it to \"multiple potential sources of component shortages\" and that \"the unavailability of any component or supplier could result in production delays, idle manufacturing facilities, product design changes and loss of access to important technology\" [0001628280-26-003952:item-1a-p003].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p003",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "Tesla notes that U.S. trade policy alterations in 2025, including heightened import tariffs and subsequent retaliatory measures, have impacted its supply chain costs.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "U.S. trade policy alterations in 2025, including heightened import tariffs and subsequent retaliatory measures, have impacted our supply chain costs",
+        "answer_span": "Tesla also highlights tariff and trade-policy exposure, noting that \"U.S. trade policy alterations in 2025, including heightened import tariffs and subsequent retaliatory measures, have impacted our supply chain costs\" [0001628280-26-003952:item-1a-p003]",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p003",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "Tesla describes efforts to ensure each component is sourced from at least two countries of origin.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Building on our efforts to reduce supply risk, we have developed our 4680  supply to ensure each component is sourced from at least two countries of origin.",
+        "answer_span": "and describes efforts to ensure \"each component is sourced from at least two countries of origin\" [0001628280-25-018851:ex-99-press-release-p005].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p005",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "Nvidia states that its supply chain is currently concentrated in the Asia-Pacific region and that it works to enhance the resiliency and redundancy of it.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in the Asia-Pacific region, new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business.",
+        "answer_span": "Nvidia states that its supply chain \"is currently concentrated in the Asia-Pacific region\" and that it works to \"enhance the resiliency and redundancy\" of it",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1-p017",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-7",
+        "text": "Nvidia warns that new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact its business.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in the Asia-Pacific region, new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business.",
+        "answer_span": "but warns that \"new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business\" [0001045810-25-000023:item-1-p017].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1-p017",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "Nvidia emphasizes that it is not provided guaranteed wafer, component, or capacity supply and that extended lead times may exceed 12 months.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…enced and may continue to experience extended lead times of more than 12 months. To secure future supply and capacity, we have paid premiums,…",
+        "answer_span": "Nvidia emphasizes long manufacturing lead times, noting it is \"not provided guaranteed wafer, component or capacity supply\" and that extended lead times may exceed 12 months [0001045810-25-000116:part-ii--item-1a-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000116:part-ii--item-1a-p001",
+            "doc_id": "NVDA-10-Q-0001045810-25-000116",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000116",
+            "filing_date": "2025-05-28"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-9",
+        "text": "Nvidia acknowledges that supply constraints or availability issues with respect to any one component have had and may have a broader revenue impact, and that its ability to sell certain products could be impeded if components necessary for the finished products are not available from third parties.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Additionally, since some of our products are part of a complex data center buildout, supply constraints or availability issues with respect to any one component have had and may have a broader revenue impact. For example, our ability to sell certain products has been and could be impeded if components necessary for the finished products are not available from third parties.",
+        "answer_span": "Nvidia also acknowledges component-level availability risk, stating that \"supply constraints or availability issues with respect to any one component have had and may have a broader revenue impact\" and that its \"ability to sell certain products has been and could be impeded if components necessary for the finished products are not available from third parties\" [0001045810-25-000116:part-ii--item-1a-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000116:part-ii--item-1a-p001",
+            "doc_id": "NVDA-10-Q-0001045810-25-000116",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000116",
+            "filing_date": "2025-05-28"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-10",
+        "text": "Nvidia describes paying premiums, providing deposits, and entering long-term supply agreements and capacity commitments to secure supply, while acknowledging it may still be unable to secure sufficient commitments for capacity.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "To secure future supply and capacity, we have paid premiums, provided deposits, and entered into long-term supply agreements and capacity commitments, which have increased our product costs and this may continue. We may still be unable to secure sufficient commitments for capacity to address our business needs.",
+        "answer_span": "To secure supply, Nvidia describes paying \"premiums,\" providing \"deposits,\" and entering \"long-term supply agreements and capacity commitments,\" while acknowledging it \"may still be unable to secure sufficient commitments for capacity\" [0001045810-25-000116:part-ii--item-1a-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000116:part-ii--item-1a-p001",
+            "doc_id": "NVDA-10-Q-0001045810-25-000116",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000116",
+            "filing_date": "2025-05-28"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-11",
+        "text": "Tesla's disclosure centers on supplier-level concentration (single-sourcing) and tariff/trade-policy disruption, with explicit mitigation tactics like dual-country sourcing and safety stock.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "As is the case for some automotive companies, some of our procured components and systems are sourced from single suppliers... U.S. trade policy alterations in 2025, including heightened import tariffs and subsequent retaliatory measures, have impacted our supply chain costs... we have developed our 4680 supply to ensure each component is sourced from at least two countries of origin. We also mitigate risk by maintaining safety stock for key parts and assemblies",
+        "answer_span": "Tesla's disclosure centers on supplier-level concentration (single-sourcing) and tariff/trade-policy disruption, with explicit mitigation tactics like dual-country sourcing and safety stock.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p009",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p003",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p005",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-12",
+        "text": "Nvidia's disclosure centers on regional geographic concentration (Asia-Pacific) and capacity-commitment risk with contract manufacturers, with export controls as the primary threat to alternative manufacturing locations.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in the Asia-Pacific region, new and existing export controls or changes to existing export controls could limit alternative manufacturing locations and negatively impact our business.",
+        "answer_span": "Nvidia's disclosure centers on regional geographic concentration (Asia-Pacific) and capacity-commitment risk with contract manufacturers, with export controls as the primary threat to alternative manufacturing locations.",
+        "feedback": "The excerpts fully support the claims that Nvidia's disclosure centers on regional geographic concentration in the Asia-Pacific region, capacity-commitment risk with contract manufacturers/foundry partners (long manufacturing lead times, uncertain supply and capacity availability, capacity commitments), and export controls limiting alternative manufacturing locations.",
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1-p017",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          },
+          {
+            "chunk_id": "0001045810-25-000116:part-ii--item-1a-p001",
+            "doc_id": "NVDA-10-Q-0001045810-25-000116",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000116",
+            "filing_date": "2025-05-28"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-13",
+        "text": "Both companies acknowledge that they may be unable to quickly or fully secure alternative supply if disruptions occur, and both address component-level availability risk—Tesla through the lens of single-source suppliers and Nvidia through the lens of single-component constraints within its complex data center platform strategy.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "While we believe that we will be able to secure additional or alternate sources or develop our own replacements for most of our components, there is no assurance that we will be able to do so quickly or at all.",
+        "answer_span": "Both companies acknowledge that they may be unable to quickly or fully secure alternative supply if disruptions occur, and both address component-level availability risk—Tesla through the lens of single-source suppliers and Nvidia through the lens of single-component constraints within its complex data center platform strategy.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p003",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001045810-25-000116:part-ii--item-1a-p001",
+            "doc_id": "NVDA-10-Q-0001045810-25-000116",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000116",
+            "filing_date": "2025-05-28"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 73915,
+      "cost_usd_used": 0.04984674299999999
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

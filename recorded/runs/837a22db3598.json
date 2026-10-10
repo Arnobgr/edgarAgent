@@ -1,29 +1,29 @@
 {
-  "job_id": "b2511952725e",
+  "job_id": "837a22db3598",
   "source": "recorded",
-  "created_at": "2026-08-13T14:59:44.168870+00:00",
+  "created_at": "2026-10-10T09:54:15.191262+00:00",
   "result": {
-    "run_id": "b2511952725e",
+    "run_id": "837a22db3598",
     "question": "How much did Nvidia spend on research and development in its latest fiscal year (FY2026)?",
-    "answer": "NVIDIA spent $18,497 million (approximately $18.5 billion) on research and development in fiscal year 2026, which ended January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25]. This figure is also reflected in the company's consolidated statements of income, where research and development expense represented 8.6% of total revenue for FY2026 [0001045810-26-000021:item-7-p007].",
+    "answer": "NVIDIA spent $18,497 million (approximately $18.5 billion) on research and development in fiscal year 2026 (the 52-week year ended January 25, 2026) [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25]. This represented 8.6% of total revenue, down from 9.9% in fiscal year 2025 [0001045810-26-000021:item-7-p007].",
     "sub_questions": [
       {
         "id": "sq1-1",
         "text": "How much did Nvidia spend on research and development in its latest fiscal year (FY2026)?",
-        "rationale": "The question asks for a single specific data point (R&D expense for FY2026) which can be retrieved directly from the financial statements.",
+        "rationale": "single-part question",
         "status": "researched"
       }
     ],
     "grounding": [
       {
         "claim_id": "claim-1-1",
-        "text": "NVIDIA spent $18,497 million on research and development in fiscal year 2026, which ended January 25, 2026.",
+        "text": "NVIDIA spent $18,497 million on research and development in fiscal year 2026, the 52-week year ended January 25, 2026.",
         "claim_type": "numeric",
         "status": "grounded",
         "verdict": "grounded",
         "method": "numeric_reconciliation",
         "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 18,497,000,000 usd ($18,497 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
-        "answer_span": "NVIDIA spent $18,497 million (approximately $18.5 billion) on research and development in fiscal year 2026, which ended January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25].",
+        "answer_span": "NVIDIA spent $18,497 million (approximately $18.5 billion) on research and development in fiscal year 2026 (the 52-week year ended January 25, 2026) [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25].",
         "feedback": null,
         "sources": [
           {
@@ -39,13 +39,13 @@
       },
       {
         "claim_id": "claim-1-2",
-        "text": "Research and development expense represented 8.6% of total revenue for FY2026.",
+        "text": "Research and development expense represented 8.6% of total revenue in fiscal year 2026, down from 9.9% in fiscal year 2025.",
         "claim_type": "numeric",
         "status": "grounded",
         "verdict": "grounded",
         "method": "numeric_reconciliation",
-        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:Revenues (Revenue) = 18,497,000,000 / 215,938,000,000 = 0.0857 for FY 2026, acc 0001045810-26-000021",
-        "answer_span": "This figure is also reflected in the company's consolidated statements of income, where research and development expense represented 8.6% of total revenue for FY2026 [0001045810-26-000021:item-7-p007].",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:Revenues (Revenue) = 18,497,000,000 / 215,938,000,000 = 0.0857 for FY 2026, acc 0001045810-26-000021\nXBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:Revenues (Revenue) = 12,914,000,000 / 130,497,000,000 = 0.0990 for FY 2025, acc 0001045810-26-000021",
+        "answer_span": "This represented 8.6% of total revenue, down from 9.9% in fiscal year 2025 [0001045810-26-000021:item-7-p007].",
         "feedback": null,
         "sources": [
           {
@@ -67,8 +67,8 @@
     "budget": {
       "max_tokens": 500000,
       "max_cost_usd": 5.0,
-      "tokens_used": 11116,
-      "cost_usd_used": 0.01028043
+      "tokens_used": 11036,
+      "cost_usd_used": 0.004901304
     },
     "error": null,
     "awaiting_review": false

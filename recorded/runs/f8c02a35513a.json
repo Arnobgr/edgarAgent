@@ -1,0 +1,127 @@
+{
+  "job_id": "f8c02a35513a",
+  "source": "recorded",
+  "created_at": "2026-10-10T10:14:41.181088+00:00",
+  "result": {
+    "run_id": "f8c02a35513a",
+    "question": "What is Apple's current market capitalization and today's stock price?",
+    "answer": "The evidence from Apple's SEC filings provided does not include Apple's current market capitalization or today's stock price, as these are real-time market data points not reported in SEC filings. However, the filings do contain related historical information:\n\n- Apple's common stock is traded on The Nasdaq Stock Market LLC under the symbol AAPL [0000320193-25-000079:item-5-p001].\n- As of September 27, 2025, Apple had 14,773,260,000 shares of common stock issued, as reported in the fiscal year 2025 10-K [xbrl:0000320193-25-000079:us-gaap:CommonStockSharesIssued:2025-09-27].\n- \n- \n\nNone of these figures represent a current market capitalization or today's stock price. To obtain those values, you would need to consult a real-time financial data source.\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- The most recent share repurchase data in the fiscal year 2025 10-K shows an average price paid per share of $238.56 for open-market and privately negotiated purchases during the period August 31, 2025 to September 27, 2025.\n- The stock performance graph in the fiscal year 2025 10-K shows a cumulative total shareholder return of $234 on a $100 invested base as of September 2025.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What is Apple's current market capitalization?",
+        "rationale": "Market capitalization is a distinct financial metric that requires its own data point retrieval.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What is Apple's current stock price today?",
+        "rationale": "Stock price is a separate market data point from market capitalization.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple's common stock is traded on The Nasdaq Stock Market LLC under the symbol AAPL.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The Company’s common stock is traded on The Nasdaq Stock Market LLC under the symbol AAPL.",
+        "answer_span": "Apple's common stock is traded on The Nasdaq Stock Market LLC under the symbol AAPL [0000320193-25-000079:item-5-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-5-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 5",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "As of September 27, 2025, Apple had 14,773,260,000 shares of common stock issued, as reported in the fiscal year 2025 10-K.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…ap:CommonStockSharesIssued) for as of 2025, period ending 2025-09-27: 14,773,260,000 SHARES — as reported in 10-K 0000320193-25-000079.\n…025, period ending 2025-09-27: 14,773,260,000 SHARES — as reported in 10-K 0000320193-25-000079.",
+        "answer_span": "As of September 27, 2025, Apple had 14,773,260,000 shares of common stock issued, as reported in the fiscal year 2025 10-K [xbrl:0000320193-25-000079:us-gaap:CommonStockSharesIssued:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:CommonStockSharesIssued:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-3",
+        "text": "The most recent share repurchase data in the fiscal year 2025 10-K shows an average price paid per share of $238.56 for open-market and privately negotiated purchases during the period August 31, 2025 to September 27, 2025.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "The most recent share repurchase data in the fiscal year 2025 10-K shows an average price paid per share of $238.56 for open-market and privately negotiated purchases during the period August 31, 2025 to September 27, 2025 [0000320193-25-000079:item-5-p001].",
+        "feedback": "figure(s) $238.56 not found in the XBRL facts store — searched XBRL concepts: AveragePricePaidPerShare, ShareRepurchaseProgramAveragePricePaidPerShare, TreasuryStockSharesAcquiredAverageCostPerShare; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-5-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 5",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "The stock performance graph in the fiscal year 2025 10-K shows a cumulative total shareholder return of $234 on a $100 invested base as of September 2025.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "The stock performance graph in the fiscal year 2025 10-K shows a cumulative total shareholder return of $234 on a $100 invested base as of September 2025 [0000320193-25-000079:item-5-p001].",
+        "feedback": "figure(s) $234, $100 not found in the XBRL facts store — searched XBRL concepts: (no mapping produced); no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-5-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 5",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 45638,
+      "cost_usd_used": 0.027240895
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

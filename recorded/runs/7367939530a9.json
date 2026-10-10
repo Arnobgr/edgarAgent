@@ -1,0 +1,421 @@
+{
+  "job_id": "7367939530a9",
+  "source": "recorded",
+  "created_at": "2026-10-10T10:06:22.497868+00:00",
+  "result": {
+    "run_id": "7367939530a9",
+    "question": "Compare R&D spending as a share of revenue across Tesla, Apple, and Nvidia in their most recent fiscal years.",
+    "answer": "In their most recent fiscal years, R&D spending as a share of revenue was as follows:\n\n**Tesla (FY 2025, ended December 31, 2025):** R&D expense was $6.411 billion and total revenue was $94.827 billion, yielding an R&D-to-revenue ratio of approximately 6.8% [xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31] [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31]. Tesla's 10-K also reports R&D as 7% of revenues for FY 2025 [0001628280-26-003952:item-7-p017].\n\n**Apple (FY 2025, ended September 27, 2025):** R&D expense was $34.55 billion and net sales (revenue) was $416.161 billion, yielding an R&D-to-revenue ratio of approximately 8.3% [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27] [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27].\n\n**Nvidia (FY 2026, ended January 25, 2026):** R&D expense was $18.497 billion and total revenue was $215.938 billion, yielding an R&D-to-revenue ratio of approximately 8.6% [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25] [xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25]. Nvidia's 10-K also confirms R&D was 8.6% of revenue for FY 2026 [0001045810-26-000021:item-7-p007].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- Based on the cited figures, Tesla had the lowest R&D intensity at roughly 6.8%, while Apple and Nvidia were comparable at approximately 8.3% and 8.6%, respectively.\n- In absolute dollars, Apple spent the most on R&D at $34.55 billion, followed by Nvidia at $18.497 billion, and Tesla at $6.411 billion.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Tesla's R&D spending and total revenue in its most recent fiscal year?",
+        "rationale": "Researching R&D spending and revenue for Tesla in its most recent fiscal year.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What was Apple's R&D spending and total revenue in its most recent fiscal year?",
+        "rationale": "Researching R&D spending and revenue for Apple in its most recent fiscal year.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-3",
+        "text": "What was Nvidia's R&D spending and total revenue in its most recent fiscal year?",
+        "rationale": "Researching R&D spending and revenue for Nvidia in its most recent fiscal year.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Tesla's R&D expense for FY 2025 (ended December 31, 2025) was $6.411 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 6,411,000,000 usd ($6,411 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "R&D expense was $6.411 billion and total revenue was $94.827 billion, yielding an R&D-to-revenue ratio of approximately 6.8% [xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31] [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "Tesla's total revenue for FY 2025 (ended December 31, 2025) was $94.827 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 94,827,000,000 usd ($94,827 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "R&D expense was $6.411 billion and total revenue was $94.827 billion, yielding an R&D-to-revenue ratio of approximately 6.8% [xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31] [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "Tesla's R&D-to-revenue ratio for FY 2025 was approximately 6.8%, derived from $6.411 billion in R&D expense divided by $94.827 billion in revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 6,411,000,000 / 94,827,000,000 = 0.0676 for FY 2025, acc 0001628280-26-003952\nXBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 6,411,000,000 usd ($6,411 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 94,827,000,000 usd ($94,827 million) for FY 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "R&D expense was $6.411 billion and total revenue was $94.827 billion, yielding an R&D-to-revenue ratio of approximately 6.8% [xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31] [xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "Tesla's 10-K reports R&D as 7% of revenues for FY 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 6,411,000,000 / 94,827,000,000 = 0.0676 for FY 2025, acc 0001628280-26-003952",
+        "answer_span": "Tesla's 10-K also reports R&D as 7% of revenues for FY 2025 [0001628280-26-003952:item-7-p017].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p017",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "Apple's R&D expense for FY 2025 (ended September 27, 2025) was $34.55 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 34,550,000,000 usd ($34,550 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "R&D expense was $34.55 billion and net sales (revenue) was $416.161 billion, yielding an R&D-to-revenue ratio of approximately 8.3% [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27] [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "Apple's net sales (revenue) for FY 2025 (ended September 27, 2025) was $416.161 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 416,161,000,000 usd ($416,161 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "R&D expense was $34.55 billion and net sales (revenue) was $416.161 billion, yielding an R&D-to-revenue ratio of approximately 8.3% [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27] [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-7",
+        "text": "Apple's R&D-to-revenue ratio for FY 2025 was approximately 8.3%, derived from $34.55 billion in R&D expense divided by $416.161 billion in net sales.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 34,550,000,000 / 416,161,000,000 = 0.0830 for FY 2025, acc 0000320193-25-000079\nXBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 34,550,000,000 usd ($34,550 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 416,161,000,000 usd ($416,161 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "R&D expense was $34.55 billion and net sales (revenue) was $416.161 billion, yielding an R&D-to-revenue ratio of approximately 8.3% [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27] [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "Nvidia's R&D expense for FY 2026 (ended January 25, 2026) was $18.497 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 18,497,000,000 usd ($18,497 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "R&D expense was $18.497 billion and total revenue was $215.938 billion, yielding an R&D-to-revenue ratio of approximately 8.6% [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25] [xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-9",
+        "text": "Nvidia's total revenue for FY 2026 (ended January 25, 2026) was $215.938 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Revenues (Revenue) = 215,938,000,000 usd ($215,938 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "R&D expense was $18.497 billion and total revenue was $215.938 billion, yielding an R&D-to-revenue ratio of approximately 8.6% [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25] [xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-10",
+        "text": "Nvidia's R&D-to-revenue ratio for FY 2026 was approximately 8.6%, derived from $18.497 billion in R&D expense divided by $215.938 billion in revenue.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:Revenues (Revenue) = 18,497,000,000 / 215,938,000,000 = 0.0857 for FY 2026, acc 0001045810-26-000021\nXBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 18,497,000,000 usd ($18,497 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021\nXBRL us-gaap:Revenues (Revenue) = 215,938,000,000 usd ($215,938 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "R&D expense was $18.497 billion and total revenue was $215.938 billion, yielding an R&D-to-revenue ratio of approximately 8.6% [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25] [xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-11",
+        "text": "Nvidia's 10-K confirms R&D was 8.6% of revenue for FY 2026.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:Revenues (Revenue) = 18,497,000,000 / 215,938,000,000 = 0.0857 for FY 2026, acc 0001045810-26-000021",
+        "answer_span": "Nvidia's 10-K also confirms R&D was 8.6% of revenue for FY 2026 [0001045810-26-000021:item-7-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p007",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-12",
+        "text": "Based on the cited figures, Tesla had the lowest R&D intensity at roughly 6.8%, while Apple and Nvidia were comparable at approximately 8.3% and 8.6%, respectively.",
+        "claim_type": "qualitative",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "In summary, based on the figures cited above, Tesla had the lowest R&D intensity at roughly 6.8%, while Apple and Nvidia were comparable at approximately 8.3% and 8.6%, respectively.",
+        "feedback": "The source excerpts provide the raw R&D expense and revenue figures for Tesla, Apple, and Nvidia, but they do not state the calculated R&D intensities (6.8%, 8.3%, 8.6%) or make a comparison regarding which was lowest. While these percentages can be derived mathematically from the numbers (e.g., TSLA: 6.411B / 94.827B ≈ 6.76%; AAPL: 34.550B / 416.161B ≈ 8.30%; NVDA: 18.497B / 215.938B ≈ 8.57%), the text itself does not explicitly contain these calculated figures or the comparative statement.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Revenues:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Revenues:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-13",
+        "text": "In absolute dollars, Apple spent the most on R&D at $34.55 billion, followed by Nvidia at $18.497 billion, and Tesla at $6.411 billion.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "In absolute dollars, Apple spent the most on R&D at $34.55 billion, followed by Nvidia at $18.497 billion, and Tesla at $6.411 billion [xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27] [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25] [xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31].",
+        "feedback": "figure(s) $34.55 billion, $18.497 billion, $6.411 billion not found in the XBRL facts store — searched XBRL concepts: Research and Development Expense, ResearchAndDevelopmentExpense; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:ResearchAndDevelopmentExpense:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:ResearchAndDevelopmentExpense:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 80667,
+      "cost_usd_used": 0.060682010999999994
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

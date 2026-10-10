@@ -1,0 +1,208 @@
+{
+  "job_id": "0c538321179e",
+  "source": "recorded",
+  "created_at": "2026-10-10T10:11:27.895451+00:00",
+  "result": {
+    "run_id": "0c538321179e",
+    "question": "How does Nvidia characterize the impact of export controls on its business with China?",
+    "answer": "Nvidia characterizes the impact of U.S. export controls on its China business as broadly negative and potentially escalating. The company states that its competitive position \"has been harmed\" by existing export controls and that future results \"may be further harmed\" if there are further changes to the rules [c0001045810-25-000023:item-1-p016]. Nvidia warns that changes to export controls could subject a wider range of its products to restrictions and licensing requirements, \"negatively impacting our business and financial results\" [c0001045810-25-000023:item-1a-p035]. In the event of such changes, Nvidia says it may be unable to sell its inventory of affected products and may be unable to develop replacement products not subject to licensing, \"effectively excluding us from all or part of the China market,\" as well as other impacted markets including the Middle East and countries designated \"Tier 2\" by the AI Diffusion IFR [c0001045810-25-000023:item-1a-p035]. Nvidia also notes that export controls may disrupt its supply and distribution chain for a substantial portion of its products, which are warehoused in and distributed from Hong Kong [c0001045810-25-000023:item-1a-p035]. Beyond China, Nvidia states that \"excessive or shifting export controls\" have already encouraged customers outside China to \"design-out\" U.S. semiconductors and have encouraged overseas governments to request that customers purchase from competitors rather than Nvidia, harming its business, market position, and financial results [c0001045810-25-000023:item-1a-p035]. The company further warns that export controls may negatively impact demand for its products and services not only in China but also in other markets such as Europe, Latin America, and Southeast Asia [c0001045810-25-000209:part-ii--item-1a-p012]. Nvidia also highlights that export controls increase the risk of investing in U.S. advanced semiconductor products, because by the time a new product reaches market it may be subject to new controls, \"resulting in excess inventory and purchase obligations as we recently experienced with the H20\" [c0001045810-25-000209:part-ii--item-1a-p012]. Additionally, Nvidia notes that any new control impacting a wider range of its products would \"likely have a disproportionate impact on NVIDIA\" and may disadvantage it against competitors selling chips outside the scope of such controls [c0001045810-25-000023:item-1a-p035].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How does Nvidia characterize the impact of export controls on its business with China?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Nvidia's competitive position has been harmed by existing export controls, and its competitive position and future results may be further harmed if there are further changes to the USG's export controls.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Our competitive position has been harmed by the existing export controls, and our competitive position and future results may be further harmed, over the long term, if there are further changes in the USG’s export controls.",
+        "answer_span": "The company states that its competitive position \"has been harmed\" by existing export controls and that future results \"may be further harmed\" if there are further changes to the rules [c0001045810-25-000023:item-1-p016].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1-p016",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "Changes to export controls could subject a wider range of Nvidia's products to restrictions and licensing requirements, negatively impacting its business and financial results.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Given the increasing strategic importance of AI and rising geopolitical tensions, the USG has changed and may again change the export control rules at any time and further subject a wider range of our products to export restrictions and licensing requirements, negatively impacting our business and financial results.",
+        "answer_span": "Nvidia warns that changes to export controls could subject a wider range of its products to restrictions and licensing requirements, \"negatively impacting our business and financial results\" [c0001045810-25-000023:item-1a-p035].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1a-p035",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "In the event of changes to export controls, Nvidia may be unable to sell its inventory of affected products and may be unable to develop replacement products not subject to licensing, effectively excluding it from all or part of the China market as well as other impacted markets including the Middle East and countries designated Tier 2 by the AI Diffusion IFR.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "In the event of such change, we may be unable to sell our inventory of such products and may be unable to develop replacement products not subject to the licensing requirements, effectively excluding us from all or part of the China market, as well as other impacted markets, including the Middle East and countries designated “Tier 2” by the AI Diffusion IFR.",
+        "answer_span": "In the event of such changes, Nvidia says it may be unable to sell its inventory of affected products and may be unable to develop replacement products not subject to licensing, \"effectively excluding us from all or part of the China market,\" as well as other impacted markets including the Middle East and countries designated \"Tier 2\" by the AI Diffusion IFR [c0001045810-25-000023:item-1a-p035].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1a-p035",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-4",
+        "text": "Export controls may disrupt Nvidia's supply and distribution chain for a substantial portion of its products, which are warehoused in and distributed from Hong Kong.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Export controls may disrupt our supply and distribution chain for a substantial portion of our products, which are warehoused in and distributed from Hong Kong.",
+        "answer_span": "Nvidia also notes that export controls may disrupt its supply and distribution chain for a substantial portion of its products, which are warehoused in and distributed from Hong Kong [c0001045810-25-000023:item-1a-p035].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1a-p035",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-5",
+        "text": "Excessive or shifting export controls have already encouraged customers outside China to design-out U.S. semiconductors and have encouraged overseas governments to request that customers purchase from competitors rather than Nvidia, harming its business, market position, and financial results.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Excessive or shifting export controls have already and may in the future encourage customers outside China and other impacted regions to “design-out” certain U.S. semiconductors from their products to reduce the compliance burden and risk, and to ensure that they are able to serve markets worldwide. Excessive or shifting export controls have already encouraged and may in the future encourage overseas governments to request that our customers purchase from our competitors rather than NVIDIA or other U.S. firms, harming our business, market position, and financial results.",
+        "answer_span": "Beyond China, Nvidia states that \"excessive or shifting export controls\" have already encouraged customers outside China to \"design-out\" U.S. semiconductors and have encouraged overseas governments to request that customers purchase from competitors rather than Nvidia, harming its business, market position, and financial results [c0001045810-25-000023:item-1a-p035].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1a-p035",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-6",
+        "text": "Export controls may negatively impact demand for Nvidia's products and services not only in China but also in other markets such as Europe, Latin America, and Southeast Asia.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "As a result, export controls have in the past and may in the future negatively impact demand for our products and services not only in China, but also in other markets, such as Europe, Latin America, and Southeast Asia.",
+        "answer_span": "The company further warns that export controls may negatively impact demand for its products and services not only in China but also in other markets such as Europe, Latin America, and Southeast Asia [c0001045810-25-000209:part-ii--item-1a-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000209:part-ii--item-1a-p012",
+            "doc_id": "NVDA-10-Q-0001045810-25-000209",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000209",
+            "filing_date": "2025-08-27"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-7",
+        "text": "Export controls increase the risk of investing in U.S. advanced semiconductor products because by the time a new product reaches market it may be subject to new controls, resulting in excess inventory and purchase obligations as Nvidia recently experienced with the H20.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Export controls increase the risk of investing in U.S. advanced semiconductor products, because by the time a new product is ready for market, it may be subject to new unilateral export controls restricting its sale, resulting in excess inventory and purchase obligations as we recently experienced with the H20.",
+        "answer_span": "Nvidia also highlights that export controls increase the risk of investing in U.S. advanced semiconductor products, because by the time a new product reaches market it may be subject to new controls, \"resulting in excess inventory and purchase obligations as we recently experienced with the H20\" [c0001045810-25-000209:part-ii--item-1a-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000209:part-ii--item-1a-p012",
+            "doc_id": "NVDA-10-Q-0001045810-25-000209",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000209",
+            "filing_date": "2025-08-27"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-8",
+        "text": "Any new control impacting a wider range of Nvidia's products would likely have a disproportionate impact on NVIDIA and may disadvantage it against competitors selling chips outside the scope of such controls.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Any new control that impacts a wider range of our products would likely have a disproportionate impact on NVIDIA and may disadvantage us against certain of our competitors that sell chips that are outside the scope of such control.",
+        "answer_span": "Additionally, Nvidia notes that any new control impacting a wider range of its products would \"likely have a disproportionate impact on NVIDIA\" and may disadvantage it against competitors selling chips outside the scope of such controls [c0001045810-25-000023:item-1a-p035].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000023:item-1a-p035",
+            "doc_id": "NVDA-10-K-0001045810-25-000023",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-25-000023",
+            "filing_date": "2025-02-26"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 18429,
+      "cost_usd_used": 0.014705347000000004
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

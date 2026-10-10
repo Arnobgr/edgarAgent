@@ -59,7 +59,7 @@ describe("AnswerProse", () => {
 
     const mark = screen
       .getAllByRole("button")
-      .find((element) => element.textContent?.includes("R&D expense further increased"));
+      .find((element) => element.textContent?.includes("Apple reported net income of"));
     expect(mark).toBeDefined();
     await user.hover(mark!);
 
