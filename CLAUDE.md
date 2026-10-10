@@ -174,6 +174,12 @@ a clean 30 but carried `degraded_attempts: 1`, and the 08-13 run reached a clean
 files where the 08-01 export had 29**. The `2b11fa1d4f9e` answer described above
 is no longer on the recorded surface.
 
+**`SynthesisOutput.claims` is required on purpose, so never give it a default**
+(ADR 0046). A default removes it from the tool schema's `required` list. One
+GLM backend on OpenRouter then omits the key in most drafts, and the omission
+parses as `[]`. That made 9 degraded attempts on 2026-10-09 look like a
+transient upstream outage, which was the first, wrong diagnosis.
+
 ## Working guidelines
 
 Adapted from Karpathy's CLAUDE.md

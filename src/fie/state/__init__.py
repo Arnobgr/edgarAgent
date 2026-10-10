@@ -223,7 +223,12 @@ class SynthesisOutput(BaseModel):
     """Synthesizer output: the draft answer plus its decomposed claims."""
 
     answer: str
-    claims: list[DraftClaim] = Field(default_factory=list)
+    # Required, deliberately without a default: a default drops `claims` from
+    # the tool schema's `required`, a GLM backend then omits the key (50 of 84
+    # drafts on 2026-10-09/10), and the omission parsed silently as `[]`.
+    # Required, it is a validation error and `ainvoke_with_retry` re-asks; an
+    # explicit `[]` still parses and still meets ADR 0038 (ADR 0046).
+    claims: list[DraftClaim]
 
 
 class JudgeOutput(BaseModel):

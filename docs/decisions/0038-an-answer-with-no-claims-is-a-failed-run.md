@@ -127,7 +127,9 @@ against a gate metric.
 - A retry fixes the symptom. **It does not explain why a model that produced a
   cited figure emitted no claim for it**, and the checkpoints cannot answer
   that because the raw structured output is not stored, only the mapped
-  `Claim` list.
+  `Claim` list. *2026-10-10:* ADR 0046 found the mechanism in Langfuse
+  traces of later runs. A backend omitted the optional `claims` key, and it
+  parsed as `[]`. `claims` is now required.
 - `runs_with_no_claims` counts the failure mode we found. It does not
   generalise to "the answer contains an assertion no claim covers" — a claim
   list that is non-empty but incomplete would still pass unnoticed. That is a

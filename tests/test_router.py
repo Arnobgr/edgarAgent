@@ -1,10 +1,16 @@
+import json
+from typing import Any
+
+import httpx
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from fie.config import ModelSpec, Settings
-from fie.llm import get_model
+from fie.guardrails import ainvoke_with_retry
+from fie.llm import bind_structured, get_model
+from fie.state import SynthesisOutput
 
 
 def test_anthropic_role_builds_native_client_with_adaptive_thinking() -> None:
@@ -101,3 +107,68 @@ def test_unknown_role_raises() -> None:
     settings = Settings(_env_file=None, models={})
     with pytest.raises(KeyError, match="synthesis"):
         get_model("synthesis", settings)
+
+
+def openrouter_answering(args: dict[str, Any], requests: list[dict[str, Any]]) -> ChatOpenAI:
+    """A ChatOpenAI whose every call returns one tool call carrying `args`,
+    over a mock transport — the real parse path, offline."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        requests.append(body)
+        tool_call = {
+            "id": "call_82b7f963fe1c4f67b9b3f7bb",
+            "type": "function",
+            "function": {
+                "name": body["tools"][0]["function"]["name"],
+                "arguments": json.dumps(args),
+            },
+        }
+        message = {"role": "assistant", "content": "", "tool_calls": [tool_call]}
+        return httpx.Response(
+            200,
+            json={
+                "id": "gen-1",
+                "object": "chat.completion",
+                "created": 0,
+                "model": "z-ai/glm-5.2",
+                "choices": [{"index": 0, "finish_reason": "tool_calls", "message": message}],
+            },
+        )
+
+    return ChatOpenAI(
+        model="z-ai/glm-5.2-20260616",
+        api_key=SecretStr("sk-or-test"),
+        base_url="http://openrouter.invalid/v1",
+        http_async_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+
+async def test_a_draft_that_omits_claims_is_re_asked_not_read_as_empty() -> None:
+    """ADR 0046. The exact shape a GLM backend returned for g-007 on
+    2026-10-10: a correct, cited answer and no `claims` key. While the field
+    had a default it parsed as `claims=[]` and the run degraded; required, it
+    is a validation error and the bounded retry asks again."""
+    requests: list[dict[str, Any]] = []
+    model = openrouter_answering({"answer": "Operating income was $4,355 million [c1]."}, requests)
+
+    with pytest.raises(ValidationError, match="claims"):
+        await ainvoke_with_retry(
+            bind_structured(model, SynthesisOutput), "q", base_delay_seconds=0.0
+        )
+
+    assert len(requests) == 3
+    assert "claims" in requests[0]["tools"][0]["function"]["parameters"]["required"]
+
+
+async def test_an_explicit_empty_claims_list_still_parses() -> None:
+    """Required is not non-empty: a model that says "no claims" in so many
+    words must still reach ADR 0038's repair and failure, which is where an
+    unverifiable answer is decided."""
+    requests: list[dict[str, Any]] = []
+    model = openrouter_answering({"answer": "Nothing to state.", "claims": []}, requests)
+
+    result = await ainvoke_with_retry(bind_structured(model, SynthesisOutput), "q")
+
+    assert result == SynthesisOutput(answer="Nothing to state.", claims=[])
+    assert len(requests) == 1
