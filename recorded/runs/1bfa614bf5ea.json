@@ -1,0 +1,76 @@
+{
+  "job_id": "1bfa614bf5ea",
+  "source": "recorded",
+  "created_at": "2026-10-11T16:24:34.149933+00:00",
+  "result": {
+    "run_id": "1bfa614bf5ea",
+    "question": "What was Apple's net income in fiscal year 2025?",
+    "answer": "Apple's net income for fiscal year 2025 (the 52-week period ended September 27, 2025) was $112,010 million, or approximately $112.0 billion [0000320193-25-000079:item-8-p001]. This figure is confirmed by the XBRL fact for us-gaap:NetIncomeLoss for FY 2025, which reports 112,010,000,000 USD [xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Apple's net income in fiscal year 2025?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Apple's net income for fiscal year 2025 (the 52-week period ended September 27, 2025) was $112,010 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 112,010,000,000 usd ($112,010 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "Apple's net income for fiscal year 2025 (the 52-week period ended September 27, 2025) was $112,010 million, or approximately $112.0 billion [0000320193-25-000079:item-8-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "The XBRL fact for us-gaap:NetIncomeLoss for FY 2025 reports net income of 112,010,000,000 USD.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…income (us-gaap:NetIncomeLoss) for FY 2025, period ending 2025-09-27: 112,010,000,000 USD — as reported in 10-K 0000320193-25-000079.",
+        "answer_span": "This figure is confirmed by the XBRL fact for us-gaap:NetIncomeLoss for FY 2025, which reports 112,010,000,000 USD [xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 10641,
+      "cost_usd_used": 0.0038424260000000003
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

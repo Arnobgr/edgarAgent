@@ -79,37 +79,44 @@ exactly the failure the first deploy produced. That is why
 not a plain HTTP check. Do not close the gap by returning 503 instead: the
 container healthcheck and `deploy.sh`'s health wait both key off that 200.
 
-`eval/baselines.json` holds run `agent-20261010-102654`, accepted 2026-10-10.
-It ran on the box against image `8b26d55`: 30/30, `degraded_attempts: 0`,
+`eval/baselines.json` holds run `agent-20261011-165218`, accepted 2026-10-11.
+It ran on the box against image `64ef36d`: 30/30, `degraded_attempts: 0`,
 `runs_with_no_claims: 0`, every floor met, and the ratchet held. It is the first
-baseline with ADR 0044 (deltas recomputed from cited facts) and ADR 0046
-(`claims` required) in it. The retraction invariant was checked before
-acceptance: 18 claims retracted, all carrying spans, none still in the prose, and
-none of the 217 rows scored `unsupported`. The 08-13 baseline before it was the
-first that was 30 verifiable runs of 30, which closed ADR 0038 §3. The 08-06
-column is the pre-public-deploy run that ADR 0036 mandated, executed on the box
-against the deployed image. **It passed every target and is not a baseline**,
-because `degraded_attempts: 1` disqualifies it (ADR 0025):
+baseline with every `DraftClaim` field required (ADR 0046 addendum) and with
+date-only claims judged by entailment (ADR 0047). The retraction invariant was
+checked before acceptance: 15 claims retracted, all carrying spans, none still
+in the delivered prose (two appear only in the retraction notice, which quotes
+them), and none of the 230 rows scored `unsupported`. The 10-10 baseline before
+it was the first with ADR 0044 (deltas recomputed from cited facts) and with
+`claims` required. The 08-13 baseline was the first that was 30 verifiable runs
+of 30, which closed ADR 0038 §3. The 08-06 column is the pre-public-deploy run
+that ADR 0036 mandated, executed on the box against the deployed image. **It
+passed every target and is not a baseline**, because `degraded_attempts: 1`
+disqualifies it (ADR 0025):
 
-| | **2026-10-10** | 2026-08-13 | 2026-08-01 | 2026-08-06 | floor |
-|---|---|---|---|---|---|
-| `grounding_rate` | **0.968** | 0.980 | 0.972 | 0.955 | ≥ 0.90 |
-| `hallucination_rate` | **0.000** | 0.000 | 0.000 | 0.000 | ≤ 0.02, ratcheted |
-| `numeric_fidelity` | **0.978** | 0.989 | 0.963 | 0.924 | ≥ 0.85 |
-| `expected_fact_coverage` | **0.893** | 1.000 | 1.000 | 0.893 | ≥ 0.65 |
-| `citation_accuracy` | **0.782** | 0.867 | 0.851 | 0.828 | ≥ 0.75 |
+| | **2026-10-11** | 2026-10-10 | 2026-08-13 | 2026-08-01 | 2026-08-06 | floor |
+|---|---|---|---|---|---|---|
+| `grounding_rate` | **0.974** | 0.968 | 0.980 | 0.972 | 0.955 | ≥ 0.90 |
+| `hallucination_rate` | **0.000** | 0.000 | 0.000 | 0.000 | 0.000 | ≤ 0.02, ratcheted |
+| `numeric_fidelity` | **0.936** | 0.978 | 0.989 | 0.963 | 0.924 | ≥ 0.85 |
+| `expected_fact_coverage` | **1.000** | 0.893 | 1.000 | 1.000 | 0.893 | ≥ 0.65 |
+| `citation_accuracy` | **0.849** | 0.782 | 0.867 | 0.851 | 0.828 | ≥ 0.75 |
 
-**The 10-10 coverage drop is one question, and the cause is known.** All three
-missing facts are g-014. Its claims came back without the optional
-`source_chunk_ids` key, from the same OpenRouter backend as ADR 0046. Every
-claim was therefore ruled to cite nothing, and six correct figures were
-retracted. That backend omitted the key in 51 of its 277 claims; all other
-backends omitted it in 3 of 176. `citation_accuracy` fell 0.085, beyond the
-±0.037 judge noise ADR 0039 measured, and **the cause is known (ADR 0047)**.
-11 of the 20 extra rejections are g-024's dated court events, typed `numeric`.
-The reconciler matched only their day-of-month and grounded "April 30, 2025" on
-a "September 30" snippet. Six more are claims about the evidence itself. Without
-both groups, the reading is 0.851 against 0.866.
+**Both 10-10 drops had causes outside the answers, and both are fixed.**
+Coverage lost all three of its facts in g-014. One OpenRouter backend omitted
+the optional `source_chunk_ids` key there, so six correct figures were ruled to
+cite nothing and retracted (ADR 0046 addendum). On 10-11 that backend omitted
+no field in 126 claims, and coverage is back to 1.000. 11 of
+`citation_accuracy`'s 20 extra rejections were g-024's dated court events, typed
+`numeric`. The reconciler matched only their day-of-month and grounded "April
+30, 2025" on a "September 30" snippet (ADR 0047). On 10-11 g-024 had 2
+rejections in 16, against 11 in 19.
+
+**The 10-11 `numeric_fidelity` drop is wording, not wrong numbers.** All six
+unmatched figures are differences the answer computed ("total revenue grew by
+$69,575 million" is 130,497 − 60,922). A difference is not a filed fact, so the
+metric counts it as a miss by design. Four of the six are g-011, which chose to
+state year-over-year deltas. The 10-10 run had two of the same kind.
 
 **Only `hallucination_rate` is ratcheted (ADR 0043). Every other row is a floor
 and nothing else, so the columns are readings, not thresholds.** Do not raise a

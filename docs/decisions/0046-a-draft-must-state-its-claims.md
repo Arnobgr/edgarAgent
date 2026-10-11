@@ -181,3 +181,25 @@ Unmeasured until the next full eval, which also measures ADR 0047. The number
 to read is the count of claims arriving with an empty `source_chunk_ids` or
 `answer_span`. Before, an omission and an explicit empty value looked the
 same; now only an explicit empty value can produce one.
+
+### Addendum measured, 2026-10-11
+
+Run `agent-20261011-165218` on image `64ef36d`: 30/30, `degraded_attempts: 0`,
+`expected_fact_coverage` 1.000 (28 of 28, so g-014's three facts are back).
+
+The Langfuse traces of the run hold 48 synthesis calls (16:24 to 16:42Z):
+
+| backend (tool-call id shape) | calls | claims | `source_chunk_ids` omitted | `answer_span` omitted |
+|---|---|---|---|---|
+| `call_<24 hex>` | 16 | 126 | **0** (10-10: 51 of 277) | **0** |
+| every other shape | 32 | 291 | 0 | 0 |
+
+As with `claims`, listing the fields as required appears to be what that
+backend obeys, so the retry never had to fire. It sent one explicit empty
+`source_chunk_ids`, which is allowed and was ruled on as before.
+
+The run has two spanless rows, both in g-020. Neither key was omitted. The
+model quoted those sentences inexactly, the one ADR 0023 repair did not fix
+them, and an inexact quote is blanked. That is the remaining, separate way a
+claim can arrive without a span.
+

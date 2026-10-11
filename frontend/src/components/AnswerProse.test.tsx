@@ -25,7 +25,10 @@ describe("AnswerProse", () => {
   it("marks one element per claim run, tinted by verdict", () => {
     const { result } = renderRun(LANDING_RUN);
     const marks = screen.getAllByRole("button");
-    expect(marks.length).toBe(result.grounding.length);
+    // One mark per quoted sentence, not per claim: two claims of the landing
+    // run quote the identical sentence, and the sweep gives that sentence one
+    // atom carrying both (see `atomsFor`).
+    expect(marks.length).toBe(new Set(result.grounding.map((row) => row.answer_span)).size);
     for (const mark of marks) {
       expect(mark).toHaveAttribute("data-tone", "verified");
     }
@@ -59,7 +62,7 @@ describe("AnswerProse", () => {
 
     const mark = screen
       .getAllByRole("button")
-      .find((element) => element.textContent?.includes("Apple reported net income of"));
+      .find((element) => element.textContent?.includes("AAPL reported total assets of"));
     expect(mark).toBeDefined();
     await user.hover(mark!);
 

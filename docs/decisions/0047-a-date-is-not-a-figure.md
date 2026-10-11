@@ -1,7 +1,7 @@
 # ADR 0047 — A date is not a figure: date-only claims are judged by entailment
 
 **Date:** 2026-10-11 · **Phase:** 7 · **Status:** accepted, implemented
-2026-10-11, unmeasured until the next full eval · **Amends:** ADR 0016 (only
+2026-10-11, **measured the same day** (see *Measured*) · **Amends:** ADR 0016 (only
 amounts are reconciliation obligations), ADR 0018 (a claim that is nothing but
 a date keeps the original behaviour)
 
@@ -108,7 +108,7 @@ point.
 
 ## Honest limits
 
-- **Unmeasured.** The next full eval measures it. The numbers to read are the
+- **Measured in one run only** (see *Measured*). The numbers to read are the
   date-only claims' methods (all `semantic`), their verdicts, and
   `citation_accuracy`. It is measured together with the ADR 0046 addendum,
   which touches different claims (omitted keys), so the two stay separable.
@@ -116,3 +116,28 @@ point.
   fall in `citation_accuracy` came from one question on one run. If no
   date-only claims appear in the next run, this change will have done nothing
   measurable, and that is not evidence that it was unnecessary.
+
+## Measured
+
+Run `agent-20261011-165218` on image `64ef36d`, the same afternoon, became the
+accepted baseline: 30/30, `degraded_attempts: 0`, `citation_accuracy` 0.849
+(185 of 218).
+
+- **The new path fired twice, and both times as intended.** Both date-only
+  `numeric` claims were in g-024, both went to entailment (`method: semantic`),
+  and both were grounded on the full sentence. One example: "The Ninth Circuit
+  affirmed the District Court's ruling on April 24, 2023", with the span "On
+  April 24, 2023, the U.S. Court of Appeals for the Ninth Circuit … affirmed".
+  No date-only claim reached the reconciler.
+- **Most of the recovery is not this change.** This time synthesis typed 13 of
+  g-024's events `qualitative`, as it did on 08-13, and only 2 as date-only
+  `numeric`, against 11 on 10-10. g-024 had 2 rejections in 16 judged claims,
+  against 11 in 19. The fix removes the failure when the typing goes the 10-10
+  way. It is not why this reading is high: a reading of 0.849 against 0.782
+  mostly measures which way the model typed the claims.
+- Windowed spans were judged 7 times and rejected twice, against 17 and 12.
+- Claims about the evidence are still produced, as expected: 3, all rejected.
+- One run cannot show how often the model types events `numeric`, so it cannot
+  show how much the fix is worth on average. What it shows is that when it
+  does, the claim's content is now checked.
+

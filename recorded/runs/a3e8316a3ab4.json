@@ -1,0 +1,296 @@
+{
+  "job_id": "a3e8316a3ab4",
+  "source": "recorded",
+  "created_at": "2026-10-11T16:36:11.955657+00:00",
+  "result": {
+    "run_id": "a3e8316a3ab4",
+    "question": "What are the main regulatory risks Tesla discloses about its driver-assistance and Full Self-Driving features?",
+    "answer": "Tesla discloses several main regulatory risks related to its driver-assistance and Full Self-Driving (FSD) features:\n\n**1. Evolving and restrictive self-driving regulations globally.** Laws pertaining to self-driving and autonomous vehicles are evolving globally and in some cases may create restrictions on features or vehicle designs that Tesla develops [0001628280-25-003063:item-1-p011]. In the U.S., while there are currently no federal regulations pertaining specifically to self-driving vehicles, NHTSA has published recommended guidelines and retains the authority to investigate or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads [0001628280-25-003063:item-1-p011]. Certain U.S. states and cities have legal restrictions on the testing, commercial operation, marketing, registration, and licensure of autonomous vehicles, creating a regulatory patchwork that increases legal complexity [0001628280-26-003952:item-1-p012].\n\n**2. ECE market and foreign regulatory restrictions.** In markets that follow United Nations Economic Commission for Europe (ECE) regulations, some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely [0001628280-25-003063:item-1-p012]. Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in those markets [0001628280-25-003063:item-1-p012]. China and other key markets continue to consider self-driving regulation, and any implemented regulations may differ materially from the U.S. and ECE markets, further increasing legal complexity and potentially limiting or preventing certain features [0001628280-25-003063:item-1-p012].\n\n**3. NHTSA crash reporting and investigation requirements.** Tesla is subject to NHTSA's Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems, as well as additional requirements for cooperating with compliance, defect, and safety investigations and recall reporting [0001628280-26-003952:item-1-p012].\n\n**4. Product liability and regulatory scrutiny from collisions.** Tesla expects to continue facing claims and regulatory scrutiny arising from or related to misuse, claimed failures, or alleged misrepresentations of the technologies it is pioneering, including collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged [0001628280-26-003952:item-1a-p013]. An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period [0001628280-26-003952:item-1a-p013].\n\n**5. FMVSS not yet accounting for autonomous vehicle design.** While NHTSA has updated certain FMVSS to account for autonomous vehicle design, other FMVSS and regulations do not currently account for autonomous vehicle design, and additional rulemaking by NHTSA may occur [0001628280-26-003952:item-1-p012].\n\n**6. Class action litigation over driver-assistance marketing.** Tesla is subject to proposed class actions alleging defects and misrepresentations related to its driver assistance technology, including a motion for a preliminary injunction seeking to order Tesla to cease using the term \"Full Self-Driving Capability,\" cease the sale and activation of FSD Capability, and provide consumer notices about the accuracy of the terms Autopilot and FSD Capability [0001628280-24-017503:part-i--item-1-p016].\n\n**7. Development and launch risk.** Tesla's future business depends on the development of its driver assistance systems and autonomous driving solutions, and there is no guarantee it will be able to successfully develop or timely introduce and scale these new products, services, and features [0001628280-26-003952:item-1a-p001].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What are the main regulatory risks Tesla discloses about its driver-assistance and Full Self-Driving features?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Laws pertaining to self-driving and autonomous vehicles are evolving globally and in some cases may create restrictions on features or vehicle designs that Tesla develops.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Generally, laws pertaining to self-driving vehicles are evolving globally, and in some cases may create restrictions on features or vehicle designs that we develop.",
+        "answer_span": "Laws pertaining to self-driving and autonomous vehicles are evolving globally and in some cases may create restrictions on features or vehicle designs that Tesla develops [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "In the U.S., while there are currently no federal regulations pertaining specifically to self-driving vehicles, NHTSA has published recommended guidelines and retains the authority to investigate or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "While there are currently no federal U.S. regulations pertaining specifically to self-driving vehicles or self-driving equipment, NHTSA has published recommended guidelines on self-driving vehicles, apart from the FMVSS and manufacturer reporting obligations, and retains the authority to investigate and/or take action on the safety or compliance of any vehicle, equipment or features operating on public roads.",
+        "answer_span": "In the U.S., while there are currently no federal regulations pertaining specifically to self-driving vehicles, NHTSA has published recommended guidelines and retains the authority to investigate or take action on the safety or compliance of any vehicle, equipment, or features operating on public roads [0001628280-25-003063:item-1-p011].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p011",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "Certain U.S. states and cities have legal restrictions on the testing, commercial operation, marketing, registration, and licensure of autonomous vehicles, creating a regulatory patchwork that increases legal complexity.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Additionally, certain U.S. states and cities have legal restrictions on, or are considering additional regulation of, the testing, commercial operation, marketing, registration and licensure of autonomous vehicles, including commercial ride-hailing with a fleet of autonomous vehicles, and many other states and cities are considering them. This regulatory patchwork increases the legal complexity with respect to autonomous vehicles and an autonomous vehicle ride-hailing business in the U.S.",
+        "answer_span": "Certain U.S. states and cities have legal restrictions on the testing, commercial operation, marketing, registration, and licensure of autonomous vehicles, creating a regulatory patchwork that increases legal complexity [0001628280-26-003952:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-4",
+        "text": "In ECE markets, some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "In markets that follow the regulations of the United Nations Economic Commission for Europe (“ECE markets”), some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely.",
+        "answer_span": "In markets that follow United Nations Economic Commission for Europe (ECE) regulations, some requirements restrict the design of advanced driver-assistance or self-driving features, which can compromise or prevent their use entirely [0001628280-25-003063:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-5",
+        "text": "Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in ECE markets.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in the markets where they apply.",
+        "answer_span": "Other applicable laws, both current and proposed, may hinder or complicate the path and timeline to introducing self-driving vehicles for sale and use in those markets [0001628280-25-003063:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-6",
+        "text": "China and other key markets continue to consider self-driving regulation, and any implemented regulations may differ materially from the U.S. and ECE markets, further increasing legal complexity and potentially limiting or preventing certain features.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Other key markets, including China, continue to consider self-driving regulation. Any implemented regulations may differ materially from the U.S. and ECE markets, which may further increase the legal complexity of self-driving vehicles and limit or prevent certain features.",
+        "answer_span": "China and other key markets continue to consider self-driving regulation, and any implemented regulations may differ materially from the U.S. and ECE markets, further increasing legal complexity and potentially limiting or preventing certain features [0001628280-25-003063:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-7",
+        "text": "Tesla is subject to NHTSA's Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems, as well as additional requirements for cooperating with compliance, defect, and safety investigations and recall reporting.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "We are also required to comply with other federal laws administered by NHTSA, including the Corporate Average Fuel Economy standards, Theft Prevention Act requirements, labeling requirements and other information provided to customers in writing, Early Warning Reporting requirements regarding warranty claims, field reports, death and injury reports and foreign recalls, a Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems, and additional requirements for cooperating with compliance, defect and safety investigations and recall reporting.",
+        "answer_span": "Tesla is subject to NHTSA's Standing General Order requiring reports regarding certain crashes involving vehicles equipped with advanced driver assistance systems, as well as additional requirements for cooperating with compliance, defect, and safety investigations and recall reporting [0001628280-26-003952:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-8",
+        "text": "Tesla expects to continue facing claims and regulatory scrutiny arising from or related to misuse, claimed failures, or alleged misrepresentations of the technologies it is pioneering, including collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "We have experienced, and we expect to continue to face, claims and regulatory scrutiny arising from or related to misuse or claimed failures or alleged misrepresentations of the technologies that we are pioneering.",
+        "answer_span": "Tesla expects to continue facing claims and regulatory scrutiny arising from or related to misuse, claimed failures, or alleged misrepresentations of the technologies it is pioneering, including collisions involving Robotaxi vehicles or customer vehicles with driver assistance features engaged [0001628280-26-003952:item-1a-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p013",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-9",
+        "text": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period.",
+        "answer_span": "An unfavorable outcome in some or all of these proceedings could have a material adverse impact on results of operations or cash flows for a particular period [0001628280-26-003952:item-1a-p013].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p013",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-10",
+        "text": "While NHTSA has updated certain FMVSS to account for autonomous vehicle design, other FMVSS and regulations do not currently account for autonomous vehicle design, and additional rulemaking by NHTSA may occur.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "In the U.S., while NHTSA has updated certain FMVSS to account for autonomous vehicle design, other FMVSS and regulations do not currently account for autonomous vehicle design and additional rulemaking by NHTSA may occur.",
+        "answer_span": "While NHTSA has updated certain FMVSS to account for autonomous vehicle design, other FMVSS and regulations do not currently account for autonomous vehicle design, and additional rulemaking by NHTSA may occur [0001628280-26-003952:item-1-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1-p012",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-11",
+        "text": "Tesla is subject to proposed class actions alleging defects and misrepresentations related to its driver assistance technology, including a motion for a preliminary injunction seeking to order Tesla to cease using the term \"Full Self-Driving Capability,\" cease the sale and activation of FSD Capability, and provide consumer notices about the accuracy of the terms Autopilot and FSD Capability.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "We are also subject to various lawsuits that seek monetary and other injunctive relief. These lawsuits include proposed class actions and other consumer claims that allege, among other things, purported defects and misrepresentations related to our products and services. For example, on September 14, 2022, a proposed class action was filed against Tesla, Inc. and related entities in the U.S. District Court for the Northern District of California, alleging various claims about the Company’s driver assistance technology systems under state and federal law... On March 22, 2023, the plaintiffs in the Northern District of California consolidated action filed a motion for a preliminary injunction to order Tesla to (1) cease using the term “Full Self-Driving Capability” (FSD Capability), (2) cease the sale and activation of FSD Capability and deactivate FSD Capability on Tesla vehicles, and (3) provide certain notices to consumers about proposed court-findings about the accuracy of the use of the terms Autopilot and FSD Capability.",
+        "answer_span": "Tesla is subject to proposed class actions alleging defects and misrepresentations related to its driver assistance technology, including a motion for a preliminary injunction seeking to order Tesla to cease using the term \"Full Self-Driving Capability,\" cease the sale and activation of FSD Capability, and provide consumer notices about the accuracy of the terms Autopilot and FSD Capability [0001628280-24-017503:part-i--item-1-p016].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-017503:part-i--item-1-p016",
+            "doc_id": "TSLA-10-Q-0001628280-24-017503",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0001628280-24-017503",
+            "filing_date": "2024-04-24"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-12",
+        "text": "Tesla's future business depends on the development of its driver assistance systems and autonomous driving solutions, and there is no guarantee it will be able to successfully develop or timely introduce and scale these new products, services, and features.",
+        "claim_type": "forward_looking",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "attribution",
+        "supporting_span": "In particular, our future business depends on development of our driver assistance systems and autonomous driving solutions... There is no guarantee we will be able to successfully develop or timely introduce and scale these new products, services and features",
+        "answer_span": "Tesla's future business depends on the development of its driver assistance systems and autonomous driving solutions, and there is no guarantee it will be able to successfully develop or timely introduce and scale these new products, services, and features [0001628280-26-003952:item-1a-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p001",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 24053,
+      "cost_usd_used": 0.019620556999999997
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

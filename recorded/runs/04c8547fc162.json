@@ -1,0 +1,317 @@
+{
+  "job_id": "04c8547fc162",
+  "source": "recorded",
+  "created_at": "2026-10-11T16:30:38.299903+00:00",
+  "result": {
+    "run_id": "04c8547fc162",
+    "question": "How did Tesla's automotive gross margin evolve over the last three fiscal years, and what drove the change?",
+    "answer": "**FY 2025 vs. FY 2024 drivers:**\n\nThe 10-K states that cost of automotive sales revenue decreased $5.60 billion, or 9%, in the year ended December 31, 2025 compared to 2024, due to decreased deliveries year over year and lower average cost per unit from sales mix and lower material costs, partially offset by lower fixed cost absorption and an increase in tariffs [0001628280-26-003952:item-7-p015]. Quarterly filings provide additional detail on the margin compression. In Q2 2025, automotive gross margin decreased from 18.5% to 17.2% compared to Q2 2024, primarily due to a decrease in regulatory credits revenue [0001628280-25-035806:part-i--item-2-p009]. For the six months ended June 30, 2025, automotive gross margin decreased from 18.5% to 16.8%, primarily due to lower average selling price per unit and a decrease in regulatory credits revenue [0001628280-25-035806:part-i--item-2-p009].\n\n**FY 2024 vs. FY 2023 drivers:**\n\nThe provided evidence does not include a full-year MD&A discussion of FY 2024 vs. FY 2023 automotive gross margin drivers from the 10-K. However, quarterly 10-Q filings provide insight into the factors at play during FY 2024. Cost of automotive sales revenue in Q2 2024 decreased due to lower raw material costs, freight and duties, and higher IRA manufacturing credits, partially offset by higher costs for Cybertruck and the updated Model 3 at the Fremont factory due to temporary under-utilization of manufacturing capacity as production ramps [0001628280-24-032662:part-i--item-2-p008].\n\n**Summary of key drivers across the three-year period:**\n\nThe persistent decline in automotive gross margin was driven by lower average selling prices per vehicle, temporary under-utilization of manufacturing capacity during production ramps (including Cybertruck and updated Model 3), and decreases in regulatory credits revenue, which were partially offset by lower raw material and material costs, higher IRA manufacturing credits, and favorable sales mix [0001628280-24-017503:part-i--item-2-p007] [0001628280-24-032662:part-i--item-2-p008] [0001628280-25-035806:part-i--item-2-p009] [0001628280-26-003952:item-7-p015].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- Tesla's automotive gross margin declined steadily over the last three fiscal years, falling from 19.4% in FY 2023 to 18.4% in FY 2024 and further to 17.8% in FY 2025.\n- Automotive gross profit declined from $16,030 million in FY 2023 to $14,197 million in FY 2024 and then to $12,361 million in FY 2025.\n- In Q1 2025, automotive gross margin fell to 16.2% from 18.5% in Q1 2024.\n- In Q1 2024, automotive gross margin decreased from 21.1% to 18.5% compared to Q1 2023, driven by changes in automotive sales revenue and cost of revenue as well as a decrease in regulatory credits revenue.\n- In Q2 2024, automotive gross margin decreased from 19.2% to 18.5% compared to Q2 2023, driven by lower average selling price on vehicles and temporary under-utilization of manufacturing capacity during production ramps, partially offset by increases in regulatory credits revenue and lower average combined cost per unit.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What were Tesla's automotive gross margins for each of the last three fiscal years?",
+        "rationale": "This sub-question isolates the numerical data for Tesla's automotive gross margin across the three fiscal years.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What factors and drivers caused the changes in Tesla's automotive gross margin over the last three fiscal years according to management's discussion and analysis (MD&A)?",
+        "rationale": "This sub-question addresses the qualitative and quantitative drivers behind the changes in automotive gross margin over the same period.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-4-3",
+        "text": "Cost of automotive sales revenue decreased $5.60 billion, or 9%, in the year ended December 31, 2025 compared to 2024, due to decreased deliveries year over year and lower average cost per unit from sales mix and lower material costs, partially offset by lower fixed cost absorption and an increase in tariffs.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL difference us-gaap:CostOfRevenue (Automotive sales): |56,267,000,000 (FY 2025) - 61,870,000,000 (FY 2024)| = 5,603,000,000 usd ($5,603 million), acc 0001628280-26-003952\nXBRL change us-gaap:CostOfRevenue (Automotive sales): 56,267,000,000 usd ($56,267 million) (FY 2025) vs 61,870,000,000 usd ($61,870 million) (FY 2024) = -9.06%, acc 0001628280-26-003952",
+        "answer_span": "The 10-K states that cost of automotive sales revenue decreased $5.60 billion, or 9%, in the year ended December 31, 2025 compared to 2024, due to decreased deliveries year over year and lower average cost per unit from sales mix and lower material costs, partially offset by lower fixed cost absorption and an increase in tariffs [0001628280-26-003952:item-7-p015].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p015",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-5",
+        "text": "In Q2 2025, automotive gross margin decreased from 18.5% to 17.2% compared to Q2 2024, primarily due to a decrease in regulatory credits revenue.",
+        "claim_type": "numeric",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:GrossProfit (Gross profit) / us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 3,878,000,000 / 22,496,000,000 = 0.1724 for Q2 2025, acc 0001628280-25-035806",
+        "answer_span": "In Q2 2025, automotive gross margin decreased from 18.5% to 17.2% compared to Q2 2024, primarily due to a decrease in regulatory credits revenue [0001628280-25-035806:part-i--item-2-p009].",
+        "feedback": "figure(s) 18.5% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossMarginRate, AutomotiveGrossProfit, AutomotiveGrossProfitPercent, AutomotiveRevenue, AutomotiveRevenues; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-035806:part-i--item-2-p009",
+            "doc_id": "TSLA-10-Q-0001628280-25-035806",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-25-035806",
+            "filing_date": "2025-07-24"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-6",
+        "text": "For the six months ended June 30, 2025, automotive gross margin decreased from 18.5% to 16.8%, primarily due to lower average selling price per unit and a decrease in regulatory credits revenue.",
+        "claim_type": "numeric",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:GrossProfit (Gross profit) / us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Revenues) = 7,031,000,000 / 41,831,000,000 = 0.1681 for YTD6 2025, acc 0001628280-25-035806",
+        "answer_span": "For the six months ended June 30, 2025, automotive gross margin decreased from 18.5% to 16.8%, primarily due to lower average selling price per unit and a decrease in regulatory credits revenue [0001628280-25-035806:part-i--item-2-p009].",
+        "feedback": "figure(s) 18.5% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfit, AutomotiveGrossProfitPercent, AutomotiveRevenues; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-035806:part-i--item-2-p009",
+            "doc_id": "TSLA-10-Q-0001628280-25-035806",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-25-035806",
+            "filing_date": "2025-07-24"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-7",
+        "text": "The provided evidence does not include a full-year MD&A discussion of FY 2024 vs. FY 2023 automotive gross margin drivers from the 10-K.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "2025 compared to 2024\n\nCost of automotive sales revenue decreased $5.60 billion, or 9%, in the year ended December 31, 2025 as compared to the year ended December 31, 2024 due to the decrease in deliveries year over year as discussed above and lower average cost per unit due to sales mix and lower material costs, partially offset by lower fixed cost absorption and an increase in tariffs compared to the prior year.",
+        "answer_span": "The provided evidence does not include a full-year MD&A discussion of FY 2024 vs. FY 2023 automotive gross margin drivers from the 10-K.",
+        "feedback": "The provided evidence discusses 2025 compared to 2024, but does not include a full-year MD&A discussion of FY 2024 vs. FY 2023 automotive gross margin drivers.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p015",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-10",
+        "text": "Cost of automotive sales revenue in Q2 2024 decreased due to lower raw material costs, freight and duties, and higher IRA manufacturing credits, partially offset by higher costs for Cybertruck and the updated Model 3 at the Fremont factory due to temporary under-utilization of manufacturing capacity as production ramps.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Cost of automotive sales revenue decreased due to a decrease in the average combined cost per unit of our vehicles primarily from lower raw material costs, freight and duties and higher IRA manufacturing credits in addition to the volume changes in deliveries year over year as discussed above. These decreases were partially offset by higher costs for Cybertruck and the updated Model 3 at our Fremont factory as a result of the temporary under-utilization of manufacturing capacity as production ramps.",
+        "answer_span": "Cost of automotive sales revenue in Q2 2024 decreased due to lower raw material costs, freight and duties, and higher IRA manufacturing credits, partially offset by higher costs for Cybertruck and the updated Model 3 at the Fremont factory due to temporary under-utilization of manufacturing capacity as production ramps [0001628280-24-032662:part-i--item-2-p008].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-032662:part-i--item-2-p008",
+            "doc_id": "TSLA-10-Q-0001628280-24-032662",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-24-032662",
+            "filing_date": "2024-07-24"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-11",
+        "text": "The persistent decline in automotive gross margin was driven by lower average selling prices per vehicle, temporary under-utilization of manufacturing capacity during production ramps, and decreases in regulatory credits revenue, partially offset by lower raw material and material costs, higher IRA manufacturing credits, and favorable sales mix.",
+        "claim_type": "qualitative",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "The persistent decline in automotive gross margin was driven by lower average selling prices per vehicle, temporary under-utilization of manufacturing capacity during production ramps (including Cybertruck and updated Model 3), and decreases in regulatory credits revenue, which were partially offset by lower raw material and material costs, higher IRA manufacturing credits, and favorable sales mix [0001628280-24-017503:part-i--item-2-p007] [0001628280-24-032662:part-i--item-2-p008] [0001628280-25-035806:part-i--item-2-p009] [0001628280-26-003952:item-7-p015].",
+        "feedback": "The claim states that the persistent decline in automotive gross margin was driven by lower average selling prices per vehicle, temporary under-utilization of manufacturing capacity during production ramps, and decreases in regulatory credits revenue, partially offset by lower raw material and material costs, higher IRA manufacturing credits, and favorable sales mix. Looking at the provided excerpts, while some of these factors are mentioned individually across different periods (e.g., in [0001628280-24-032662:part-i--item-2-p008] for June 30, 2024, decreases were driven by lower average selling price and temporary under-utilization of manufacturing capacity, offset by increases in regulatory credits and lower average combined cost per unit), none of the excerpts support the combined compound statement as a single driver of a 'persistent decline' incorporating all these specific offsetting and driving elements together. Specifically, 'higher IRA manufacturing credits' and 'favorable sales mix' are not listed together with the other drivers as part of the stated overall explanation in the excerpts.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-017503:part-i--item-2-p007",
+            "doc_id": "TSLA-10-Q-0001628280-24-017503",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-24-017503",
+            "filing_date": "2024-04-24"
+          },
+          {
+            "chunk_id": "0001628280-24-032662:part-i--item-2-p008",
+            "doc_id": "TSLA-10-Q-0001628280-24-032662",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-24-032662",
+            "filing_date": "2024-07-24"
+          },
+          {
+            "chunk_id": "0001628280-25-035806:part-i--item-2-p009",
+            "doc_id": "TSLA-10-Q-0001628280-25-035806",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-25-035806",
+            "filing_date": "2025-07-24"
+          },
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p015",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-4-1",
+        "text": "Tesla's automotive gross margin declined steadily over the last three fiscal years, falling from 19.4% in FY 2023 to 18.4% in FY 2024 and further to 17.8% in FY 2025.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "Tesla's automotive gross margin declined steadily over the last three fiscal years, falling from 19.4% in FY 2023 to 18.4% in FY 2024 and further to 17.8% in FY 2025 [0001628280-26-003952:item-7-p015].",
+        "feedback": "figure(s) 19.4%, 18.4%, 17.8% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfit, AutomotiveGrossProfitPercent, AutomotiveRevenues, Revenues; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p015",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-2",
+        "text": "Automotive gross profit declined from $16,030 million in FY 2023 to $14,197 million in FY 2024 and then to $12,361 million in FY 2025.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "Automotive gross profit declined correspondingly, from $16,030 million in FY 2023 to $14,197 million in FY 2024 and then to $12,361 million in FY 2025 [0001628280-26-003952:item-7-p015].",
+        "feedback": "figure(s) $16,030 million, $14,197 million, $12,361 million not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfit, AutomotiveSalesCostOfGoodsAndServicesGrossProfit; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p015",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-4",
+        "text": "In Q1 2025, automotive gross margin fell to 16.2% from 18.5% in Q1 2024.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "In Q1 2025, automotive gross margin fell to 16.2% from 18.5% in Q1 2024 [0001628280-25-018911:part-i--item-2-p007].",
+        "feedback": "figure(s) 16.2%, 18.5% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfit, AutomotiveGrossProfitPercent, AutomotiveRevenue, AutomotiveRevenues, GrossMarginAutomotive; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-018911:part-i--item-2-p007",
+            "doc_id": "TSLA-10-Q-0001628280-25-018911",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-25-018911",
+            "filing_date": "2025-04-23"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-8",
+        "text": "In Q1 2024, automotive gross margin decreased from 21.1% to 18.5% compared to Q1 2023, driven by changes in automotive sales revenue and cost of revenue as well as a decrease in regulatory credits revenue.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "In Q1 2024, automotive gross margin decreased from 21.1% to 18.5% compared to Q1 2023, driven by changes in automotive sales revenue and cost of revenue as well as a decrease in regulatory credits revenue [0001628280-24-017503:part-i--item-2-p007].",
+        "feedback": "figure(s) 21.1%, 18.5% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfitPercent and 1 cited table chunk(s). Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-017503:part-i--item-2-p007",
+            "doc_id": "TSLA-10-Q-0001628280-24-017503",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-24-017503",
+            "filing_date": "2024-04-24"
+          },
+          {
+            "chunk_id": "0001628280-24-017503:table-0035",
+            "doc_id": "TSLA-10-Q-0001628280-24-017503",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Item 2",
+            "accession_no": "0001628280-24-017503",
+            "filing_date": "2024-04-24"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-4-9",
+        "text": "In Q2 2024, automotive gross margin decreased from 19.2% to 18.5% compared to Q2 2023, driven by lower average selling price on vehicles and temporary under-utilization of manufacturing capacity during production ramps, partially offset by increases in regulatory credits revenue and lower average combined cost per unit.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "In Q2 2024, automotive gross margin decreased from 19.2% to 18.5% compared to Q2 2023, driven by lower average selling price on vehicles and temporary under-utilization of manufacturing capacity during production ramps, partially offset by increases in regulatory credits revenue and lower average combined cost per unit [0001628280-24-032662:part-i--item-2-p008].",
+        "feedback": "figure(s) 19.2%, 18.5% not found in the XBRL facts store — searched XBRL concepts: AutomotiveGrossMargin, AutomotiveGrossProfit, AutomotiveGrossProfitMargin, AutomotiveGrossProfitPercent, AutomotiveRevenue, AutomotiveRevenues; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-032662:part-i--item-2-p008",
+            "doc_id": "TSLA-10-Q-0001628280-24-032662",
+            "ticker": "TSLA",
+            "form_type": "10-Q",
+            "section": "Part I, Item 2",
+            "accession_no": "0001628280-24-032662",
+            "filing_date": "2024-07-24"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 3,
+    "critic_iterations": 2,
+    "critic_passed": false,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 119413,
+      "cost_usd_used": 0.13575315799999998
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

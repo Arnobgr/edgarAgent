@@ -1,0 +1,300 @@
+{
+  "job_id": "411d11c10311",
+  "source": "recorded",
+  "created_at": "2026-10-11T16:35:09.640943+00:00",
+  "result": {
+    "run_id": "411d11c10311",
+    "question": "Which company among the three carries the largest total assets, and how do their balance sheet sizes compare?",
+    "answer": "Among the three companies, Apple (AAPL) carries the largest total assets. Based on their latest balance sheets, AAPL reported total assets of approximately $359,241,000,000 as of September 27, 2025 [xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27]. NVIDIA (NVDA) reported total assets of approximately $206,803,000,000 as of January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25], a figure also confirmed in NVDA's condensed consolidated balance sheet showing total assets of $206,803 million as of January 25, 2026 [0001045810-26-000051:table-0003]. Tesla (TSLA) reported total assets of approximately $137,806,000,000 as of December 31, 2025 [xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31].\n\n The ranking from largest to smallest balance sheet is therefore AAPL ($359.2B), NVDA ($206.8B), and TSLA ($137.8B).\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- AAPL's total assets exceed NVDA's by roughly $152 billion.\n- AAPL's total assets exceed TSLA's by roughly $221 billion.\n- NVDA's total assets exceed TSLA's by roughly $69 billion.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What are the total assets of each of the three companies based on their latest balance sheets?",
+        "rationale": "Identify the total assets of each company to determine which one is the largest.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "How do the total assets and overall balance sheet sizes of the three companies compare to one another?",
+        "rationale": "Compare the balance sheet sizes and total asset figures across all three companies.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple (AAPL) carries the largest total assets among the three companies.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "AAPL filed Total assets (us-gaap:Assets) for as of 2025, period ending 2025-09-27: 359,241,000,000 USD\nNVDA filed Total assets (us-gaap:Assets) for as of 2026, period ending 2026-01-25: 206,803,000,000 USD\nTSLA filed Total assets (us-gaap:Assets) for as of 2025, period ending 2025-12-31: 137,806,000,000 USD",
+        "answer_span": "Among the three companies, Apple (AAPL) carries the largest total assets.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "AAPL reported total assets of approximately $359,241,000,000 as of September 27, 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Assets (Total assets) = 359,241,000,000 usd ($359,241 million) for 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "AAPL reported total assets of approximately $359,241,000,000 as of September 27, 2025 [xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "NVDA reported total assets of approximately $206,803,000,000 as of January 25, 2026.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Assets (Total assets) = 206,803,000,000 usd ($206,803 million) for 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "NVIDIA (NVDA) reported total assets of approximately $206,803,000,000 as of January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25], a figure also confirmed in NVDA's condensed consolidated balance sheet showing total assets of $206,803 million as of January 25, 2026 [0001045810-26-000051:table-0003].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "NVDA's condensed consolidated balance sheet shows total assets of $206,803 million as of January 25, 2026.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Assets (Total assets) = 206,803,000,000 usd ($206,803 million) for 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "NVIDIA (NVDA) reported total assets of approximately $206,803,000,000 as of January 25, 2026 [xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25], a figure also confirmed in NVDA's condensed consolidated balance sheet showing total assets of $206,803 million as of January 25, 2026 [0001045810-26-000051:table-0003].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000051:table-0003",
+            "doc_id": "NVDA-8-K-0001045810-26-000051",
+            "ticker": "NVDA",
+            "form_type": "8-K",
+            "section": "Unattributed table",
+            "accession_no": "0001045810-26-000051",
+            "filing_date": "2026-05-20"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "TSLA reported total assets of approximately $137,806,000,000 as of December 31, 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:Assets (Total assets) = 137,806,000,000 usd ($137,806 million) for 2025, period ending 2025-12-31, 10-K acc 0001628280-26-003952",
+        "answer_span": "Tesla (TSLA) reported total assets of approximately $137,806,000,000 as of December 31, 2025 [xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-9",
+        "text": "The ranking from largest to smallest balance sheet is AAPL ($359.2B), NVDA ($206.8B), and TSLA ($137.8B).",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "AAPL filed Total assets (us-gaap:Assets) for as of 2025, period ending 2025-09-27: 359,241,000,000 USD — as reported in 10-K 0000320193-25-000079.\n\n---\n\n[xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25] NVDA 10-K (2026-02-25) — XBRL facts\nNVDA filed Total assets (us-gaap:Assets) for as of 2026, period ending 2026-01-25: 206,803,000,000 USD — as reported in 10-K 0001045810-26-000021.\n\n---\n\n[xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31] TSLA 10-K (2026-01-29) — XBRL facts\nTSLA filed Total assets (us-gaap:Assets) for as of 2025, period ending 2025-12-31: 137,806,000,000 USD — as reported in 10-K 0001628280-26-003952.",
+        "answer_span": "The ranking from largest to smallest balance sheet is therefore AAPL ($359.2B), NVDA ($206.8B), and TSLA ($137.8B).",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-6",
+        "text": "AAPL's total assets exceed NVDA's by roughly $152 billion.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "In comparison, AAPL's total assets exceed NVDA's by roughly $152 billion and exceed TSLA's by roughly $221 billion.",
+        "feedback": "figure(s) $152 billion not found in the XBRL facts store — searched XBRL concepts: Assets, Total assets; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-7",
+        "text": "AAPL's total assets exceed TSLA's by roughly $221 billion.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "In comparison, AAPL's total assets exceed NVDA's by roughly $152 billion and exceed TSLA's by roughly $221 billion.",
+        "feedback": "figure(s) $221 billion not found in the XBRL facts store — searched XBRL concepts: Assets, Total assets; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:Assets:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "NVDA's total assets exceed TSLA's by roughly $69 billion.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "NVDA's total assets exceed TSLA's by roughly $69 billion.",
+        "feedback": "figure(s) $69 billion not found in the XBRL facts store — searched XBRL concepts: Assets, Total assets; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:Assets:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001628280-26-003952:us-gaap:Assets:2025-12-31",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 36933,
+      "cost_usd_used": 0.027555747999999998
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}
