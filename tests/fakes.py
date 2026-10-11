@@ -139,6 +139,7 @@ def any_claim(chunk_id: str = "c1") -> DraftClaim:
         text="a claim this test does not care about",
         claim_type="qualitative",
         source_chunk_ids=[chunk_id],
+        answer_span="",
     )
 
 

@@ -1,7 +1,8 @@
 # ADR 0046 — A draft must state its claims: `claims` is a required field
 
 **Date:** 2026-10-10 · **Phase:** 7 · **Status:** accepted, implemented
-2026-10-10, **measured the same day** (see *Measured*) · **Extends:** ADR 0038
+2026-10-10, **measured the same day** (see *Measured*); addendum 2026-10-11
+extends it to both `DraftClaim` fields · **Extends:** ADR 0038
 (an answer with no claims is a failed run), ADR 0025 (a degraded attempt
 disqualifies a baseline)
 
@@ -147,3 +148,36 @@ accepted baseline: 30/30, `degraded_attempts: 0`, `runs_with_no_claims: 0`.
   lost its `answer_span`s the same way, and its prose cannot be highlighted.
   Making both `DraftClaim` fields required is the obvious next step. It is not
   taken here, because it changes the answer path and needs its own eval.
+
+## Addendum, 2026-10-11: both `DraftClaim` fields are required too
+
+Taken the day after *Measured*, with the same reasoning. `source_chunk_ids` and
+`answer_span` had defaults, so they were not in the claim's `required` list,
+and the `call_<24 hex>` backend omitted them:
+- `source_chunk_ids` from 51 of its 277 claims on 10-10, against 3 of 176 for
+  every other backend. That retracted all six of g-014's correct figures.
+- `answer_span` from every claim of g-002.
+
+Both are now required with no default. A claim missing either key is a
+`ValidationError`, and `ainvoke_with_retry` re-asks, as for `claims`.
+
+**Required is not non-empty here either.** An explicit `[]` still reaches
+verify's "cites no retrievable evidence" ruling. An explicit `""` still reaches
+the token-overlap fallback of ADR 0023. What changes is that an *omitted* key
+is no longer read as either of those.
+
+`DraftClaim` exists only inside a `SynthesisOutput` during synthesis and is
+never written to `EngineState` (the checkpointed `Claim` keeps its own
+defaults), so checkpoints from earlier runs still load and export unchanged.
+
+Tests in `tests/test_router.py`, over the real `ChatOpenAI` path:
+- a claim omitting either field raises after three calls, and the field is in
+  the claim schema's `required` on the wire;
+- explicit `[]` and `""` parse after one call.
+
+Restoring the defaults makes the first test fail for both fields.
+
+Unmeasured until the next full eval, which also measures ADR 0047. The number
+to read is the count of claims arriving with an empty `source_chunk_ids` or
+`answer_span`. Before, an omission and an explicit empty value looked the
+same; now only an explicit empty value can produce one.

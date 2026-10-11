@@ -15,7 +15,7 @@ from fie.context import build_entailment_messages
 from fie.eval.datasets import LabeledClaim
 from fie.eval.metrics import VerifierScore, verifier_scores
 from fie.state import EvidenceChunk, JudgeOutput, VerdictLabel
-from fie.tools.reconcile import NumericReconciler
+from fie.tools.reconcile import NumericReconciler, states_only_dates
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,9 @@ def run_verifier_eval(
     """
     predictions: dict[str, VerdictLabel] = {}
     for claim in labeled:
-        if claim.claim_type == "numeric":
+        # Routed exactly as `verify_claim` routes, date-only claims included
+        # (ADR 0047).
+        if claim.claim_type == "numeric" and not states_only_dates(claim.text):
             outcome = reconciler.reconcile(claim.text, [_evidence_chunk(claim)])
             predictions[claim.id] = outcome.verdict
         else:

@@ -134,13 +134,22 @@ async def test_multipart_question_fans_out_one_parallel_branch_per_subquestion()
                 answer="Margins up [m1]. Buybacks up [m2]. Risks remain [m3].",
                 claims=[
                     DraftClaim(
-                        text="margin claim", claim_type="qualitative", source_chunk_ids=["m1"]
+                        text="margin claim",
+                        claim_type="qualitative",
+                        source_chunk_ids=["m1"],
+                        answer_span="",
                     ),
                     DraftClaim(
-                        text="buyback claim", claim_type="qualitative", source_chunk_ids=["m2"]
+                        text="buyback claim",
+                        claim_type="qualitative",
+                        source_chunk_ids=["m2"],
+                        answer_span="",
                     ),
                     DraftClaim(
-                        text="risk claim", claim_type="qualitative", source_chunk_ids=["m3"]
+                        text="risk claim",
+                        claim_type="qualitative",
+                        source_chunk_ids=["m3"],
+                        answer_span="",
                     ),
                 ],
             )
@@ -263,12 +272,18 @@ async def test_targeted_loop_back_reruns_exactly_one_branch() -> None:
     )
     decompose = StructuredFakeModel(outputs=[_three_part_decompose()])
     claims = [
-        DraftClaim(text="Revenue was $100 million", claim_type="numeric", source_chunk_ids=["m1"]),
-        DraftClaim(text=lie, claim_type="qualitative", source_chunk_ids=["m2"]),
+        DraftClaim(
+            text="Revenue was $100 million",
+            claim_type="numeric",
+            source_chunk_ids=["m1"],
+            answer_span="",
+        ),
+        DraftClaim(text=lie, claim_type="qualitative", source_chunk_ids=["m2"], answer_span=""),
         DraftClaim(
             text="Management expects continued growth",
             claim_type="forward_looking",
             source_chunk_ids=["m3"],
+            answer_span="",
         ),
     ]
     synthesis = StructuredFakeModel(

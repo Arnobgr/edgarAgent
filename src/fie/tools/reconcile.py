@@ -147,6 +147,16 @@ def _is_date_day(text: str, number: ParsedNumber) -> bool:
     return _MONTH_RE.search(text[: number.start]) is not None
 
 
+def states_only_dates(text: str) -> bool:
+    """Whether every number in `text` is a day-of-month: an event, not a figure.
+
+    "On April 30, 2025, the court found Apple in violation" has nothing to
+    reconcile. Matching the day alone grounded it on a "September 30, 2024"
+    snippet on 2026-10-10, so such a claim goes to entailment (ADR 0047)."""
+    numbers = parse_numbers(text)
+    return bool(numbers) and all(_is_date_day(text, n) for n in numbers)
+
+
 def _context_scale(text: str) -> float | None:
     """The scale implied by an "in millions"-style marker, if present."""
     match = _CONTEXT_RE.search(text)

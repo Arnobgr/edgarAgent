@@ -74,7 +74,7 @@ from fie.state import (
     VerifyMethod,
 )
 from fie.tools.fact_lookup import FactLookup
-from fie.tools.reconcile import NumericReconciler
+from fie.tools.reconcile import NumericReconciler, states_only_dates
 from fie.tools.retrieval import Retriever
 
 logger = logging.getLogger(__name__)
@@ -432,7 +432,10 @@ def build_graph(
                 method="attribution",
                 feedback="claim cites no retrievable evidence chunk — cite a real chunk or retract",
             )
-        if claim.claim_type == "numeric":
+        # A "numeric" claim whose only numbers are dates states an event, not a
+        # figure, and the reconciler could only match its day-of-month. It is
+        # judged by entailment like any other prose claim (ADR 0047).
+        if claim.claim_type == "numeric" and not states_only_dates(claim.text):
             # Phase 3 reconciler does SQLite + mapping-model I/O — keep it
             # off the event loop (the protocol stays sync, per ADR 0005).
             outcome = await asyncio.to_thread(reconciler.reconcile, claim.text, cited)
@@ -444,14 +447,14 @@ def build_graph(
                 feedback=outcome.feedback,
             )
         method: VerifyMethod
-        if claim.claim_type == "qualitative":
-            messages = build_entailment_messages(claim.text, cited)
-            ruling = cast(JudgeOutput, await _call(qualitative_llm, messages, config))
-            method = "semantic"
-        else:
+        if claim.claim_type == "forward_looking":
             messages = build_attribution_messages(claim.text, cited)
             ruling = cast(JudgeOutput, await _call(forward_llm, messages, config))
             method = "attribution"
+        else:
+            messages = build_entailment_messages(claim.text, cited)
+            ruling = cast(JudgeOutput, await _call(qualitative_llm, messages, config))
+            method = "semantic"
         return Verdict(
             claim_id=claim.id,
             verdict=ruling.verdict,

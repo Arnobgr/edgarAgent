@@ -211,12 +211,17 @@ class DraftClaim(BaseModel):
 
     text: str
     claim_type: ClaimType
-    source_chunk_ids: list[str] = Field(default_factory=list)
+    # Both fields below are required for the reason `SynthesisOutput.claims`
+    # is: with a default they leave the tool schema's `required`, and a GLM
+    # backend omits them (`source_chunk_ids` from 51 of its 277 claims on
+    # 2026-10-10, retracting six correct figures in g-014). An explicit `[]`
+    # or `""` still parses and is handled as before (ADR 0046, addendum).
+    source_chunk_ids: list[str]
     # The sentence of `answer` that states this claim, quoted verbatim. The
     # synthesizer wrote both and knows the correspondence exactly; discarding
     # it forced `retract` to guess the mapping back by token overlap, which
     # deleted the wrong sentences (ADR 0023). Empty falls back to that guess.
-    answer_span: str = ""
+    answer_span: str
 
 
 class SynthesisOutput(BaseModel):

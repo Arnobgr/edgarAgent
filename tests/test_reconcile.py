@@ -2,7 +2,7 @@
 
 import pytest
 
-from fie.tools.reconcile import InterimNumericReconciler, parse_numbers
+from fie.tools.reconcile import InterimNumericReconciler, parse_numbers, states_only_dates
 from tests.fakes import make_chunks
 
 RECONCILER = InterimNumericReconciler()
@@ -142,3 +142,21 @@ def test_parse_numbers_normalization() -> None:
     assert (365817.0, False) in values
     # The bare year was skipped.
     assert all(n.value != 2023 for n in numbers)
+
+
+@pytest.mark.parametrize(
+    ("claim", "expected"),
+    [
+        # g-024, 2026-10-10: an event with a date and nothing to reconcile.
+        ("On April 30, 2025, the court found Apple in violation of the injunction.", True),
+        ("Fiscal 2024 ended on September 28, 2024.", True),
+        # A count is not a date: ADR 0016 keeps it on the cited-text path.
+        ("Lead times may exceed 12 months.", False),
+        # A date beside a figure leaves the figure to reconcile.
+        ("As of September 27, 2025, cash was $35,934 million.", False),
+        # No number at all is not "only dates"; the reconciler rules on it.
+        ("The ruling came in 2021.", False),
+    ],
+)
+def test_states_only_dates(claim: str, expected: bool) -> None:
+    assert states_only_dates(claim) is expected

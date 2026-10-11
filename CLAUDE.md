@@ -105,7 +105,11 @@ missing facts are g-014. Its claims came back without the optional
 claim was therefore ruled to cite nothing, and six correct figures were
 retracted. That backend omitted the key in 51 of its 277 claims; all other
 backends omitted it in 3 of 176. `citation_accuracy` fell 0.085, beyond the
-±0.037 judge noise ADR 0039 measured, and **that fall is not yet explained**.
+±0.037 judge noise ADR 0039 measured, and **the cause is known (ADR 0047)**.
+11 of the 20 extra rejections are g-024's dated court events, typed `numeric`.
+The reconciler matched only their day-of-month and grounded "April 30, 2025" on
+a "September 30" snippet. Six more are claims about the evidence itself. Without
+both groups, the reading is 0.851 against 0.866.
 
 **Only `hallucination_rate` is ratcheted (ADR 0043). Every other row is a floor
 and nothing else, so the columns are readings, not thresholds.** Do not raise a
@@ -186,11 +190,13 @@ a clean 30 but carried `degraded_attempts: 1`, and the 08-13 run reached a clean
 files where the 08-01 export had 29**. The `2b11fa1d4f9e` answer described above
 is no longer on the recorded surface.
 
-**`SynthesisOutput.claims` is required on purpose, so never give it a default**
-(ADR 0046). A default removes it from the tool schema's `required` list. One
+**`SynthesisOutput.claims` is required on purpose, and so are
+`DraftClaim.source_chunk_ids` and `answer_span`. Never give any of them a
+default** (ADR 0046 and its addendum). A default removes it from the tool schema's `required` list. One
 GLM backend on OpenRouter then omits the key in most drafts, and the omission
 parses as `[]`. That made 9 degraded attempts on 2026-10-09 look like a
-transient upstream outage, which was the first, wrong diagnosis.
+transient upstream outage, which was the first, wrong diagnosis. The same
+backend dropping `source_chunk_ids` retracted six correct figures in g-014.
 
 ## Working guidelines
 
@@ -324,6 +330,9 @@ stamps statuses. Adding a channel that branches write requires a reducer.
   deterministic SQLite lookup grounds it only on an exact match at the claim's
   stated precision. No LLM verdict. Table-chunk cell matching is the fallback
   (ADR 0012).
+  A `numeric` claim whose only numbers are days of the month is an event, not
+  a figure, and goes to entailment instead (ADR 0047). The reconciler could
+  only match its day.
 - **qualitative** → entailment judge (LLM).
 - **forward_looking** → attribution judge (LLM).
 

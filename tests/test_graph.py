@@ -48,9 +48,15 @@ def _lie_synthesis_output() -> SynthesisOutput:
     return SynthesisOutput(
         answer=f"{TRUE_NUMERIC} [c1]. {LIE_NUMERIC} [c1]. {LIE_QUAL} [c2].",
         claims=[
-            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
-            DraftClaim(text=LIE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
-            DraftClaim(text=LIE_QUAL, claim_type="qualitative", source_chunk_ids=["c2"]),
+            DraftClaim(
+                text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"], answer_span=""
+            ),
+            DraftClaim(
+                text=LIE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"], answer_span=""
+            ),
+            DraftClaim(
+                text=LIE_QUAL, claim_type="qualitative", source_chunk_ids=["c2"], answer_span=""
+            ),
         ],
     )
 
@@ -148,7 +154,11 @@ REWRITTEN = "Tesla consolidated statements of operations total revenues fiscal y
 def _grounded_output(answer: str) -> SynthesisOutput:
     return SynthesisOutput(
         answer=answer,
-        claims=[DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"])],
+        claims=[
+            DraftClaim(
+                text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"], answer_span=""
+            )
+        ],
     )
 
 
@@ -196,11 +206,17 @@ async def test_all_grounded_single_pass_reaches_critic_and_ends() -> None:
             SynthesisOutput(
                 answer=answer,
                 claims=[
-                    DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
+                    DraftClaim(
+                        text=TRUE_NUMERIC,
+                        claim_type="numeric",
+                        source_chunk_ids=["c1"],
+                        answer_span="",
+                    ),
                     DraftClaim(
                         text="Services grew on advertising",
                         claim_type="qualitative",
                         source_chunk_ids=["c2"],
+                        answer_span="",
                     ),
                 ],
             )
@@ -233,12 +249,23 @@ async def test_verify_routes_each_claim_type_to_its_checker() -> None:
             SynthesisOutput(
                 answer="a [c1]. b [c1]. c [c1].",
                 claims=[
-                    DraftClaim(text="numeric claim", claim_type="numeric", source_chunk_ids=["c1"]),
                     DraftClaim(
-                        text="qualitative claim", claim_type="qualitative", source_chunk_ids=["c1"]
+                        text="numeric claim",
+                        claim_type="numeric",
+                        source_chunk_ids=["c1"],
+                        answer_span="",
                     ),
                     DraftClaim(
-                        text="forward claim", claim_type="forward_looking", source_chunk_ids=["c1"]
+                        text="qualitative claim",
+                        claim_type="qualitative",
+                        source_chunk_ids=["c1"],
+                        answer_span="",
+                    ),
+                    DraftClaim(
+                        text="forward claim",
+                        claim_type="forward_looking",
+                        source_chunk_ids=["c1"],
+                        answer_span="",
                     ),
                 ],
             )
@@ -271,6 +298,62 @@ async def test_verify_routes_each_claim_type_to_its_checker() -> None:
     assert by_span == {"NUM": "numeric_reconciliation", "QUAL": "semantic", "FWD": "attribution"}
 
 
+async def test_a_numeric_claim_stating_only_a_date_is_judged_by_entailment() -> None:
+    """ADR 0047. On 2026-10-10 synthesis typed g-024's dated court events as
+    numeric. The reconciler could only match the day of the month, and it
+    grounded "On April 30, 2025, ..." on a "September 30, 2024" snippet. A
+    claim whose only numbers are dates now goes where its content can be
+    checked; a figure beside a date still goes to the reconciler."""
+    dated = "On April 30, 2025, the court found Apple in violation of the injunction."
+    figure = "As of September 27, 2025, cash was $35,934 million."
+    retriever = StubRetriever(
+        make_chunks({"c1": "On September 30, 2024, the Company filed a motion."})
+    )
+    synthesis = StructuredFakeModel(
+        outputs=[
+            SynthesisOutput(
+                answer=f"{dated} {figure}",
+                claims=[
+                    DraftClaim(
+                        text=dated,
+                        claim_type="numeric",
+                        source_chunk_ids=["c1"],
+                        answer_span=dated,
+                    ),
+                    DraftClaim(
+                        text=figure,
+                        claim_type="numeric",
+                        source_chunk_ids=["c1"],
+                        answer_span=figure,
+                    ),
+                ],
+            )
+        ]
+    )
+    reconciler = SpyReconciler(
+        ReconcileOutcome(verdict="grounded", supporting_span="NUM", feedback=None)
+    )
+    qualitative = StructuredFakeModel(
+        outputs=[JudgeOutput(verdict="grounded", supporting_span="QUAL")]
+    )
+    critic = StructuredFakeModel(default_output=CriticOutput(passed=True))
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        qualitative=qualitative,
+        critic=critic,
+        reconciler=reconciler,
+    )
+
+    result = await graph.ainvoke(EngineState(question=QUESTION))
+    state = EngineState.model_validate(result)
+
+    assert reconciler.calls == [(figure, ["c1"])]
+    assert len(qualitative.calls) == 1
+    by_span = {v.supporting_span: v.method for v in state.verdicts}
+    assert by_span == {"NUM": "numeric_reconciliation", "QUAL": "semantic"}
+
+
 async def test_claim_without_citation_is_auto_unsupported() -> None:
     retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE}))
     synthesis = StructuredFakeModel(
@@ -278,7 +361,12 @@ async def test_claim_without_citation_is_auto_unsupported() -> None:
             SynthesisOutput(
                 answer="Uncited assertion.",
                 claims=[
-                    DraftClaim(text="Uncited assertion", claim_type="qualitative"),
+                    DraftClaim(
+                        text="Uncited assertion",
+                        claim_type="qualitative",
+                        source_chunk_ids=[],
+                        answer_span="",
+                    ),
                 ],
             )
         ]
@@ -426,9 +514,15 @@ def _shared_sentence_output() -> SynthesisOutput:
     return SynthesisOutput(
         answer=f"{TRUE_NUMERIC} [c1]. {SHARED_SENTENCE}",
         claims=[
-            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
-            DraftClaim(text=SHARED_AMOUNT, claim_type="numeric", source_chunk_ids=["c2"]),
-            DraftClaim(text=SHARED_GROWTH, claim_type="numeric", source_chunk_ids=["c2"]),
+            DraftClaim(
+                text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"], answer_span=""
+            ),
+            DraftClaim(
+                text=SHARED_AMOUNT, claim_type="numeric", source_chunk_ids=["c2"], answer_span=""
+            ),
+            DraftClaim(
+                text=SHARED_GROWTH, claim_type="numeric", source_chunk_ids=["c2"], answer_span=""
+            ),
         ],
     )
 
@@ -468,9 +562,18 @@ def _collateral_output() -> SynthesisOutput:
     return SynthesisOutput(
         answer=f"{TRUE_NUMERIC} [c1]. {SHARED_SENTENCE}",
         claims=[
-            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
-            DraftClaim(text=SHARED_AMOUNT, claim_type="numeric", source_chunk_ids=["c2"]),
-            DraftClaim(text=SHARED_GROWTH, claim_type="qualitative", source_chunk_ids=["c2"]),
+            DraftClaim(
+                text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"], answer_span=""
+            ),
+            DraftClaim(
+                text=SHARED_AMOUNT, claim_type="numeric", source_chunk_ids=["c2"], answer_span=""
+            ),
+            DraftClaim(
+                text=SHARED_GROWTH,
+                claim_type="qualitative",
+                source_chunk_ids=["c2"],
+                answer_span="",
+            ),
         ],
     )
 
@@ -800,8 +903,15 @@ def _unexcisable_synthesis_output() -> SynthesisOutput:
     return SynthesisOutput(
         answer=f"{TRUE_NUMERIC} [c1]. It grew a lot [c2].",
         claims=[
-            DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"]),
-            DraftClaim(text=STRANDED_CLAIM, claim_type="qualitative", source_chunk_ids=["c2"]),
+            DraftClaim(
+                text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"], answer_span=""
+            ),
+            DraftClaim(
+                text=STRANDED_CLAIM,
+                claim_type="qualitative",
+                source_chunk_ids=["c2"],
+                answer_span="",
+            ),
         ],
     )
 

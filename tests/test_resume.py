@@ -25,7 +25,12 @@ async def test_crash_after_verify_resumes_without_rerunning_earlier_nodes(
             SynthesisOutput(
                 answer=ANSWER,
                 claims=[
-                    DraftClaim(text=TRUE_NUMERIC, claim_type="numeric", source_chunk_ids=["c1"])
+                    DraftClaim(
+                        text=TRUE_NUMERIC,
+                        claim_type="numeric",
+                        source_chunk_ids=["c1"],
+                        answer_span="",
+                    )
                 ],
             )
         ]

@@ -172,3 +172,50 @@ async def test_an_explicit_empty_claims_list_still_parses() -> None:
 
     assert result == SynthesisOutput(answer="Nothing to state.", claims=[])
     assert len(requests) == 1
+
+
+CLAIM = {
+    "text": "Revenue was $94,827 million.",
+    "claim_type": "numeric",
+    "source_chunk_ids": ["c1"],
+    "answer_span": "Revenue was $94,827 million.",
+}
+
+
+@pytest.mark.parametrize("omitted", ["source_chunk_ids", "answer_span"])
+async def test_a_claim_that_omits_a_field_is_re_asked_not_read_as_empty(omitted: str) -> None:
+    """ADR 0046, addendum. The same backend that dropped `claims` dropped
+    `source_chunk_ids` from every claim of g-014 on 2026-10-10, so six correct
+    figures were ruled to cite nothing and retracted, and dropped `answer_span`
+    from g-002, whose prose could then not be highlighted."""
+    requests: list[dict[str, Any]] = []
+    claim = {k: v for k, v in CLAIM.items() if k != omitted}
+    model = openrouter_answering(
+        {"answer": "Revenue was $94,827 million.", "claims": [claim]}, requests
+    )
+
+    with pytest.raises(ValidationError, match=omitted):
+        await ainvoke_with_retry(
+            bind_structured(model, SynthesisOutput), "q", base_delay_seconds=0.0
+        )
+
+    assert len(requests) == 3
+    claims_schema = requests[0]["tools"][0]["function"]["parameters"]["properties"]["claims"]
+    assert omitted in claims_schema["items"]["required"]
+
+
+async def test_explicitly_empty_claim_fields_still_parse() -> None:
+    """Required is not non-empty: an explicit `[]` still reaches verify's
+    "cites no evidence" ruling, and an explicit `""` still reaches the
+    token-overlap fallback (ADR 0023), exactly as before."""
+    requests: list[dict[str, Any]] = []
+    claim = {**CLAIM, "source_chunk_ids": [], "answer_span": ""}
+    model = openrouter_answering(
+        {"answer": "Revenue was $94,827 million.", "claims": [claim]}, requests
+    )
+
+    result = await ainvoke_with_retry(bind_structured(model, SynthesisOutput), "q")
+
+    assert result.claims[0].source_chunk_ids == []
+    assert result.claims[0].answer_span == ""
+    assert len(requests) == 1
