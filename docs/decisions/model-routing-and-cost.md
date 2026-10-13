@@ -1,19 +1,26 @@
 # Model routing and cost — what a verified answer costs, and why it is routed this way
 
-**Date:** 2026-10-09 · **Phase:** 7 (Deliverable 1) · **Status:** accepted ·
+**Date:** 2026-10-09, numbers refreshed 2026-10-11 against the current baseline ·
+**Phase:** 7 (Deliverable 1) · **Status:** accepted ·
 **Relates to:** ADR 0001 (routing by role), ADR 0014 (provider-agnostic router),
 ADR 0032 (Langfuse Cloud in production), ADR 0045 (GLM 5.2 for synthesis/critic)
 
 ## Summary
 
-On the accepted baseline (`agent-20260813-174221`, 30/30, every floor met) an
-analyst question costs **$0.036 on average, $0.025 at the median and $0.070 at
-p90**; the most expensive of the 30 cost $0.104. Those are the prices the run
-was charged. GLM 5.2 has since been repriced, and the same tokens at the
-2026-10-09 price cost **$0.021 on average and $0.052 at p90**. Three quarters of that is
-synthesis. What drives it is **how many times the answer gets drafted**, not
-how big the question is: a run that verifies cleanly on its first draft costs
-$0.016, and one that loops back costs $0.057.
+On the accepted baseline (`agent-20261011-165218`, 30/30, every floor met) an
+analyst question costs **$0.028 on average, $0.019 at the median and $0.064 at
+p90**. The most expensive of the 30 cost $0.136. Those are the prices the run
+was charged, which are the current ones. About two thirds of it is synthesis.
+What drives it is **how many times the answer gets drafted**, not how big the
+question is: a run that verifies cleanly on its first draft costs $0.013, and
+one that loops back costs $0.048.
+
+The first version of this note (2026-10-09) measured the 08-13 baseline: $0.036
+mean at the prices that run was charged, and $0.021 for the same tokens at
+today's. The new baseline is dearer than that repricing for two reasons, both
+measured below. It verifies more claims, and its synthesis output is larger.
+Most of that output is reasoning, whose length varied sevenfold between the
+OpenRouter backends that served the same model on the same day.
 
 Synthesis and critic stay on GLM 5.2. The reason is **cost plus "it clears
 every floor"**. GLM has not been shown to beat the Anthropic arms on quality,
@@ -28,72 +35,92 @@ There are two independent sources, and they agree.
   superstep, so the difference between two consecutive checkpoints is what
   that superstep spent. The node that ran is identified by the channels it
   wrote. This gives cost per run and per node, priced at `Settings.model_prices`.
-- **Langfuse traces** (the local dev instance the baseline ran against). Every
-  generation carries its `fie-role:<role>` tag (ADR 0001) and its input/output
-  token counts, reasoning included. This gives the input/output split per role,
-  which is what repricing the alternatives requires.
+  The baseline ran on the box, so this is a consistent copy of the service's
+  `checkpoints.db`, taken with SQLite's backup API.
+- **Langfuse Cloud traces** (production tracing, ADR 0032). Every generation
+  carries its `fie-role:<role>` tag (ADR 0001) and its input/output token
+  counts, reasoning included. This gives the input/output split per role,
+  which is what repricing the alternatives requires. All 622 generations in
+  the run's window belong to its 30 traces.
 
 Repricing the Langfuse token counts at the same unit prices reproduces the
-checkpoint cost to the cent on 27 of the 30 runs. The other three differ by
-about $0.0001. Both sources cover the production answer path only: the
-`eval_judge` role scores the eval and never runs on a user's question, so it
-is excluded.
+checkpoint cost to the cent on all 30 runs, and within $0.0001 on 28 of them;
+the largest difference is $0.0004. Both sources cover the production answer
+path only: the `eval_judge` role scores the eval and never runs on a user's
+question, so it is excluded.
 
 ## Where the money goes
 
-Mean per question, 30 runs, at the prices the run was charged:
+Mean per question, 30 runs, at the prices the run was charged (GLM 5.2
+$0.057/$4.30, Flash-Lite $0.30/$2.50 per million tokens):
 
 | Role | Model | Calls | Input tok | Output tok | $ / question | Share |
 |---|---|---|---|---|---|---|
-| `synthesis` | GLM 5.2 | 1.8 | 20,215 | 2,724 | 0.0273 | 75% |
-| `verify_qualitative` | Gemini 3.5 Flash-Lite | 5.2 | 6,642 | 482 | 0.0032 | 9% |
-| `fact_mapping` (numeric verify) | Flash-Lite | 3.9 | 2,540 | 516 | 0.0021 | 6% |
-| `critic` | GLM 5.2 | 1.1 | 1,184 | 174 | 0.0016 | 4% |
-| `fact_lookup` (research) | Flash-Lite | 2.6 | 1,677 | 138 | 0.0008 | 2% |
-| `verify_forward` | Flash-Lite | 0.8 | 905 | 73 | 0.0005 | 1% |
-| `query_rewrite` (research) | Flash-Lite | 2.6 | 689 | 78 | 0.0004 | 1% |
-| `decompose` | Flash-Lite | 1.0 | 341 | 64 | 0.0003 | 1% |
-| **total** | | **19** | **34,193** | **4,249** | **0.0362** | |
+| `synthesis` | GLM 5.2 | 1.6 | 14,380 | 3,981 | 0.0179 | 63% |
+| `verify_qualitative` | Gemini 3.5 Flash-Lite | 7.3 | 10,593 | 761 | 0.0051 | 18% |
+| `fact_mapping` (numeric verify) | Flash-Lite | 4.1 | 2,201 | 530 | 0.0020 | 7% |
+| `critic` | GLM 5.2 | 1.0 | 1,334 | 342 | 0.0015 | 5% |
+| `fact_lookup` (research) | Flash-Lite | 2.4 | 1,312 | 141 | 0.0007 | 3% |
+| `verify_forward` | Flash-Lite | 0.8 | 888 | 65 | 0.0004 | 1% |
+| `query_rewrite` (research) | Flash-Lite | 2.4 | 585 | 75 | 0.0004 | 1% |
+| `decompose` | Flash-Lite | 1.0 | 281 | 57 | 0.0002 | 1% |
+| **total** | | **20.7** | **31,574** | **5,952** | **0.0283** | |
 
-By node: synthesize 75.5%, verify 15.8%, critic 4.5%, research 3.5%,
-decompose 0.7%. Retract makes no LLM call. Numeric verdicts are a SQLite
+By node: synthesize 63.4%, verify 26.5%, critic 5.4%, research 3.9%,
+decompose 0.8%. Retract makes no LLM call. Numeric verdicts are a SQLite
 lookup, and the model's only part in them is mapping claims to concepts
-(ADR 0012), which is why verification costs **$0.0008 per claim**.
+(ADR 0012), which is why verification costs **$0.0009 per claim**.
 
-Synthesis reads about 20k tokens of packed evidence and writes about 2.7k.
-Which side of that dominates the bill depends on the price, and the price has
-moved. At the $0.95/$2.98 this run was charged, input was 70% of the synthesis
-bill. At the $0.057/$4.30 OpenRouter charges on 2026-10-09, it is 9%. **On
-today's prices, output length is the lever and evidence packing is nearly
-free.** A conclusion about where to cut that does not name its price date is
-not one.
+**Synthesis is output-bound, and its output depends on the backend.** It reads
+about 14k tokens of packed evidence and writes about 4k. At the $0.95/$2.98 the
+08-13 run was charged, input was 70% of the synthesis bill. At today's
+$0.057/$4.30 it is 5%. Most of that output is reasoning, and reasoning varies
+with whichever OpenRouter backend serves the call. On 10-11 the `call_<24 hex>`
+backend (the one in ADR 0046) spent 161 reasoning tokens per synthesis call and
+the others 1,155. On 10-10 the pattern was reversed, at 1,574 against 336. The
+quoted text did not move: `answer_span` averaged 200–290 characters per claim
+in both runs, so the ADR 0046 addendum is not what made output grow. **On
+today's prices, output length is the lever, and part of it is set by
+OpenRouter's routing rather than by the prompt.** A conclusion about where to
+cut that does not name its price date is not one.
+
+**Why the new baseline costs more than the old one repriced** ($0.028 against
+$0.021):
+- Synthesis output went from 2.7k to 4.0k tokens per question, which is
+  +$0.005. The cause is the backend mix above.
+- Qualitative verification went from 5.2 to 7.3 calls per question, which is
+  +$0.002. The run made more claims (8.2 against 7.1), and more of them were
+  qualitative. ADR 0047 also sends date-only claims to this role, but there
+  were only two of them.
 
 ## What scales the cost
 
 | Shape of the run (30 runs) | mean | median | range |
 |---|---|---|---|
-| sub-questions | 1.5 | 1 | 1–4 |
-| research branches, all passes | 2.6 | 2 | 1–8 |
-| claims | 7.1 | 5.5 | 1–19 |
-| synthesis passes | 1.6 | 1.5 | 1–3 |
+| sub-questions | 1.5 | 1 | 1–3 |
+| research branches, all passes | 2.4 | 1.5 | 1–11 |
+| claims | 8.2 | 5 | 1–20 |
+| synthesis passes | 1.5 | 1 | 1–3 |
 
 Fitting cost against each of these separately:
 
 | Driver | $ per unit | r |
 |---|---|---|
-| synthesis pass | 0.034 | **0.80** |
-| sub-question | 0.015 | 0.45 |
-| claim | 0.0028 | 0.56 |
+| synthesis pass | 0.038 | **0.76** |
+| sub-question | 0.019 | 0.46 |
+| claim | 0.0031 | 0.67 |
 
-**Loop-backs are the cost driver.** 15 runs verified on the first draft and
-averaged **$0.016**. The 15 that looped (verify → targeted research → a second
-synthesis, or critic → synthesize) averaged **$0.057**, 3.6× as much. The
-reason is that each loop pays for another full synthesis over a larger fan-in.
-Claims are cheap at the margin, because the verify fan-out runs on the cheap
-model and the numeric path barely uses a model at all.
+**Loop-backs are the cost driver.** 17 runs verified on the first draft and
+averaged **$0.013**. The 13 that looped (verify → targeted research → a second
+synthesis, or critic → synthesize) averaged **$0.048**, 3.6× as much, the same
+ratio as on 08-13. The reason is that each loop pays for another full synthesis
+over a larger fan-in. The most expensive run, g-012 at $0.136, drafted three
+times over eleven research branches. Claims are cheap at the margin, because
+the verify fan-out runs on the cheap model and the numeric path barely uses a
+model at all.
 
-So the honest scaling statement is: **about $0.016 for a question that is
-right the first time, plus about $0.034 for every redraft.** The iteration caps
+So the honest scaling statement is: **about $0.013 for a question that is
+right the first time, plus about $0.038 for every redraft.** The iteration caps
 on the conditional edges (three cycles, all bounded) are what keep that a
 small integer.
 
@@ -106,30 +133,32 @@ are from its public models endpoint on the same date.
 
 | Routing | Reasoning roles | Mechanical roles | Mean $/q | p90 $/q | × chosen |
 |---|---|---|---|---|---|
-| **Chosen** (prices as charged) | GLM 5.2 $0.95/$2.98 | Flash-Lite $0.30/$2.50 | **0.036** | **0.070** | 1.0 |
-| **Chosen, at the 2026-10-09 charge** | GLM 5.2 $0.057/$4.30 | Flash-Lite $0.30/$2.50 | **0.021** | **0.052** | 0.6 |
-| GLM 5.3 (untested) | $0.0312/$4.40 | Flash-Lite | 0.021 | 0.051 | 0.6 |
-| Sonnet 5.5 (or Sonnet 5) | $2/$10 | Flash-Lite | 0.079 | 0.149 | 2.2 |
-| Opus 5.5 | $4/$20 | Flash-Lite | 0.151 | 0.291 | 4.2 |
-| Opus 5 / 4.8 (the ADR 0001 default) | $5/$25 | Flash-Lite | 0.187 | 0.361 | 5.2 |
-| Everything frontier | Opus 5.5 | Opus 5.5 | 0.222 | 0.469 | 6.1 |
-| Everything cheap | Flash-Lite | Flash-Lite | 0.021 | 0.044 | 0.6 |
-| Cheaper mechanical tier | GLM 5.2 | Haiku 5.5 $0.10/$0.50 | 0.031 | 0.065 | 0.9 |
+| **Chosen** (prices as charged) | GLM 5.2 $0.057/$4.30 | Flash-Lite $0.30/$2.50 | **0.028** | **0.064** | 1.0 |
+| GLM 5.3 (untested) | $0.0312/$4.40 | Flash-Lite | 0.028 | 0.064 | 1.0 |
+| Sonnet 5.5 (or Sonnet 5) | $2/$10 | Flash-Lite | 0.084 | 0.152 | 2.9 |
+| Opus 5.5 | $4/$20 | Flash-Lite | 0.158 | 0.278 | 5.6 |
+| Opus 5 / 4.8 (the ADR 0001 default) | $5/$25 | Flash-Lite | 0.196 | 0.341 | 6.9 |
+| Everything frontier | Opus 5.5 | Opus 5.5 | 0.245 | 0.469 | 8.7 |
+| Everything cheap | Flash-Lite | Flash-Lite | 0.024 | 0.050 | 0.9 |
+| Cheaper mechanical tier | GLM 5.2 | Haiku 5.5 $0.10/$0.50 | 0.022 | 0.045 | 0.8 |
 
-**This table understates the Anthropic arms by about 2×.** It holds token
-counts fixed, but the head-to-heads below measured the models' real behaviour,
-and the Anthropic models wrote more. They used adaptive thinking, and Opus
-emitted 40% more claims. The measured multiples were **5.1× for Sonnet 5 and
-10.3× for Opus 5**, against 2.2× and 5.2× above. Read the table as a lower
-bound.
+**This table understates the Anthropic arms.** It holds token counts fixed, but
+the head-to-heads below measured the models' real behaviour, and the Anthropic
+models wrote more. They used adaptive thinking, and Opus emitted 40% more
+claims. On July's price basis, the measured multiples were **5.1× for Sonnet 5
+and 10.3× for Opus 5**, where this method modelled 2.2× and 5.2×: about half.
+Read the Anthropic rows as lower bounds.
 
 **On the public path this is not a matter of taste.** The public run cap is
 $0.25 (`public_budget_max_cost_usd`), and the daily governor is $0.35. At the
-chosen routing the worst of the 30 runs ($0.104) leaves 2.4× headroom under
-the run cap, and the daily cap admits 9 average questions. On Opus 5.5
-the modelled p90 ($0.29) is *over* the run cap, so one public question in ten
-would abort partway, and the daily cap would admit about 2. A frontier
-synthesis route would mean redesigning the governor as well as paying more.
+chosen routing the worst of the 30 runs ($0.136) leaves 1.8× headroom under
+the run cap, and the daily cap admits about 12 average questions. On Opus 5.5
+the modelled p90 ($0.28) is *over* the run cap: 7 of the 30 runs would cost
+more than $0.25, so nearly a quarter of public questions would abort partway,
+and the daily cap would admit about 2. Sonnet 5.5 would put 1 of the 30 over.
+These are lower bounds, for the reason above. A
+frontier synthesis route would mean redesigning the governor as well as paying
+more.
 
 ## The A/B the decision rests on, stated plainly
 
@@ -161,18 +190,19 @@ Reports `agent-20260723-162646`, `-170240`, `20260726-212641`, `-212038` and
 - **The Opus comparison is confounded by claim count.** `grounding_rate` is
   per-claim, and Opus emitted 40% more claims. n = 5.
 
-Every full 30-question run in `eval/reports/`, all eight of them, used GLM. So the decision
-stands on three things. First, **cost**: a measured 5–10× against the
-Anthropic arms. Second, **sufficiency**: GLM clears every floor on the current
-baseline (grounding 0.980, hallucination 0.000, numeric fidelity 0.989,
-citation accuracy 0.867). Third, **no head-to-head went against GLM**. That is
+Every full 30-question run in `eval/reports/`, all ten of them, used GLM. So
+the decision stands on three things. First, **cost**: a measured 5–10× against
+the Anthropic arms. Second, **sufficiency**: GLM clears every floor on the
+current baseline (grounding 0.974, hallucination 0.000, numeric fidelity 0.936,
+citation accuracy 0.849, expected-fact coverage 1.000). Third, **no head-to-head went against GLM**. That is
 the blueprint's earn-it rule applied honestly: the expensive route has to earn
 its price, and nothing measured says it would.
 
 **What would reopen it, and what that costs.** One full `eval-agent` with
 `synthesis`/`critic` on Sonnet 5.5 would settle the quality question on the
-current system. On the measured multiple that is about **$5 of synthesis**
-plus the judge, which costs the same for both arms, and about 75 minutes. Run
+current system. The table's lower bound for that arm is $2.50 for 30
+questions; on the measured multiple it is about **$5**, plus the judge, which
+costs the same for both arms. On the box it takes about half an hour. Run
 it if GLM ever misses a floor, if the monthly drift run moves, or if a
 reviewer needs the quality comparison rather than the cost one.
 
@@ -190,9 +220,8 @@ recall** on the labelled claim set (`eval/verifier_claims.jsonl`, 128 claims).
 
 **No escalation, so the escalated path costs nothing.** What escalation would
 have cost: putting `verify_qualitative` and `verify_forward` on Sonnet 5.5
-raises the verify node from $0.006 to about $0.023 per question. That
-+$0.017 is nearly half again the whole bill, spent on a verifier that already
-measures 1.000.
+raises those two roles from $0.006 to about $0.031 per question. That +$0.026
+nearly doubles the whole bill, spent on a verifier that already measures 1.000.
 
 Two corrections to the record:
 
@@ -200,8 +229,8 @@ Two corrections to the record:
   never written; the numbering goes from 0012 to 0014. The decision and its
   numbers live in `plans/phase-3-exit-gate.md` and now here.
 - **The forward-looking verifier has never been measured.** The labelled set
-  holds no forward-looking claims. It is about one call in 24 (0.8 per question) and
-  1% of cost, so the money at stake is small. But "no escalation" is a measured
+  holds no forward-looking claims. It is about one call in 26 (0.8 per question)
+  and 1.5% of cost, so the money at stake is small. But "no escalation" is a measured
   decision for two claim types and an assumption for the third. The fix is to
   add forward-looking claims to the set, not to escalate the role.
 
@@ -227,33 +256,41 @@ rather than ours. Tracing is also not a health dependency (ADR 0032), so a
 SaaS outage cannot turn the service red.
 
 **The fluency paragraph.** A verified answer to an analyst question over SEC
-filings costs $0.025 at the median and $0.036 on average, under $0.11 in the
-worst case of 30. About $0.016 of it is the first pass, and each redraft that
-verification forces adds about $0.034. Three quarters goes to one role,
-synthesis. At today's prices its output is 90% of its bill, so how much it
-writes, and how often it is made to redraft, matters more than how much
-evidence it reads. Numeric truth costs almost nothing, because it
-is a SQLite lookup rather than a model's opinion. Routing is per role and is
-config: reasoning on an open model at a fifth to a tenth of the frontier price,
-mechanical work on a flash-tier model, and the judge on Anthropic. That held
-every quality floor. The comparison that would tell us what a frontier model
-buys on quality costs about $5 and has not been run, because no floor has
-asked for it.
+filings costs $0.019 at the median and $0.028 on average, under $0.14 in the
+worst case of 30. About $0.013 of it is the first pass, and each redraft that
+verification forces adds about $0.038. Two thirds goes to one role, synthesis.
+At today's prices its output is 95% of its bill, so how much it writes, and
+how often it is made to redraft, matters far more than how much evidence it
+reads. Part of how much it writes is reasoning, and that varies by which
+OpenRouter backend serves the call. Numeric truth costs almost nothing, because
+it is a SQLite lookup rather than a model's opinion. Routing is per role and is
+config: reasoning on an open model at a third to a seventh of the frontier
+price, mechanical work on a flash-tier model, and the judge on Anthropic. That
+held every quality floor. The comparison that would tell us what a frontier
+model buys on quality costs about $5 and has not been run, because no floor
+has asked for it.
 
 ## Follow-ups this note found
 
 - **`model_prices` was stale in two places — fixed 2026-10-09.** Sonnet 5
   was listed at $3/$15 (actual $2/$10). GLM 5.2 was at $0.95/$2.98, and
   OpenRouter charges $0.057/$4.30, confirmed on the billing side. The tracker
-  feeds the public spend governor, so this changes what the caps admit: the
-  daily $0.35 now covers about 17 average questions, up from 9. The
-  run-cap headroom over the worst of the 30 runs rises from 2.4× to 3.8×.
+  feeds the public spend governor, so this changes what the caps admit. On the
+  08-13 tokens the fix took the daily $0.35 from about 9 average questions to
+  about 17. On the 10-11 baseline, which writes and verifies more, it admits
+  about 12, and the worst run sits 1.8× under the run cap.
 - **GLM 5.3 is priced below 5.2** ($0.0312/$4.40). At this token profile it
-  saves nothing measurable ($0.0206 against $0.0209), because the bill is now
+  saves nothing measurable ($0.0283 against $0.0283), because the bill is now
   output-bound and its output price is higher. A 5.3 arm would be a quality
   test, not a cost one.
 - **Haiku 5.5 is now cheaper than Flash-Lite** ($0.10/$0.50 against
-  $0.30/$2.50) and would cut about $0.005 a question. Quality on those roles is
+  $0.30/$2.50) and would cut about $0.006 a question, a fifth of the bill. Quality on those roles is
   unmeasured, and CLAUDE.md says models are cleared and not to be tuned for
   metrics. Recorded as an option, not a recommendation.
 - **Forward-looking claims in `verifier_claims.jsonl`.** See "Verifier routing".
+- **Reasoning tokens follow the OpenRouter backend** (found 2026-10-11). The
+  same model wrote 161 or 1,155 reasoning tokens per synthesis call depending
+  on which backend served it, and the bill is output-bound, so routing moves
+  cost by itself. Pinning a provider would control that. ADR 0046 rejected
+  pinning for correctness reasons; cost is a separate argument and has not
+  been decided. Recorded, not recommended.
