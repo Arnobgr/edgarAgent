@@ -1,6 +1,7 @@
 # ADR 0010 — Structure-aware parsing: edgartools items + bs4 tables, with an in-text re-split fallback
 
-**Date:** 2026-07-19 · **Phase:** 3 · **Status:** accepted (decided on TSLA evidence)
+**Date:** 2026-07-19 · **Phase:** 3 · **Status:** accepted (decided on TSLA evidence) ·
+**Amended by:** ADR 0048 (under edgartools 5.61.1 the re-split no longer fires on any corpus 10-Q)
 
 ## Decision
 

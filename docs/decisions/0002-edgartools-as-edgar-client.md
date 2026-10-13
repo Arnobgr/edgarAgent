@@ -1,6 +1,7 @@
 # ADR 0002 — edgartools as the EDGAR client
 
-**Date:** 2026-07-17 · **Phase:** 0 · **Status:** accepted
+**Date:** 2026-07-17 · **Phase:** 0 · **Status:** accepted · **Amended by:** ADR 0048
+(edgartools ≥ 5.61.1: SEC refused the index URL older releases built)
 
 ## Decision
 

@@ -444,6 +444,16 @@ SQLite manifest: **acquire** (network → `data/parsed/`) → **chunk** (local �
 failures isolate to their filing. `--skip-embed` runs the free stages with no
 API keys.
 
+**Ingest needs edgartools ≥ 5.61.1, and the deployed corpus was not parsed by
+it** (ADR 0048). SEC began refusing the index URL 5.42.0 built, which broke
+every 10-K/10-Q acquire; 5.59–5.60 fail *silently* (empty HTML). Re-acquiring
+all 78 filings under 5.61.1 gave identical tables and 8-Ks, 15 fewer facts (all
+unitless years), and different section text in about a quarter of chunks. So a
+re-ingest is a retrieval change: **it needs a full eval before it ships, and a
+partial ingest mixes two parses.** The stored TSLA FY2023 10-K
+(`0001628280-24-002390`) has no Risk Factors or Business section; 5.61.1 parses
+it correctly, and only a re-ingest fixes it.
+
 ### The service, and what actually protects it
 
 `src/fie/api/` wraps `answer_question` in HTTP. `create_app` injects its

@@ -6,8 +6,9 @@ filed in that window — 8-Ks filtered to earnings releases (Item 2.02 with
 an EX-99 press release). Raw HTML is cached under `data/raw/` (gitignored)
 and each filing's manifest row (accession, form, dates, checksum) goes to
 SQLite, so re-running skips everything already acquired. SEC rate limiting
-is handled inside edgartools (verified: it throttles to 10 req/s and sets
-the declared identity).
+is handled inside edgartools (5.61.1 throttles to 9 req/s by default and sets
+the declared identity). Older releases cannot fetch a 10-K or 10-Q at all:
+SEC now 403s the index URL they built (ADR 0048).
 """
 
 import datetime as dt

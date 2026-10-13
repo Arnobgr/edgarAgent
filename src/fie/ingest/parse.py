@@ -187,7 +187,11 @@ def resplit_mangled_sections(sections: dict[str, str]) -> dict[str, str]:
     headings are re-split at those headings — tracking the Part I → Part II
     transition by item numbers restarting — and the pieces are merged
     across blobs, keeping the longest text per item. Sections with at most
-    one heading were segmented fine and keep their original label."""
+    one heading were segmented fine and keep their original label.
+
+    Measured under edgartools 5.61.1 (ADR 0048): it no longer fires on any
+    corpus 10-Q. It still fires on TSLA's FY2024/FY2025 10-Ks, whose "Item 1B"
+    also carries Item 1C, and there it adds a duplicate "Part I, Item 1C"."""
     if not any(len(_INLINE_ITEM_RE.findall(text)) >= 2 for text in sections.values()):
         return sections
     merged: dict[str, str] = {}
