@@ -354,6 +354,54 @@ async def test_a_numeric_claim_stating_only_a_date_is_judged_by_entailment() -> 
     assert by_span == {"NUM": "numeric_reconciliation", "QUAL": "semantic"}
 
 
+async def test_verify_logs_one_event_per_claim(caplog: pytest.LogCaptureFixture) -> None:
+    """Each claim is one tool call (the reconciler or a judge), and each gets
+    one structured event naming its verdict and how it was reached."""
+    figure = "As of September 27, 2025, cash was $35,934 million."
+    prose = "Apple describes its cash position as strong."
+    retriever = StubRetriever(make_chunks({"c1": "Cash was $35,934 million."}))
+    synthesis = StructuredFakeModel(
+        outputs=[
+            SynthesisOutput(
+                answer=f"{figure} {prose}",
+                claims=[
+                    DraftClaim(
+                        text=figure,
+                        claim_type="numeric",
+                        source_chunk_ids=["c1"],
+                        answer_span=figure,
+                    ),
+                    DraftClaim(
+                        text=prose,
+                        claim_type="qualitative",
+                        source_chunk_ids=["c1"],
+                        answer_span=prose,
+                    ),
+                ],
+            )
+        ]
+    )
+    graph = make_graph(
+        retriever=retriever,
+        synthesis=synthesis,
+        qualitative=StructuredFakeModel(outputs=[JudgeOutput(verdict="grounded")]),
+        critic=StructuredFakeModel(default_output=CriticOutput(passed=True)),
+        reconciler=SpyReconciler(
+            ReconcileOutcome(verdict="grounded", supporting_span="NUM", feedback=None)
+        ),
+    )
+    with caplog.at_level("INFO", logger="fie.graph.build"):
+        await graph.ainvoke(EngineState(question=QUESTION))
+
+    events = [
+        (r.claim_type, r.verdict, r.verify_method) for r in caplog.records if hasattr(r, "claim_id")
+    ]
+    assert sorted(events) == [
+        ("numeric", "grounded", "numeric_reconciliation"),
+        ("qualitative", "grounded", "semantic"),
+    ]
+
+
 async def test_claim_without_citation_is_auto_unsupported() -> None:
     retriever = StubRetriever(make_chunks({"c1": NUMERIC_SOURCE}))
     synthesis = StructuredFakeModel(

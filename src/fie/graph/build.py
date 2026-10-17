@@ -479,6 +479,23 @@ def build_graph(
             for claim, verdict in zip(claims, verdicts, strict=True)
             if verdict.verdict == "unsupported"
         ]
+        # One event per claim, which is one tool call each: the reconciler or
+        # an LLM judge. The verdicts live in the checkpoint too; this is what
+        # puts them beside the run's other log lines.
+        for claim, verdict in zip(claims, verdicts, strict=True):
+            logger.info(
+                "verify %s (%s): %s by %s",
+                claim.id,
+                claim.claim_type,
+                verdict.verdict,
+                verdict.method,
+                extra={
+                    "claim_id": claim.id,
+                    "claim_type": claim.claim_type,
+                    "verdict": verdict.verdict,
+                    "verify_method": verdict.method,
+                },
+            )
         logger.info(
             "verify pass %d: %d claim(s), %d unsupported",
             state.verify_iteration + 1,

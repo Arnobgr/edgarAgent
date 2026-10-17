@@ -141,6 +141,13 @@ def guarded[S: SupportsError](
                 "error": f"run aborted in node {name!r}: budget exceeded — {exc}",
                 "run_budget": tracker.snapshot(),
             }
+        except Exception:
+            # A node that raises (a verifier judge still failing after its
+            # retries, say) used to leave no transition line at all. It is
+            # logged and re-raised unchanged: whether it fails the run is the
+            # caller's decision, not this wrapper's.
+            transition("raised", started)
+            raise
         transition("error" if update.get("error") else "ok", started)
         update.setdefault("run_budget", tracker.snapshot())
         return update

@@ -249,3 +249,22 @@ async def test_guarded_logs_nothing_for_a_node_it_skips(caplog: pytest.LogCaptur
     with caplog.at_level("INFO", logger="fie.guardrails.execution"):
         await wrapped(EngineState(question="q", error="already failed"), _config())
     assert not [r for r in caplog.records if hasattr(r, "node")]
+
+
+async def test_guarded_logs_a_node_that_raises_and_re_raises_it(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A raise used to leave no transition line: the run's log ended at the
+    node before, with nothing to say which node failed."""
+
+    async def node(state: EngineState, config: RunnableConfig) -> dict[str, Any]:
+        raise RuntimeError("judge still failing after retries")
+
+    wrapped = guarded("verify", node, tracker=BudgetTracker(100, 1.0), timeout_seconds=1.0)
+    with (
+        caplog.at_level("INFO", logger="fie.guardrails.execution"),
+        pytest.raises(RuntimeError, match="still failing"),
+    ):
+        await wrapped(EngineState(question="q"), _config())
+    [event] = [r for r in caplog.records if hasattr(r, "node")]
+    assert (event.node, event.outcome) == ("verify", "raised")
