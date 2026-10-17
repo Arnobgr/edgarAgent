@@ -86,9 +86,20 @@ def get_langfuse_handler(run_id: str, settings: Settings | None = None) -> Trace
         public_key=s.langfuse_public_key,
         trace_context={"trace_id": trace_id},
     )
+    # The only synchronous Langfuse call in a run: the link needs the project
+    # id, which the client fetches over HTTP. With Langfuse unreachable it
+    # raised and failed the whole question, so a Langfuse Cloud outage took the
+    # public path down with it. Spans export in the background and a failed
+    # export is only logged, so tracing is optional everywhere else; the link
+    # is a log line and must not be the exception.
+    try:
+        trace_url: str | None = client.get_trace_url(trace_id=trace_id)
+    except Exception as exc:
+        logger.warning("Langfuse unreachable, no trace link for run %s: %s", run_id, exc)
+        trace_url = None
     return TraceHandle(
         handler=handler,
         trace_id=trace_id,
-        trace_url=client.get_trace_url(trace_id=trace_id),
+        trace_url=trace_url,
         _client=client,
     )
