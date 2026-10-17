@@ -418,6 +418,47 @@ def test_mid_sentence_item_references_do_not_split() -> None:
     assert resplit_mangled_sections(sections) is sections
 
 
+# --- Duplicated item text from edgartools 5.61.1 (ADR 0048) ---
+
+
+def test_an_item_running_into_the_next_item_is_cut_at_its_heading() -> None:
+    from fie.ingest.parse import drop_duplicated_items
+
+    cyber = "ITEM 1C. CYBERSECURITY\n" + "Risk management. " * 30
+    overrun = "Table of Contents\nITEM 1B. UNRESOLVED STAFF COMMENTS\nNone.\n27\n" + cyber
+    risks = "ITEM 1A. RISK FACTORS\n" + "Risks. " * 50
+    result = drop_duplicated_items({"Item 1A": risks, "Item 1B": overrun, "Item 1C": cyber})
+    # 1B is cut at 1C's heading; what remains is shorter than any kept section.
+    assert result == {"Item 1A": risks, "Item 1C": cyber}
+
+
+def test_an_item_cites_another_only_when_that_item_has_its_own_section() -> None:
+    from fie.ingest.parse import drop_duplicated_items
+
+    # Item 1C was not returned separately, so 1B's copy is the only one: keep it.
+    overrun = "ITEM 1B. UNRESOLVED STAFF COMMENTS\nNone.\nITEM 1C. CYBERSECURITY\n" + "x " * 200
+    assert drop_duplicated_items({"Item 1B": overrun}) == {"Item 1B": overrun}
+
+
+def test_one_text_under_two_labels_keeps_the_later_label() -> None:
+    from fie.ingest.parse import drop_duplicated_items
+
+    legal = "ITEM 1. LEGAL PROCEEDINGS\n" + "Litigation content. " * 20
+    mdna = "ITEM 2. MANAGEMENT'S DISCUSSION\n" + "Discussion. " * 30
+    result = drop_duplicated_items(
+        {"Part I, Item 1": legal, "Part I, Item 2": mdna, "Part II, Item 1": legal}
+    )
+    assert result == {"Part I, Item 2": mdna, "Part II, Item 1": legal}
+
+
+def test_ten_q_labels_are_never_cut_by_the_ten_k_rule() -> None:
+    from fie.ingest.parse import drop_duplicated_items
+
+    blob = f"ITEM 2. MANAGEMENT'S DISCUSSION\n{'Discussion. ' * 30}\nITEM 1. LEGAL\n{'x ' * 50}"
+    sections = {"Part I, Item 4": blob, "Part I, Item 2": "Other. " * 40}
+    assert drop_duplicated_items(sections) == sections
+
+
 # --- Pipeline: a failure stays with its filing ---
 
 

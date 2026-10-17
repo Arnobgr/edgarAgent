@@ -189,9 +189,10 @@ def resplit_mangled_sections(sections: dict[str, str]) -> dict[str, str]:
     across blobs, keeping the longest text per item. Sections with at most
     one heading were segmented fine and keep their original label.
 
-    Measured under edgartools 5.61.1 (ADR 0048): it no longer fires on any
-    corpus 10-Q. It still fires on TSLA's FY2024/FY2025 10-Ks, whose "Item 1B"
-    also carries Item 1C, and there it adds a duplicate "Part I, Item 1C"."""
+    Measured under edgartools 5.61.1 (ADR 0048): it fires on no corpus
+    filing once `drop_duplicated_items` has run first. Before that, it fired
+    only on TSLA's FY2024/FY2025 10-Ks, whose "Item 1B" also carried Item 1C,
+    and added a duplicate "Part I, Item 1C"."""
     if not any(len(_INLINE_ITEM_RE.findall(text)) >= 2 for text in sections.values()):
         return sections
     merged: dict[str, str] = {}
@@ -209,6 +210,33 @@ def resplit_mangled_sections(sections: dict[str, str]) -> dict[str, str]:
         return sections
     # Re-split labels win over pass-through duplicates of the same item.
     return {**passthrough, **merged}
+
+
+def drop_duplicated_items(sections: dict[str, str]) -> dict[str, str]:
+    """Remove the two duplications edgartools 5.61.1 produces on the corpus (ADR 0048).
+
+    A 10-K item can run on past the next item's heading. TSLA's FY2024 and
+    FY2025 "Item 1B" carry all of Item 1C, which edgartools also returns on
+    its own, so the section is cut at that heading. 10-Q labels ("Part I,
+    Item 1") never equal a bare "Item 1C", so only 10-K items are cut here.
+    A mangled 10-Q blob is left to `resplit_mangled_sections`.
+
+    One text can also come back under two labels. TSLA's Q3 2023 10-Q returns
+    Legal Proceedings as both "Part I, Item 1" and "Part II, Item 1". The
+    later label is kept, because in the observed case the earlier item could
+    not be anchored and took the next one's text. That rests on one case.
+    """
+    trimmed: dict[str, str] = {}
+    for label, text in sections.items():
+        for match in _INLINE_ITEM_RE.finditer(text):
+            other = f"Item {match.group(1).upper()}"
+            if other != label and other in sections and text[: match.start()].strip():
+                text = text[: match.start()].strip()
+                break
+        if len(text) >= _MIN_SECTION_CHARS:
+            trimmed[label] = text
+    last_label = {text: label for label, text in trimmed.items()}
+    return {label: text for label, text in trimmed.items() if last_label[text] == label}
 
 
 def _split_blob(text: str) -> list[tuple[str, str]]:

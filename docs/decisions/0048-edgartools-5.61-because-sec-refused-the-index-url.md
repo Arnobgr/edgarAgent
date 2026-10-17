@@ -1,8 +1,9 @@
 # ADR 0048 — edgartools 5.61.1, because SEC refused the index URL 5.42.0 built
 
 **Date:** 2026-10-13 · **Phase:** 7 · **Status:** accepted, implemented
-2026-10-13 · **Amends:** ADR 0002 (the EDGAR client is a dependency on SEC's
-page layout, not only on its API), ADR 0010 (the 10-Q re-split no longer fires)
+2026-10-13; addendum 2026-10-17 removes the duplicated sections · **Amends:**
+ADR 0002 (the EDGAR client is a dependency on SEC's page layout, not only on
+its API), ADR 0010 (the 10-Q re-split no longer fires)
 
 ## Context
 
@@ -92,7 +93,7 @@ what the July ingest stored:
   on Tesla's FY2024 and FY2025 10-Ks. There, edgartools' "Item 1B" also contains
   Item 1C, so the re-split adds a duplicate "Part I, Item 1C". Tesla's 2023 Q3
   10-Q gains a duplicate Legal Proceedings as "Part I, Item 1". Each duplicate
-  costs about one redundant chunk.
+  costs about one redundant chunk. *Removed in the addendum below.*
 - No 429 or 403 in two full re-acquisitions of the corpus. 5.61.1 throttles to 9 req/s by default
   (`EDGAR_RATE_LIMIT_PER_SEC`).
 
@@ -126,3 +127,27 @@ grounded, the FY2025 figure reconciled to `us-gaap:NetIncomeLoss`, for $0.006.
   changing a URL, and no amount of locking prevents the next one. The early
   warning is the one that worked here: run the README quickstart against
   a clean clone.
+
+## Addendum, 2026-10-17: the duplicated sections are removed
+
+Both duplications come from edgartools itself, and they have different
+mechanisms:
+
+- **An item that runs past the next item's heading.** On Tesla's FY2024 and
+  FY2025 10-Ks, "Item 1B" holds "None." and then all of Item 1C, which
+  edgartools also returns on its own. The two copies differ only by a page
+  number. The re-split then cut the over-long section and labelled the copy
+  "Part I, Item 1C", a 10-Q label on a 10-K.
+- **One text under two labels.** On Tesla's Q3 2023 10-Q, "Part I, Item 1" and
+  "Part II, Item 1" are byte-identical, and both are Legal Proceedings.
+
+`drop_duplicated_items` runs before the re-split. It cuts a section at the
+in-text heading of another item that has its own section. That rule can only
+act on bare 10-K labels, because a 10-Q label never equals "Item 1C". Of two
+identical texts, it keeps the later label. That choice rests on the one
+observed case, where the earlier item could not be anchored and took the next
+one's text.
+
+Applied to all 34 corpus 10-Ks and 10-Qs re-acquired under 5.61.1, it removes
+exactly the three duplicates and changes nothing else. After it, the re-split
+fires on no corpus filing. Tests are in `tests/test_ingest.py`.

@@ -21,6 +21,7 @@ from typing import Any
 from fie.ingest.facts import extract_facts
 from fie.ingest.parse import (
     ParsedFiling,
+    drop_duplicated_items,
     extract_sections,
     extract_tables,
     fiscal_period_label,
@@ -132,7 +133,7 @@ def _sections_for(filing: Any, form_type: str, html: str) -> dict[str, str]:
 
         text = BeautifulSoup(html, "lxml").get_text("\n", strip=True)
         return {"EX-99 Press Release": text} if text else {}
-    sections = resplit_mangled_sections(extract_sections(filing.obj()))
+    sections = resplit_mangled_sections(drop_duplicated_items(extract_sections(filing.obj())))
     if not sections:
         raise RuntimeError(f"no sections extracted from {filing.accession_no} ({form_type})")
     return sections
