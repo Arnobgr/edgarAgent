@@ -443,6 +443,32 @@ def _gate(metrics: dict[str, Any], baselines: Mapping[str, float | None]) -> lis
 _RATCHETED_PREFIXES = ("hallucination",)
 
 
+def _incomplete(metrics: Mapping[str, Any]) -> list[str]:
+    """Why this run is not a full reading, if it is not. Each reason refuses
+    `--write-baseline` (without `--force`) and exits 1.
+
+    A dropped question silently shrinks every metric's denominator; the
+    2026-07-27 run lost g-010 that way. A judge that failed on every pair
+    measured nothing: `citation_accuracy` is then None, which `_gate` skips
+    like any non-number, so without this the floor would pass a run nobody
+    judged (2026-10-17, a stale judge key, 187 of 187 calls failed).
+    `--skip-judge` sets the same None on purpose and reports no failures, so
+    it is not caught here.
+    """
+    reasons = []
+    if metrics["n_completed"] < metrics["n_questions"]:
+        reasons.append(
+            f"INCOMPLETE RUN: {metrics['n_completed']}/{metrics['n_questions']} questions "
+            "completed — metrics are computed over a shrunken denominator"
+        )
+    if metrics.get("citation_judge_failures", 0) > 0 and not metrics.get("citation_judged"):
+        reasons.append(
+            f"UNMEASURED: citation_accuracy — 0 pairs judged, "
+            f"{metrics['citation_judge_failures']} judge calls failed"
+        )
+    return reasons
+
+
 def _scalars(metrics: Mapping[str, Any]) -> dict[str, Any]:
     """Every scalar in a run's metrics — the buckets and per-claim lists out."""
     return {
@@ -572,19 +598,13 @@ def run(
     typer.echo("expected facts: " + ", ".join(f"{k} {v}" for k, v in buckets.items()))
     typer.echo(f"Report: {report_path}")
 
-    # A dropped question silently shrinks every metric's denominator — the
-    # 2026-07-27 run lost g-010 this way. Fail loudly instead.
-    dropped = metrics["n_completed"] < metrics["n_questions"]
-    if dropped:
-        typer.secho(
-            f"INCOMPLETE RUN: {metrics['n_completed']}/{metrics['n_questions']} questions "
-            "completed — metrics are computed over a shrunken denominator",
-            fg=typer.colors.RED,
-        )
+    incomplete = _incomplete(metrics)
+    for reason in incomplete:
+        typer.secho(reason, fg=typer.colors.RED)
 
     if write_baseline:
         target_misses = _gate(metrics, TARGETS)
-        if (dropped or target_misses) and not force:
+        if (incomplete or target_misses) and not force:
             for miss in target_misses:
                 typer.secho(f"TARGET MISSED: {miss}", fg=typer.colors.RED)
             typer.secho(
@@ -618,7 +638,7 @@ def run(
         typer.echo(f"Baseline written: {baselines_path}")
         return
 
-    if dropped:
+    if incomplete:
         raise typer.Exit(code=1)
 
     # `TARGETS` used to be checked on the `--write-baseline` path only, so an

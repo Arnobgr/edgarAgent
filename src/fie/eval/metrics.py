@@ -145,12 +145,16 @@ class CitationJudgment:
     supported: bool
 
 
-def citation_accuracy(judgments: list[CitationJudgment]) -> float:
+def citation_accuracy(judgments: list[CitationJudgment]) -> float | None:
     """% of judged (claim, span) pairs where the span supports the claim.
     Judged by the `eval_judge` role (see config) in the runner; spot-check 20%
-    by hand — the report lists a deterministic sample for that."""
+    by hand — the report lists a deterministic sample for that.
+
+    None when nothing was judged. It used to be 0.0, which reads as "every
+    citation rejected": on 2026-10-17 a stale judge key failed all 187 calls
+    and the report printed `citation_accuracy: 0.000`."""
     if not judgments:
-        return 0.0
+        return None
     return sum(1 for j in judgments if j.supported) / len(judgments)
 
 

@@ -13,6 +13,7 @@ from fie.eval.agent_runner import (
     _RATCHETED_PREFIXES,
     TARGETS,
     _gate,
+    _incomplete,
     _measured,
     _ratcheted,
     _run_gold,
@@ -300,6 +301,35 @@ def test_judge_failures_are_counted_not_scored(eval_settings: Settings) -> None:
         ("run-1:claim-1-0", True),
         ("run-1:claim-1-2", False),
     ]
+
+
+def test_a_judge_that_judged_nothing_leaves_the_run_unmeasured() -> None:
+    """2026-10-17: a stale judge key failed all 187 calls and the report read
+    `citation_accuracy: 0.000`. Nothing was measured, so the metric is None;
+    and because `_gate` skips a None, the run has to be refused here instead,
+    or the floor would pass a run nobody judged."""
+    full = {"n_questions": 30, "n_completed": 30}
+    unjudged = {
+        **full,
+        "citation_accuracy": None,
+        "citation_judged": 0,
+        "citation_judge_failures": 187,
+    }
+    assert _gate(unjudged, TARGETS) == []
+    assert _incomplete(unjudged) == [
+        "UNMEASURED: citation_accuracy — 0 pairs judged, 187 judge calls failed"
+    ]
+    # --skip-judge leaves the metric None on purpose and reports no failures.
+    assert _incomplete({**full, "citation_accuracy": None}) == []
+    # A partial failure still measured something; the count stays in the report.
+    partial = {
+        **full,
+        "citation_accuracy": 0.83,
+        "citation_judged": 180,
+        "citation_judge_failures": 7,
+    }
+    assert _incomplete(partial) == []
+    assert _incomplete({"n_questions": 30, "n_completed": 29})[0].startswith("INCOMPLETE RUN")
 
 
 def queue_answers(monkeypatch: pytest.MonkeyPatch, results: list[RunResult | Exception]) -> None:

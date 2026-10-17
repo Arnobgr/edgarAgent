@@ -209,7 +209,7 @@ def test_citation_accuracy() -> None:
         CitationJudgment("c", False),
     ]
     assert citation_accuracy(judgments) == 2 / 3
-    assert citation_accuracy([]) == 0.0
+    assert citation_accuracy([]) is None
 
 
 def test_numeric_fidelity_matches_store_values_excluding_percents() -> None:
