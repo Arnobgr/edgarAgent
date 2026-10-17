@@ -85,3 +85,50 @@ unchanged-system runs. The evidence that the fix works is the unit test and
 the replay; the full run's job is the Phase 7 exit gate's own bullet (green,
 unchanged or improved), plus producing a baseline clean enough to export
 (`degraded_attempts: 0`, ADR 0025).
+
+## Exit gate — met 2026-10-17
+
+Checked bullet by bullet against the repo, not from memory.
+
+- **Cost note** — `docs/decisions/model-routing-and-cost.md`, re-measured on
+  the 10-11 baseline from checkpoints and reconciled to the cent against
+  Langfuse traces: $0.028 mean, $0.064 p90. The 10-17 baseline reads
+  $0.030 / $0.069 from its checkpoints. The cost A/B is closed on GLM 5.2
+  (ADR 0045) and `Settings.models` routes synthesis and critic to it.
+- **Coverage** — 86% overall (`pytest --cov`, 2026-10-17). Graph 97%,
+  guardrails 100%, state 100%, reconciler 95%. The coverage pass is
+  `3750b0a`.
+- **Error-handling sweep** — `be290e3` pinned the verifier judge, guardrail
+  aborts and EDGAR. **Langfuse was the gap, and it was a production one.**
+  `get_trace_url`, the only synchronous Langfuse call in a run, raised on an
+  unreachable host and failed the question before the graph started. That
+  contradicted ADR 0028 and ADR 0032 ("tracing is not on the answer path"),
+  and it meant a Langfuse Cloud outage would fail every public question. It
+  is now caught, and the run continues untraced with one warning
+  (`tests/test_observability.py`, plus a live `fie ask` against a closed
+  port). The eval's own judge had the matching instrument fault: a judge
+  that judged nothing reported `citation_accuracy: 0.000`. It now reports
+  None, and `_incomplete` refuses that run the way it refuses a dropped
+  question.
+- **Logging sweep** — node transitions were already one structured event
+  each, carrying `job_id`/`trace_id` (`8c78a14`, ADR 0028). Two gaps are
+  closed: a node that raises now logs `raised` before re-raising, and verify
+  logs one event per claim, which is one tool call each (`claim_id`,
+  `claim_type`, `verdict`, `verify_method`). Research already logged its two
+  tool calls per branch. No `print` is left in `src/`. The one
+  `# type: ignore` carries its reason.
+- **README and quickstart** — rewritten on 2026-10-13 to the seven points
+  above. The quickstart was run on a clean clone: ingest, ask, 3 of 3
+  grounded.
+- **Full eval green** — the 10-17 baseline (`agent-20261017-131037`) meets
+  every floor, and the hallucination ratchet held. *"Unchanged or improved
+  vs the Phase 6 baseline" is read through ADR 0043*, which postdates this
+  plan. Scores are floored and only the invariant is ratcheted, because one
+  reading carries ±0.037 of judge noise alone. Three metrics read below
+  08-13 (grounding 0.961 against 0.980, numeric fidelity 0.947 against
+  0.989, citation accuracy 0.834 against 0.867), all on a re-ingested corpus
+  and inside the spread ADR 0043 measured across unchanged-system runs.
+  Against a literal reading of this plan, they are drops.
+
+The Langfuse fix reaches production with the next deploy. Until then, the
+server still makes the call that can fail a question.

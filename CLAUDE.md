@@ -38,7 +38,9 @@ the same day (image `sha-e7789b3`, `/healthz` all-true), and the Pages build
 made `frontend/public/_headers` live — six headers where the CDN used to serve
 two, CSP included and measured against the deployed bundle. One item outlived
 it by ten days and is now closed too: the npm hold, taken 2026-08-23 (ADR 0041,
-amendment).
+amendment). **Phase 7 (cost, rigor, README) met its exit gate on
+2026-10-17**; the bullet-by-bullet record is at the foot of
+`plans/phase-7-cost-and-rigor.md`. **Phase 8, the MCP server, is next.**
 
 **A regenerated `recorded/` changes every run id, and one of them is
 hard-coded.** `frontend/src/lib/recorded.ts` names the run a stranger lands
