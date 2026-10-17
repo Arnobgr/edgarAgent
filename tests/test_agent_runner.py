@@ -389,7 +389,7 @@ def test_citation_accuracy_is_floored_not_ratcheted() -> None:
 
     accepted = json.loads((EVAL_DIR / "baselines.json").read_text())
     assert "citation_accuracy" not in accepted["metrics"]
-    assert accepted["measured"]["citation_accuracy"] == pytest.approx(0.849, abs=0.001)
+    assert accepted["measured"]["citation_accuracy"] == pytest.approx(0.834, abs=0.001)
 
 
 def test_only_an_invariant_is_ratcheted_and_every_score_has_a_floor() -> None:

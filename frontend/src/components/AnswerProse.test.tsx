@@ -25,9 +25,9 @@ describe("AnswerProse", () => {
   it("marks one element per claim run, tinted by verdict", () => {
     const { result } = renderRun(LANDING_RUN);
     const marks = screen.getAllByRole("button");
-    // One mark per quoted sentence, not per claim: two claims of the landing
-    // run quote the identical sentence, and the sweep gives that sentence one
-    // atom carrying both (see `atomsFor`).
+    // One mark per quoted sentence, not per claim: the landing run's ten
+    // claims quote seven sentences, and the sweep gives a shared sentence one
+    // atom carrying all its claims (see `atomsFor`).
     expect(marks.length).toBe(new Set(result.grounding.map((row) => row.answer_span)).size);
     for (const mark of marks) {
       expect(mark).toHaveAttribute("data-tone", "verified");
@@ -62,14 +62,16 @@ describe("AnswerProse", () => {
 
     const mark = screen
       .getAllByRole("button")
-      .find((element) => element.textContent?.includes("AAPL reported total assets of"));
+      .find((element) => element.textContent?.includes("Nvidia's total revenue grew dramatically"));
     expect(mark).toBeDefined();
     await user.hover(mark!);
 
     const popover = await screen.findByRole("dialog", { name: /claim verification/i });
-    expect(within(popover).getByText(/XBRL reconciliation/)).toBeInTheDocument();
-    expect(within(popover).getByText(numeric!.sources[0]!.accession_no)).toBeInTheDocument();
-    expect(within(popover).getByText(/AAPL 10-K/)).toBeInTheDocument();
+    expect(within(popover).getAllByText(/XBRL reconciliation/).length).toBeGreaterThan(0);
+    expect(
+      within(popover).getAllByText(numeric!.sources[0]!.accession_no).length,
+    ).toBeGreaterThan(0);
+    expect(within(popover).getAllByText(/NVDA 10-K/).length).toBeGreaterThan(0);
   });
 
   it("says so plainly when a run recorded no spans, rather than guessing", async () => {

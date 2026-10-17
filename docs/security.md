@@ -303,7 +303,7 @@ the poisoned chunk. A numeric claim cannot survive this route, since the XBRL
 lookup does not read the prompt — so **the corpus attack that pays is the
 qualitative one, not the fake-table one that reads more dramatically.**
 
-**Reachability, honestly.** The corpus is 78 filings from TSLA, AAPL and NVDA,
+**Reachability, honestly.** The corpus is 85 filings from TSLA, AAPL and NVDA,
 ingested once by hand. Using this path requires text inside a filing by one of
 those three issuers, which means already being able to publish through their
 filing agents. **The realistic version is not a targeted attack on this

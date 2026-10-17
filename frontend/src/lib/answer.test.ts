@@ -79,20 +79,20 @@ describe("layoutAnswer", () => {
         layout.placements.length + layout.spanless.length + layout.unlocated.length,
       ).toBe(payload.result.grounding.length);
     }
-    // The accepted 2026-10-11 baseline has 230 grounding rows. Two are
-    // spanless, both in g-020 (`db1877c98db4`): the model quoted those
-    // sentences inexactly, the one repair did not fix them, and an inexact
-    // quote is blanked rather than guessed at (ADR 0023). Since the ADR 0046
-    // addendum a span can no longer be lost by omission, which is how all of
-    // g-002 went spanless in the 10-10 corpus. Assert the count rather than
-    // assume it: it moves with every baseline.
-    expect(placed + spanless + unlocated).toBe(230);
-    expect(placed).toBe(228);
-    expect(spanless).toBe(2);
+    // The accepted 2026-10-17 baseline has 203 grounding rows, and every one
+    // carries a span the answer contains. The 10-11 baseline had two spanless
+    // rows in g-020, where the model quoted inexactly and the one repair did
+    // not fix it (ADR 0023). That can still happen; it did not here. Since the
+    // ADR 0046 addendum a span can no longer be lost by omission, which is how
+    // all of g-002 went spanless in the 10-10 corpus. Assert the count rather
+    // than assume it: it moves with every baseline.
+    expect(placed + spanless + unlocated).toBe(203);
+    expect(placed).toBe(203);
+    expect(spanless).toBe(0);
     // No *delivered* grounding row lost its sentence to another claim's
     // excision. That is not the same as the defect being extinct: ADR 0021
-    // point 3 fired twice in this very baseline, both in g-012, and the graph
-    // logged it. A claim it hits is dropped from the grounding
+    // point 3 fired twice in the 10-11 baseline, both in g-012, and none in
+    // this one, and the graph logs it when it does. A claim it hits is dropped from the grounding
     // table rather than left in it, so it reaches the reader as a retraction
     // and never as an unmarkable row. This asserts the table the reader gets
     // is clean, not that the defect cannot happen.

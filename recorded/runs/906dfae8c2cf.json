@@ -1,0 +1,286 @@
+{
+  "job_id": "906dfae8c2cf",
+  "source": "recorded",
+  "created_at": "2026-10-17T10:58:22.277262+00:00",
+  "result": {
+    "run_id": "906dfae8c2cf",
+    "question": "Compare Apple's services revenue growth rate to its products revenue growth rate over the last two fiscal years.",
+    "answer": "However, the filings do provide disaggregated revenue data for certain quarters and nine-month periods that allow partial year-over-year comparisons.\n\nFor the first quarter of FY2025 (three months ended December 28, 2024) versus the first quarter of FY2024 (three months ended December 30, 2023), Services revenue grew from $23,117 million to $26,340 million, an increase of approximately 13.9% [0000320193-25-000007:ex-99-press-release-p002]. Over the same period, Products revenue grew from $96,458 million to $97,960 million, an increase of approximately 1.6% [0000320193-25-000007:ex-99-press-release-p002]. Services growth significantly outpaced Products growth in this quarter.\n\nFor the nine months ended June 29, 2024 (FY2024) versus the nine months ended July 1, 2023 (FY2023), Services revenue grew from $62,886 million to $71,197 million, an increase of approximately 13.2% [0000320193-24-000081:part-i--item-1-p005]. Over the same period, Products revenue (total net sales minus Services) declined from $230,901 million ($293,787 million total minus $62,886 million Services) to $224,908 million ($296,105 million total minus $71,197 million Services), a decrease of approximately 2.6% [0000320193-24-000081:part-i--item-1-p005].\n\nFor the first quarter of FY2026 (three months ended December 27, 2025) versus the first quarter of FY2025 (three months ended December 28, 2024), Services revenue grew from $26,340 million to $30,013 million, an increase of approximately 13.9% [0000320193-26-000005:ex-99-press-release-p002]. Over the same period, Products revenue grew from $97,960 million to $113,743 million, an increase of approximately 16.1% [0000320193-26-000005:ex-99-press-release-p002]. In this most recent quarter, Products growth outpaced Services growth.\n\n Full-year FY2023 total net sales were $383,285 million [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2023-09-30]. However, without a full-year Products and Services breakdown, a complete fiscal-year growth rate comparison between the two categories cannot be determined from the available evidence.\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- Apple's SEC filings do not provide a full-year Products vs. Services revenue breakdown for either of the last two fiscal years (FY2025 and FY2024).\n- Total net sales for the full fiscal years were $416,161 million in FY2025 and $391,035 million in FY2024, representing overall growth of approximately 6.4%.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Apple's services revenue for the last two fiscal years?",
+        "rationale": "This sub-question isolates the data needed for Apple's services revenue over the required period to calculate its growth rate.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What was Apple's products revenue for the last two fiscal years?",
+        "rationale": "This sub-question isolates the data needed for Apple's products revenue over the required period to calculate its growth rate.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-2",
+        "text": "For the first quarter of FY2025 (three months ended December 28, 2024) versus the first quarter of FY2024 (three months ended December 30, 2023), Services revenue grew from $23,117 million to $26,340 million, an increase of approximately 13.9%.",
+        "claim_type": "numeric",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 26,340,000,000 usd ($26,340 million) for Q1 2025, period ending 2024-12-28, 10-Q acc 0000320193-26-000006\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services): 26,340,000,000 usd ($26,340 million) (Q1 2025) vs 23,117,000,000 usd ($23,117 million) (Q1 2024) = +13.94%, acc 0000320193-26-000006",
+        "answer_span": "For the first quarter of FY2025 (three months ended December 28, 2024) versus the first quarter of FY2024 (three months ended December 30, 2023), Services revenue grew from $23,117 million to $26,340 million, an increase of approximately 13.9% [0000320193-25-000007:ex-99-press-release-p002].",
+        "feedback": "figure(s) $23,117 million not found in the XBRL facts store — searched XBRL concepts: RevenueFromContractWithCustomerExcludingAssessedTax, SalesRevenueNet, Services, ServicesRevenue; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000007:ex-99-press-release-p002",
+            "doc_id": "AAPL-8-K-0000320193-25-000007",
+            "ticker": "AAPL",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000320193-25-000007",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "Over the same Q1 period, Products revenue grew from $96,458 million to $97,960 million, an increase of approximately 1.6%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 96,458,000,000 usd ($96,458 million) for Q1 2024, period ending 2023-12-30, 10-Q acc 0000320193-25-000008\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 97,960,000,000 usd ($97,960 million) for Q1 2025, period ending 2024-12-28, 10-Q acc 0000320193-26-000006\nderived change from verified claim figures: |9.796e+10| vs |9.6458e+10| = 1.56%",
+        "answer_span": "Over the same period, Products revenue grew from $96,458 million to $97,960 million, an increase of approximately 1.6% [0000320193-25-000007:ex-99-press-release-p002].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000007:ex-99-press-release-p002",
+            "doc_id": "AAPL-8-K-0000320193-25-000007",
+            "ticker": "AAPL",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000320193-25-000007",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "For the nine months ended June 29, 2024 (FY2024) versus the nine months ended July 1, 2023 (FY2023), Services revenue grew from $62,886 million to $71,197 million, an increase of approximately 13.2%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 62,886,000,000 usd ($62,886 million) for YTD9 2023, period ending 2023-07-01, 10-Q acc 0000320193-24-000081\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 71,197,000,000 usd ($71,197 million) for YTD9 2024, period ending 2024-06-29, 10-Q acc 0000320193-25-000073\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services): 71,197,000,000 usd ($71,197 million) (YTD9 2024) vs 62,886,000,000 usd ($62,886 million) (YTD9 2023) = +13.22%, acc 0000320193-25-000073",
+        "answer_span": "For the nine months ended June 29, 2024 (FY2024) versus the nine months ended July 1, 2023 (FY2023), Services revenue grew from $62,886 million to $71,197 million, an increase of approximately 13.2% [0000320193-24-000081:part-i--item-1-p005].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000081:part-i--item-1-p005",
+            "doc_id": "AAPL-10-Q-0000320193-24-000081",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-24-000081",
+            "filing_date": "2024-08-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "Over the same nine-month period, Products revenue (total net sales minus Services) declined from $230,901 million to $224,908 million, a decrease of approximately 2.6%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 230,901,000,000 usd ($230,901 million) for YTD9 2023, period ending 2023-07-01, 10-Q acc 0000320193-24-000081\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 224,908,000,000 usd ($224,908 million) for YTD9 2024, period ending 2024-06-29, 10-Q acc 0000320193-25-000073\nderived change from verified claim figures: |2.24908e+11| vs |2.30901e+11| = 2.60%",
+        "answer_span": "Over the same period, Products revenue (total net sales minus Services) declined from $230,901 million ($293,787 million total minus $62,886 million Services) to $224,908 million ($296,105 million total minus $71,197 million Services), a decrease of approximately 2.6% [0000320193-24-000081:part-i--item-1-p005].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-24-000081:part-i--item-1-p005",
+            "doc_id": "AAPL-10-Q-0000320193-24-000081",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-24-000081",
+            "filing_date": "2024-08-02"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "For the first quarter of FY2026 (three months ended December 27, 2025) versus the first quarter of FY2025 (three months ended December 28, 2024), Services revenue grew from $26,340 million to $30,013 million, an increase of approximately 13.9%.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 26,340,000,000 usd ($26,340 million) for Q1 2025, period ending 2024-12-28, 10-Q acc 0000320193-26-000006\nXBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services) [dimensioned=true] = 30,013,000,000 usd ($30,013 million) for Q1 2026, period ending 2025-12-27, 10-Q acc 0000320193-26-000006\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Services): 30,013,000,000 usd ($30,013 million) (Q1 2026) vs 26,340,000,000 usd ($26,340 million) (Q1 2025) = +13.94%, acc 0000320193-26-000006",
+        "answer_span": "For the first quarter of FY2026 (three months ended December 27, 2025) versus the first quarter of FY2025 (three months ended December 28, 2024), Services revenue grew from $26,340 million to $30,013 million, an increase of approximately 13.9% [0000320193-26-000005:ex-99-press-release-p002].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000005:ex-99-press-release-p002",
+            "doc_id": "AAPL-8-K-0000320193-26-000005",
+            "ticker": "AAPL",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000320193-26-000005",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-7",
+        "text": "Over the same Q1 FY2026 period, Products revenue grew from $97,960 million to $113,743 million, an increase of approximately 16.1%.",
+        "claim_type": "numeric",
+        "status": "partial",
+        "verdict": "partial",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products) [dimensioned=true] = 113,743,000,000 usd ($113,743 million) for Q1 2026, period ending 2025-12-27, 10-Q acc 0000320193-26-000006\nXBRL change us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Products): 113,743,000,000 usd ($113,743 million) (Q1 2026) vs 97,960,000,000 usd ($97,960 million) (Q1 2025) = +16.11%, acc 0000320193-26-000006",
+        "answer_span": "Over the same period, Products revenue grew from $97,960 million to $113,743 million, an increase of approximately 16.1% [0000320193-26-000005:ex-99-press-release-p002].",
+        "feedback": "figure(s) $97,960 million not found in the XBRL facts store — searched XBRL concepts: ProductsRevenue, RevenueFromContractWithCustomerExcludingAssessedTax, SalesRevenueNet; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000005:ex-99-press-release-p002",
+            "doc_id": "AAPL-8-K-0000320193-26-000005",
+            "ticker": "AAPL",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000320193-26-000005",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-9",
+        "text": "Full-year FY2023 total net sales were $383,285 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Net sales) = 383,285,000,000 usd ($383,285 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079",
+        "answer_span": "Full-year FY2023 total net sales were $383,285 million [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2023-09-30].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2023-09-30",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-10",
+        "text": "Without a full-year Products and Services breakdown, a complete fiscal-year growth rate comparison between the two categories cannot be determined from the available evidence.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "However, without a full-year Products and Services breakdown, a complete fiscal-year growth rate comparison between the two categories cannot be determined from the available evidence.",
+        "feedback": "The provided excerpts only contain total net sales for FY 2024 and FY 2025, and do not provide Products and Services breakdowns or growth rate comparisons. Thus, the claim is supported by the absence of this information in the evidence.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple's SEC filings do not provide a full-year Products vs. Services revenue breakdown for either of the last two fiscal years (FY2025 and FY2024).",
+        "claim_type": "qualitative",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "Apple's SEC filings do not provide a full-year Products vs. Services revenue breakdown for either of the last two fiscal years (FY2025 and FY2024), so a precise full-fiscal-year comparison cannot be made from the available evidence.",
+        "feedback": "The cited source excerpts only provide total net sales for FY 2025 and FY 2024, but they do not mention whether Products vs. Services revenue breakdowns are absent or present elsewhere in Apple's SEC filings.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "Total net sales for the full fiscal years were $416,161 million in FY2025 and $391,035 million in FY2024, representing overall growth of approximately 6.4%.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "For additional context, total net sales for the full fiscal years were $416,161 million in FY2025 and $391,035 million in FY2024, representing overall growth of approximately 6.4% [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27] [xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28].",
+        "feedback": "figure(s) $416,161 million, $391,035 million, 6.4% not found in the XBRL facts store — searched XBRL concepts: Revenues, SalesRevenueNet; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax:2024-09-28",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 69689,
+      "cost_usd_used": 0.08809962199999997
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

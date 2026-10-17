@@ -1,0 +1,117 @@
+{
+  "job_id": "cca5fc4d8a4f",
+  "source": "recorded",
+  "created_at": "2026-10-17T11:07:16.405277+00:00",
+  "result": {
+    "run_id": "cca5fc4d8a4f",
+    "question": "What did Tesla's CFO say about 2027 margin guidance on the latest earnings call?",
+    "answer": "The provided evidence excerpts from Tesla's SEC filings do not contain any statements from Tesla's CFO regarding 2027 margin guidance. The excerpts consist of press release boilerplate (non-GAAP definitions, forward-looking statement disclaimers, and webcast information) from various 8-K filings, as well as operational highlights from a 10-K filing. None of these chunks include earnings call transcript content or any specific commentary about 2027 margin guidance from the CFO.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What did Tesla's CFO say about 2027 margin guidance on the latest earnings call?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "The provided evidence excerpts from Tesla's SEC filings do not contain any statements from Tesla's CFO regarding 2027 margin guidance.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "The provided evidence excerpts from Tesla's SEC filings do not contain any statements from Tesla's CFO regarding 2027 margin guidance.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-043432:ex-99-press-release-p010",
+            "doc_id": "TSLA-8-K-0001628280-24-043432",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-24-043432",
+            "filing_date": "2024-10-23"
+          },
+          {
+            "chunk_id": "0000950170-24-046895:ex-99-press-release-p009",
+            "doc_id": "TSLA-8-K-0000950170-24-046895",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000950170-24-046895",
+            "filing_date": "2024-04-23"
+          },
+          {
+            "chunk_id": "0001628280-26-003837:ex-99-press-release-p015",
+            "doc_id": "TSLA-8-K-0001628280-26-003837",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-26-003837",
+            "filing_date": "2026-01-28"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p012",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          },
+          {
+            "chunk_id": "0001628280-25-035738:ex-99-press-release-p012",
+            "doc_id": "TSLA-8-K-0001628280-25-035738",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-035738",
+            "filing_date": "2025-07-23"
+          },
+          {
+            "chunk_id": "0001628280-26-003952:item-7-p001",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-26-049213:ex-99-press-release-p013",
+            "doc_id": "TSLA-8-K-0001628280-26-049213",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-26-049213",
+            "filing_date": "2026-07-22"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1-p015",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 15831,
+      "cost_usd_used": 0.0054760270000000005
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

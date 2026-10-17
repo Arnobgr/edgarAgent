@@ -1,0 +1,147 @@
+{
+  "job_id": "004fcb477fb6",
+  "source": "recorded",
+  "created_at": "2026-10-17T10:58:40.239613+00:00",
+  "result": {
+    "run_id": "004fcb477fb6",
+    "question": "How has Nvidia's net income evolved over its last three fiscal years?",
+    "answer": "Nvidia's net income has grown dramatically over its last three fiscal years. In FY2024 (year ended January 28, 2024), net income was $29,760 million [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2024-01-28], also confirmed in the consolidated statements of income [0001045810-24-000029:item-15-p005]. In FY2025 (year ended January 26, 2025), net income rose to $72,880 million [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2025-01-26], more than doubling from the prior year. In FY2026 (year ended January 25, 2026), net income reached $120,067 million [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25], continuing the strong upward trajectory. Overall, net income roughly quadrupled from $29.8 billion in FY2024 to $120.1 billion in FY2026.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How has Nvidia's net income evolved over its last three fiscal years?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "In FY2024 (year ended January 28, 2024), Nvidia's net income was $29,760 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 29,760,000,000 usd ($29,760 million) for FY 2024, period ending 2024-01-28, 10-K acc 0001045810-26-000021",
+        "answer_span": "In FY2024 (year ended January 28, 2024), net income was $29,760 million [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2024-01-28], also confirmed in the consolidated statements of income [0001045810-24-000029:item-15-p005].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2024-01-28",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "0001045810-24-000029:item-15-p005",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 15",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "In FY2025 (year ended January 26, 2025), Nvidia's net income rose to $72,880 million, more than doubling from the prior year.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 72,880,000,000 usd ($72,880 million) for FY 2025, period ending 2025-01-26, 10-K acc 0001045810-26-000021",
+        "answer_span": "In FY2025 (year ended January 26, 2025), net income rose to $72,880 million [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2025-01-26], more than doubling from the prior year.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2025-01-26",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2024-01-28",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "In FY2026 (year ended January 25, 2026), Nvidia's net income reached $120,067 million.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 120,067,000,000 usd ($120,067 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "In FY2026 (year ended January 25, 2026), net income reached $120,067 million [xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25], continuing the strong upward trajectory.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "Nvidia's net income roughly quadrupled from $29.8 billion in FY2024 to $120.1 billion in FY2026.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "NVDA filed Net income (us-gaap:NetIncomeLoss) for FY 2024, period ending 2024-01-28: 29,760,000,000 USD — as reported in 10-K 0001045810-26-000021.\nNVDA filed Net income (us-gaap:NetIncomeLoss) for FY 2026, period ending 2026-01-25: 120,067,000,000 USD — as reported in 10-K 0001045810-26-000021.",
+        "answer_span": "Overall, net income roughly quadrupled from $29.8 billion in FY2024 to $120.1 billion in FY2026.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2024-01-28",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          },
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:NetIncomeLoss:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 28297,
+      "cost_usd_used": 0.019103501000000002
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

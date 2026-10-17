@@ -1,0 +1,112 @@
+{
+  "job_id": "c67659c6c3ce",
+  "source": "recorded",
+  "created_at": "2026-10-17T10:53:54.935180+00:00",
+  "result": {
+    "run_id": "c67659c6c3ce",
+    "question": "How much cash and cash equivalents did Apple report at the end of fiscal 2025?",
+    "answer": "Apple reported cash and cash equivalents of $35,934 million (approximately $35.9 billion) at the end of fiscal 2025, which concluded on September 27, 2025. This figure is confirmed by the XBRL fact for CashAndCashEquivalentsAtCarryingValue as of 2025-09-27 [xbrl:0000320193-25-000079:us-gaap:CashAndCashEquivalentsAtCarryingValue:2025-09-27], the September 27, 2025 column of the condensed consolidated balance sheet in Apple's Q1 2026 10-Q [0000320193-26-000006:part-i--item-1-p002], and the ending balance on the consolidated statements of cash flows in Apple's 2025 Form 10-K [0000320193-25-000079:item-8-p004].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How much cash and cash equivalents did Apple report at the end of fiscal 2025?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Apple reported cash and cash equivalents of $35,934 million at the end of fiscal 2025, which concluded on September 27, 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:CashAndCashEquivalentsAtCarryingValue (Cash and cash equivalents) = 35,934,000,000 usd ($35,934 million) for 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "Apple reported cash and cash equivalents of $35,934 million (approximately $35.9 billion) at the end of fiscal 2025, which concluded on September 27, 2025.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:CashAndCashEquivalentsAtCarryingValue:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "0000320193-26-000006:part-i--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000006",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-26-000006",
+            "filing_date": "2026-01-30"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p004",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "The $35,934 million figure is confirmed by the XBRL fact for CashAndCashEquivalentsAtCarryingValue as of 2025-09-27, the September 27, 2025 balance sheet column in Apple's Q1 2026 10-Q, and the ending balance on the consolidated statements of cash flows in Apple's 2025 Form 10-K.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "AAPL filed Cash and cash equivalents (us-gaap:CashAndCashEquivalentsAtCarryingValue) for as of 2025, period ending 2025-09-27: 35,934,000,000 USD — as reported in 10-K 0000320193-25-000079.\n\nCash and cash equivalents $ 45,317 $ 35,934\n\nCash, cash equivalents, and restricted cash and cash equivalents, ending balances $ 35,934 $ 29,943 $ 30,737",
+        "answer_span": "This figure is confirmed by the XBRL fact for CashAndCashEquivalentsAtCarryingValue as of 2025-09-27 [xbrl:0000320193-25-000079:us-gaap:CashAndCashEquivalentsAtCarryingValue:2025-09-27], the September 27, 2025 column of the condensed consolidated balance sheet in Apple's Q1 2026 10-Q [0000320193-26-000006:part-i--item-1-p002], and the ending balance on the consolidated statements of cash flows in Apple's 2025 Form 10-K [0000320193-25-000079:item-8-p004].",
+        "feedback": "The claim states that the $35,934 million figure is confirmed by the XBRL fact, the September 27, 2025 balance sheet column in the Q1 2026 10-Q, and the ending balance on the consolidated statements of cash flows in Apple's 2025 Form 10-K. \n1. XBRL fact: confirms $35,934,000,000 USD (i.e. $35,934 million) for CashAndCashEquivalentsAtCarryingValue as of 2025-09-27.\n2. Q1 2026 10-Q Balance Sheet: shows Cash and cash equivalents of $35,934 million under the September 27, 2025 column.\n3. 2025 Form 10-K Statement of Cash Flows: shows ending balance of \"$35,934\" for \"Cash, cash equivalents, and restricted cash and cash equivalents\" as of September 27, 2025 (not purely Cash and cash equivalents, but the figure matches).\nLet's check if the cash flow statement line item is strictly 'Cash and cash equivalents' or 'Cash, cash equivalents, and restricted cash and cash equivalents'. The excerpt shows: 'Cash, cash equivalents, and restricted cash and cash equivalents, ending balances $ 35,934'. Therefore, the 10-K cash flow statement lists it as cash, cash equivalents, and restricted cash and cash equivalents. The claim says \"ending balance on the consolidated statements of cash flows in Apple's 2025 Form 10-K\", which matches $35,934. Let's verify each part with supporting spans.",
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:CashAndCashEquivalentsAtCarryingValue:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "0000320193-26-000006:part-i--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000006",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-26-000006",
+            "filing_date": "2026-01-30"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p004",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 14674,
+      "cost_usd_used": 0.008205106
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

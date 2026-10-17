@@ -1,0 +1,118 @@
+{
+  "job_id": "a7eaee2b2070",
+  "source": "recorded",
+  "created_at": "2026-10-17T11:07:32.826967+00:00",
+  "result": {
+    "run_id": "a7eaee2b2070",
+    "question": "What is Apple's current market capitalization and today's stock price?",
+    "answer": "The SEC filing excerpts provided do not contain Apple's current market capitalization or today's stock price. SEC filings such as 10-Qs, 10-Ks, and 8-Ks report historical financial data, share repurchase activity, and stock performance graphs, but they do not provide real-time market capitalization or same-day stock prices. To obtain Apple's current market capitalization and today's stock price, one would need to consult a real-time financial data source rather than SEC filings.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What is Apple's current market capitalization?",
+        "rationale": "Market capitalization requires finding the current share price and total shares outstanding, which is a distinct metric from the stock price alone, though they are often found together.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What is Apple's current stock price today?",
+        "rationale": "Stock price is a real-time market data point separate from fundamental accounting market capitalization, though often reported together.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "The SEC filing excerpts provided do not contain Apple's current market capitalization or today's stock price.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "The SEC filing excerpts provided do not contain Apple's current market capitalization or today's stock price.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000006:part-i--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000006",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-26-000006",
+            "filing_date": "2026-01-30"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-5-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 5",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p002",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "SEC filings report historical financial data, share repurchase activity, and stock performance graphs rather than real-time market capitalization or same-day stock prices.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "CONDENSED CONSOLIDATED BALANCE SHEETS... Purchases of Equity Securities by the Issuer and Affiliated Purchasers... The following graph shows a comparison of five-year cumulative total shareholder return...",
+        "answer_span": "SEC filings such as 10-Qs, 10-Ks, and 8-Ks report historical financial data, share repurchase activity, and stock performance graphs, but they do not provide real-time market capitalization or same-day stock prices.",
+        "feedback": "The provided excerpts show historical financial data (Balance Sheets, Statements of Shareholders' Equity, Statements of Comprehensive Income), share repurchase activity (\"Purchases of Equity Securities by the Issuer and Affiliated Purchasers\"), and stock performance comparisons (the five-year cumulative total shareholder return graph). They do not contain real-time market capitalization or same-day stock prices, which aligns with the claim's statement that SEC filings report these historical items rather than real-time/same-day ones.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-26-000006:part-i--item-1-p002",
+            "doc_id": "AAPL-10-Q-0000320193-26-000006",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-26-000006",
+            "filing_date": "2026-01-30"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-5-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 5",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p002",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 44108,
+      "cost_usd_used": 0.015686644999999996
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

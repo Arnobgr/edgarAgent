@@ -1,0 +1,308 @@
+{
+  "job_id": "3cc806dca16a",
+  "source": "recorded",
+  "created_at": "2026-10-17T11:08:06.422328+00:00",
+  "result": {
+    "run_id": "3cc806dca16a",
+    "question": "How many Cybertrucks did Tesla deliver in each month of the last quarter?",
+    "answer": "The provided SEC filing evidence does not contain monthly Cybertruck delivery figures. Tesla's operational summaries in its quarterly press releases report deliveries on a quarterly basis, organized into two categories: \"Model 3/Y deliveries\" and \"Other models deliveries\" [c1, c2, c3, c4]. Cybertruck is listed separately in the vehicle capacity tables with an installed annual capacity of >125,000 and a production status, but no delivery count is provided for Cybertruck in any of the excerpts [c1, c2, c3, c4, c5]. For example, the Q1 2025 press release shows \"Other models deliveries\" of 12,881 for the quarter and the Q3 2025 press release shows \"Other models deliveries\" of 15,933 for the quarter, but neither provides a Cybertruck-specific delivery figure or a monthly breakdown [c3, c4]. None of the provided excerpts contain any monthly delivery data for any vehicle model. Therefore, the number of Cybertrucks delivered in each month of the last quarter cannot be determined from the provided evidence.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How many Cybertrucks did Tesla deliver in each month of the last quarter?",
+        "rationale": "Tesla's SEC filings (like 10-Q or 10-K) do not break down vehicle deliveries by individual month or by specific model (Cybertruck) on a monthly basis.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Tesla's operational summaries in its quarterly press releases report deliveries on a quarterly basis, organized into two categories: \"Model 3/Y deliveries\" and \"Other models deliveries\".",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Model 3/Y deliveries 412,180 446,915 419,074 461,538 369,783 -10% Other models deliveries 10,695 19,225 15,985 22,969 17,027 59%",
+        "answer_span": "Tesla's operational summaries in its quarterly press releases report deliveries on a quarterly basis, organized into two categories: \"Model 3/Y deliveries\" and \"Other models deliveries\" [c1, c2, c3, c4].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000950170-24-046895:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0000950170-24-046895",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000950170-24-046895",
+            "filing_date": "2024-04-23"
+          },
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          },
+          {
+            "chunk_id": "0001628280-26-003837:ex-99-press-release-p004",
+            "doc_id": "TSLA-8-K-0001628280-26-003837",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-26-003837",
+            "filing_date": "2026-01-28"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "Cybertruck is listed separately in the vehicle capacity tables with an installed annual capacity of >125,000 and a production status, but no delivery count is provided for Cybertruck in any of the excerpts.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Texas Model Y >250,000 Production Cybertruck >125,000 Production",
+        "answer_span": "Cybertruck is listed separately in the vehicle capacity tables with an installed annual capacity of >125,000 and a production status, but no delivery count is provided for Cybertruck in any of the excerpts [c1, c2, c3, c4, c5].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000950170-24-046895:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0000950170-24-046895",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000950170-24-046895",
+            "filing_date": "2024-04-23"
+          },
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          },
+          {
+            "chunk_id": "0001628280-26-003837:ex-99-press-release-p004",
+            "doc_id": "TSLA-8-K-0001628280-26-003837",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-26-003837",
+            "filing_date": "2026-01-28"
+          },
+          {
+            "chunk_id": "0001628280-25-002993:ex-99-press-release-p004",
+            "doc_id": "TSLA-8-K-0001628280-25-002993",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-002993",
+            "filing_date": "2025-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "The Q1 2025 press release shows \"Other models deliveries\" of 12,881 for the quarter and the Q3 2025 press release shows \"Other models deliveries\" of 15,933 for the quarter.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…0.4B was primarily the result of positive free cash  flow of $0.7B. 5 (1) Impact is calculated on a constant currency basis. Actuals are compar…\n…,930 323,800 -12% Other models deliveries 17,027 21,551 22,915 23,640 12,881 -24% Total deliveries 386,810 443,956 462,890 495,570 336,681 -13%  o…\n…ed into USD using average exchange rates from Q1’24.\nQ1-2024 Q2-2024 Q3-2024 Q4-2024 Q1-2025 YoY Model 3/Y production 412,376 386,576 443,668…\n…73,728 481,166 9% Other models deliveries 22,915 23,640 12,881 10,394 15,933 -30% Total deliveries 462,890 495,570 336,681 384,122 497,099 7%  of…",
+        "answer_span": "For example, the Q1 2025 press release shows \"Other models deliveries\" of 12,881 for the quarter and the Q3 2025 press release shows \"Other models deliveries\" of 15,933 for the quarter, but neither provides a Cybertruck-specific delivery figure or a monthly breakdown [c3, c4].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "Neither the Q1 2025 nor the Q3 2025 press release provides a Cybertruck-specific delivery figure or a monthly breakdown of deliveries.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Q1-2024 Q2-2024 Q3-2024 Q4-2024 Q1-2025 Model 3/Y production 412,376 386,576 443,668 436,718 345,454 -16% Other models production 20,995 24,255 26,128 22,727 17,161 -18% Total production 433,371 410,831 469,796 459,445 362,615 -16% Model 3/Y deliveries 369,783 422,405 439,975 471,930 323,800 -12% Other models deliveries 17,027 21,551 22,915 23,640 12,881 -24% Total deliveries 386,810 443,956 462,890 495,570 336,681 -13%",
+        "answer_span": "For example, the Q1 2025 press release shows \"Other models deliveries\" of 12,881 for the quarter and the Q3 2025 press release shows \"Other models deliveries\" of 15,933 for the quarter, but neither provides a Cybertruck-specific delivery figure or a monthly breakdown [c3, c4].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "None of the provided excerpts contain any monthly delivery data for any vehicle model.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "None of the provided excerpts contain any monthly delivery data for any vehicle model.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000950170-24-046895:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0000950170-24-046895",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000950170-24-046895",
+            "filing_date": "2024-04-23"
+          },
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          },
+          {
+            "chunk_id": "0001628280-26-003837:ex-99-press-release-p004",
+            "doc_id": "TSLA-8-K-0001628280-26-003837",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-26-003837",
+            "filing_date": "2026-01-28"
+          },
+          {
+            "chunk_id": "0001628280-25-002993:ex-99-press-release-p004",
+            "doc_id": "TSLA-8-K-0001628280-25-002993",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-002993",
+            "filing_date": "2025-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "The number of Cybertrucks delivered in each month of the last quarter cannot be determined from the provided evidence.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": null,
+        "answer_span": "Therefore, the number of Cybertrucks delivered in each month of the last quarter cannot be determined from the provided evidence.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000950170-24-046895:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0000950170-24-046895",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0000950170-24-046895",
+            "filing_date": "2024-04-23"
+          },
+          {
+            "chunk_id": "0001628280-25-018851:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-018851",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-018851",
+            "filing_date": "2025-04-22"
+          },
+          {
+            "chunk_id": "0001628280-25-045861:ex-99-press-release-p003",
+            "doc_id": "TSLA-8-K-0001628280-25-045861",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-25-045861",
+            "filing_date": "2025-10-22"
+          },
+          {
+            "chunk_id": "0001628280-26-003837:ex-99-press-release-p004",
+            "doc_id": "TSLA-8-K-0001628280-26-003837",
+            "ticker": "TSLA",
+            "form_type": "8-K",
+            "section": "EX-99 Press Release",
+            "accession_no": "0001628280-26-003837",
+            "filing_date": "2026-01-28"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 64262,
+      "cost_usd_used": 0.033208325000000004
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

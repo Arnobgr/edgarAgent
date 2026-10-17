@@ -16,21 +16,20 @@ runs from the current eval baseline. The API behind live questions is at
 
 ## The numbers
 
-The current baseline is `agent-20261011-165218`: the 30-question gold set, run
-on the VPS against the deployed image, 30 of 30 completed with no degraded
-attempts.
+The current baseline is `agent-20261017-131037`: the 30-question gold set, run
+against the re-ingested corpus, 30 of 30 completed with no degraded attempts.
 
 | Metric | Value | Floor | How it is measured |
 |---|---|---|---|
-| `grounding_rate` | **0.974** | ≥ 0.90 | Share of claims in delivered answers with a `grounded` verdict and a cited source |
+| `grounding_rate` | **0.961** | ≥ 0.90 | Share of claims in delivered answers with a `grounded` verdict and a cited source |
 | `hallucination_rate` | **0.000** | ≤ 0.02 | Share of claims in delivered answers with no valid support; retracted claims are gone and do not count |
-| `numeric_fidelity` | **0.936** | ≥ 0.85 | Share of dollar figures in delivered prose that equal a filed XBRL value at their stated precision |
+| `numeric_fidelity` | **0.947** | ≥ 0.85 | Share of dollar figures in delivered prose that equal a filed XBRL value at their stated precision |
 | `expected_fact_coverage` | **1.000** | ≥ 0.65 | Share of the gold set's 28 hand-checked expected facts that appear in the answers |
-| `citation_accuracy` | **0.849** | ≥ 0.75 | Share of 218 (claim, supporting span) pairs that an independent judge, Claude Sonnet 5, accepts as sufficient evidence |
+| `citation_accuracy` | **0.834** | ≥ 0.75 | Share of 187 (claim, supporting span) pairs that an independent judge, Claude Sonnet 5, accepts as sufficient evidence |
 | verifier precision / recall | **1.000 / 1.000** | ≥ 0.95 | The verifiers on 128 hand-labelled claims (110 numeric, 18 qualitative) |
 | unanswerable declined | **4 / 4** | | Questions the corpus cannot answer (market price, Azure revenue, a CFO's call remarks, monthly deliveries) |
 | adversarial cases | **16 / 16** | | Injection, extraction and poisoned-document attacks (2026-08-12, `docs/security.md`) |
-| cost per question | **$0.028** mean, $0.064 p90 | | Measured from checkpoints and reconciled to the cent against Langfuse traces |
+| cost per question | **$0.030** mean, $0.069 p90 | | Read from the baseline's checkpoints. The cost note's breakdown is from the 10-11 run ($0.028 / $0.064), reconciled to the cent against Langfuse traces |
 
 **Read `hallucination_rate` with its caveat.** It is computed from the
 system's own verdicts. A claim the verifier wrongly accepts would count as
@@ -127,8 +126,9 @@ closing that gap at about $5.
 ### Retrieval and ingestion
 
 The corpus is the last three fiscal years of 10-Ks, 10-Qs and earnings-release
-8-Ks for TSLA, AAPL and NVDA, all from EDGAR. That is 78 filings, 4,181
-retrieval chunks and 28,550 XBRL facts.
+8-Ks for TSLA, AAPL and NVDA, all from EDGAR. That is 85 filings, 4,591
+retrieval chunks and 31,023 XBRL facts, re-ingested on 2026-10-17 with
+edgartools 5.61.1 (ADR 0048).
 
 - **Structure-aware parsing** (ADR 0010). 10-K and 10-Q items are split
   by the filing's own structure, tables are kept as tables rather than

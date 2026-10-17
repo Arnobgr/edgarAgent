@@ -79,28 +79,44 @@ exactly the failure the first deploy produced. That is why
 not a plain HTTP check. Do not close the gap by returning 503 instead: the
 container healthcheck and `deploy.sh`'s health wait both key off that 200.
 
-`eval/baselines.json` holds run `agent-20261011-165218`, accepted 2026-10-11.
-It ran on the box against image `64ef36d`: 30/30, `degraded_attempts: 0`,
-`runs_with_no_claims: 0`, every floor met, and the ratchet held. It is the first
-baseline with every `DraftClaim` field required (ADR 0046 addendum) and with
-date-only claims judged by entailment (ADR 0047). The retraction invariant was
-checked before acceptance: 15 claims retracted, all carrying spans, none still
-in the delivered prose (two appear only in the retraction notice, which quotes
-them), and none of the 230 rows scored `unsupported`. The 10-10 baseline before
-it was the first with ADR 0044 (deltas recomputed from cited facts) and with
-`claims` required. The 08-13 baseline was the first that was 30 verifiable runs
-of 30, which closed ADR 0038 §3. The 08-06 column is the pre-public-deploy run
-that ADR 0036 mandated, executed on the box against the deployed image. **It
-passed every target and is not a baseline**, because `degraded_attempts: 1`
-disqualifies it (ADR 0025):
+`eval/baselines.json` holds run `agent-20261017-131037`, accepted 2026-10-17.
+**It is the first baseline on the re-ingested corpus** (ADR 0048): 85 filings
+parsed by edgartools 5.61.1, with duplicated sections removed. It ran on the
+developer's machine, because that is where the new corpus was, with the code of
+`32b328c` plus the duplicate fix: 30/30, `degraded_attempts: 0`,
+`runs_with_no_claims: 0`, every floor met, and the ratchet held.
+**`citation_accuracy` was judged in a second pass.** On the first pass every
+judge call failed with a 401, because the local Anthropic key was the
+pre-rotation one. The eval reports that as `0.000`, not as unmeasured. The 30
+runs were rebuilt from `checkpoints.db` with the export's `build_run_result`
+path; they reproduced the report's grounding, hallucination and no-claims
+figures exactly; then only the judge was re-run (187 judged, 0 failures). The
+report records this under `citation_rejudged`. The retraction invariant was
+checked before acceptance: 9 claims retracted, all carrying spans, none in the
+delivered prose, and none of the 203 rows scored `unsupported`.
 
-| | **2026-10-11** | 2026-10-10 | 2026-08-13 | 2026-08-01 | 2026-08-06 | floor |
-|---|---|---|---|---|---|---|
-| `grounding_rate` | **0.974** | 0.968 | 0.980 | 0.972 | 0.955 | ≥ 0.90 |
-| `hallucination_rate` | **0.000** | 0.000 | 0.000 | 0.000 | 0.000 | ≤ 0.02, ratcheted |
-| `numeric_fidelity` | **0.936** | 0.978 | 0.989 | 0.963 | 0.924 | ≥ 0.85 |
-| `expected_fact_coverage` | **1.000** | 0.893 | 1.000 | 1.000 | 0.893 | ≥ 0.65 |
-| `citation_accuracy` | **0.849** | 0.782 | 0.867 | 0.851 | 0.828 | ≥ 0.75 |
+The 10-11 baseline was the first with every `DraftClaim` field required
+(ADR 0046 addendum) and with date-only claims judged by entailment (ADR 0047).
+The 10-10 baseline before it was the first with ADR 0044 (deltas recomputed
+from cited facts) and with `claims` required. The 08-13 baseline was the first
+that was 30 verifiable runs of 30, which closed ADR 0038 §3. The 08-06 column
+is the pre-public-deploy run that ADR 0036 mandated, executed on the box
+against the deployed image. **It passed every target and is not a baseline**,
+because `degraded_attempts: 1` disqualifies it (ADR 0025):
+
+| | **2026-10-17** | 2026-10-11 | 2026-10-10 | 2026-08-13 | 2026-08-01 | 2026-08-06 | floor |
+|---|---|---|---|---|---|---|---|
+| `grounding_rate` | **0.961** | 0.974 | 0.968 | 0.980 | 0.972 | 0.955 | ≥ 0.90 |
+| `hallucination_rate` | **0.000** | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | ≤ 0.02, ratcheted |
+| `numeric_fidelity` | **0.947** | 0.936 | 0.978 | 0.989 | 0.963 | 0.924 | ≥ 0.85 |
+| `expected_fact_coverage` | **1.000** | 1.000 | 0.893 | 1.000 | 1.000 | 0.893 | ≥ 0.65 |
+| `citation_accuracy` | **0.834** | 0.849 | 0.782 | 0.867 | 0.851 | 0.828 | ≥ 0.75 |
+
+**The 10-17 moves are inside the noise, and they are not a parser verdict.**
+One claim in ~200 is 0.005 of `grounding_rate`, and the judge alone carries
+±0.037 (ADR 0039). This run changed the corpus *and* GLM's sampling at once,
+so one reading cannot say whether the new parse helped or hurt retrieval. What
+it shows is that the floors hold on it.
 
 **Both 10-10 drops had causes outside the answers, and both are fixed.**
 Coverage lost all three of its facts in g-014. One OpenRouter backend omitted
@@ -444,15 +460,18 @@ SQLite manifest: **acquire** (network → `data/parsed/`) → **chunk** (local �
 failures isolate to their filing. `--skip-embed` runs the free stages with no
 API keys.
 
-**Ingest needs edgartools ≥ 5.61.1, and the deployed corpus was not parsed by
-it** (ADR 0048). SEC began refusing the index URL 5.42.0 built, which broke
-every 10-K/10-Q acquire; 5.59–5.60 fail *silently* (empty HTML). Re-acquiring
-all 78 filings under 5.61.1 gave identical tables and 8-Ks, 15 fewer facts (all
-unitless years), and different section text in about a quarter of chunks. So a
-re-ingest is a retrieval change: **it needs a full eval before it ships, and a
-partial ingest mixes two parses.** The stored TSLA FY2023 10-K
-(`0001628280-24-002390`) has no Risk Factors or Business section; 5.61.1 parses
-it correctly, and only a re-ingest fixes it.
+**Ingest needs edgartools ≥ 5.61.1** (ADR 0048). SEC began refusing the index
+URL 5.42.0 built, which broke every 10-K/10-Q acquire; 5.59–5.60 fail
+*silently* (empty HTML). Re-acquiring all 78 July filings under 5.61.1 gave
+identical tables and 8-Ks, 15 fewer facts (all unitless years), and different
+section text in about a quarter of chunks. So a re-ingest is a retrieval
+change: **it needs a full eval before it ships, and a partial ingest mixes two
+parses.** The corpus was fully re-ingested on 2026-10-17 (85 filings, 4,591
+chunks, 31,023 facts) and evaluated as the 10-17 baseline. That fixed the TSLA
+FY2023 10-K (`0001628280-24-002390`), which had been stored with no Risk
+Factors or Business section. The July corpus is kept at `data/corpus-2026-07/`
+with a Qdrant snapshot. `drop_duplicated_items` (parse.py) removes the three
+duplicated sections 5.61.1 produced.
 
 ### The service, and what actually protects it
 

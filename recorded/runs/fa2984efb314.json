@@ -1,0 +1,161 @@
+{
+  "job_id": "fa2984efb314",
+  "source": "recorded",
+  "created_at": "2026-10-17T10:52:45.748363+00:00",
+  "result": {
+    "run_id": "fa2984efb314",
+    "question": "What was Apple's net income in fiscal year 2025?",
+    "answer": "Apple's net income for fiscal year 2025 (the year ended September 27, 2025) was $112,010 million, or approximately $112.0 billion. The same amount appears in the Consolidated Statements of Cash Flows, where net income is listed as 112,010 (in millions) for the same period [0000320193-25-000079:item-8-p004]. The XBRL fact for NetIncomeLoss for the period ending 2025-09-27 reports 112,010,000,000 USD [xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27]. For comparison, net income was $93,736 million in fiscal 2024 and $96,995 million in fiscal 2023 [0000320193-25-000079:item-8-p001].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- The Consolidated Statements of Operations in Apple's 2025 Form 10-K shows net income of $112,010 (in millions) for the year ended September 27, 2025.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What was Apple's net income in fiscal year 2025?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple's net income for fiscal year 2025 (the year ended September 27, 2025) was $112,010 million, or approximately $112.0 billion.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 112,010,000,000 usd ($112,010 million) for FY 2025, period ending 2025-09-27, 10-K acc 0000320193-25-000079",
+        "answer_span": "Apple's net income for fiscal year 2025 (the year ended September 27, 2025) was $112,010 million, or approximately $112.0 billion.",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          },
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p004",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "The Consolidated Statements of Cash Flows lists net income as 112,010 (in millions) for the year ended September 27, 2025.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…es  $  29,943  $  30,737  $  24,977\nOperating activities:\nNet income  112,010  93,736  96,995\nAdjustments to reconcile net income to cash generated…",
+        "answer_span": "The same amount appears in the Consolidated Statements of Cash Flows, where net income is listed as 112,010 (in millions) for the same period [0000320193-25-000079:item-8-p004].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p004",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-4",
+        "text": "The XBRL fact for NetIncomeLoss for the period ending 2025-09-27 reports 112,010,000,000 USD.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "…ed Net income (us-gaap:NetIncomeLoss) for FY 2025, period ending 2025-09-27: 112,010,000,000 USD — as reported in 10-K 0000320193-25-000079.\n…Net income (us-gaap:NetIncomeLoss) for FY 2025, period ending 2025-09-27: 112,010,000,000 USD — as reported in 10-K 0000320193-25-000079.\n…income (us-gaap:NetIncomeLoss) for FY 2025, period ending 2025-09-27: 112,010,000,000 USD — as reported in 10-K 0000320193-25-000079.",
+        "answer_span": "The XBRL fact for NetIncomeLoss for the period ending 2025-09-27 reports 112,010,000,000 USD [xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0000320193-25-000079:us-gaap:NetIncomeLoss:2025-09-27",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "Apple's net income was $93,736 million in fiscal 2024 and $96,995 million in fiscal 2023.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:NetIncomeLoss (Net income) = 93,736,000,000 usd ($93,736 million) for FY 2024, period ending 2024-09-28, 10-K acc 0000320193-25-000079\nXBRL us-gaap:NetIncomeLoss (Net income) = 96,995,000,000 usd ($96,995 million) for FY 2023, period ending 2023-09-30, 10-K acc 0000320193-25-000079",
+        "answer_span": "For comparison, net income was $93,736 million in fiscal 2024 and $96,995 million in fiscal 2023 [0000320193-25-000079:item-8-p001].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-2",
+        "text": "The Consolidated Statements of Operations in Apple's 2025 Form 10-K shows net income of $112,010 (in millions) for the year ended September 27, 2025.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "This figure is reported on the Consolidated Statements of Operations in Apple's 2025 Form 10-K, which shows net income of $112,010 (in millions) for the year ended September 27, 2025 [0000320193-25-000079:item-8-p001].",
+        "feedback": "figure(s) $112,010 not found in the XBRL facts store — searched XBRL concepts: Net Income, NetIncomeLoss, ProfitLoss; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000079:item-8-p001",
+            "doc_id": "AAPL-10-K-0000320193-25-000079",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 8",
+            "accession_no": "0000320193-25-000079",
+            "filing_date": "2025-10-31"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 27859,
+      "cost_usd_used": 0.013331927999999998
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

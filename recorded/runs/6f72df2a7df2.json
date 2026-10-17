@@ -1,0 +1,352 @@
+{
+  "job_id": "6f72df2a7df2",
+  "source": "recorded",
+  "created_at": "2026-10-17T11:06:38.620439+00:00",
+  "result": {
+    "run_id": "6f72df2a7df2",
+    "question": "What does Tesla disclose about its dependence on Elon Musk?",
+    "answer": "Tesla discloses in its risk factors that it is \"highly dependent on the services of Elon Musk, Technoking of Tesla and our Chief Executive Officer\" [0001628280-25-003063:item-1a-p016] [0001628280-26-003952:item-1a-p016] [0001628280-24-002390:item-1a-p015]. The company warns that the loss of services of key employees, including in particular Mr. Musk, could disrupt operations or delay the development, introduction, and ramp of its products and services [0001628280-26-003952:item-1a-p016] [0001628280-24-002390:item-1a-p015]. Tesla further notes that none of its key employees, including Mr. Musk, is bound by an employment agreement for any specific term, and it may not be able to successfully attract and retain senior leadership necessary to grow its business [0001628280-26-003952:item-1a-p016] [0001628280-24-002390:item-1a-p015].\n\nRegarding Mr. Musk's time commitment, Tesla states that although Mr. Musk spends significant time with Tesla and is highly active in its management, he does not devote his full time and attention to Tesla [0001628280-25-003063:item-1a-p016] [0001628280-26-003952:item-1a-p017] [0001628280-24-002390:item-1a-p016]. In the 2025 10-K filed January 30, 2025, Tesla discloses that Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X Corp., X.AI Corp., Neuralink Corp. and The Boring Company, and is involved in other ventures and with the Department of Government Efficiency [0001628280-25-003063:item-1a-p016]. In the 2024 10-K filed January 29, 2024, Tesla similarly discloses that Mr. Musk serves as Chief Executive Officer and Chief Technical Officer of Space Exploration Technologies Corp., Chairman and Chief Technical Officer of X Corp., and is involved in other emerging technology ventures [0001628280-24-002390:item-1a-p016]. In the 2026 10-K filed January 29, 2026, Tesla discloses that Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X.AI Holdings Corp. (\"xAI\"), Neuralink Corp. and The Boring Company, and is involved in other ventures [0001628280-26-003952:item-1a-p017].\n\nTesla also discloses risks related to Mr. Musk's personal financial arrangements. Certain banking institutions have made extensions of credit to Mr. Musk, a portion of which was used to purchase shares of Tesla common stock, and these loans are partially secured by pledges of Tesla common stock owned by Mr. Musk [0001628280-25-003063:item-1a-p034] [0001628280-24-002390:item-1a-p034]. If the price of Tesla's common stock were to decline substantially, Mr. Musk may be forced to sell shares to satisfy his loan obligations, which could cause the stock price to decline further [0001628280-25-003063:item-1a-p034] [0001628280-24-002390:item-1a-p034]. In the 2026 10-K, Tesla adds that Mr. Musk may also sell a portion of his shares to satisfy tax obligations relating to the 2018 CEO Performance Award [0001628280-26-003952:item-1a-p035]. The 2026 10-K also discusses the 2025 CEO Performance Award, noting that the product goals were designed to incentivize Elon Musk to devote time and energy to development of specific products and services, and that misalignment of consumer demand with these technologies could impair Tesla's ability to realize returns on related investments [0001628280-26-003952:item-1a-p034].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What specific risks does Tesla disclose regarding its dependence on Elon Musk in its risk factors section?",
+        "rationale": "Tesla's risk factors specifically address the company's reliance on Elon Musk's continued service and leadership.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What does Tesla disclose about Elon Musk's time commitment, other business ventures, and executive role?",
+        "rationale": "Tesla discloses details regarding Elon Musk's time commitment, executive role, and other ventures that impact his focus on Tesla.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "Tesla discloses in its risk factors that it is highly dependent on the services of Elon Musk, Technoking of Tesla and its Chief Executive Officer.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "We are highly dependent on the services of Elon Musk, Technoking of Tesla and our Chief Executive Officer.",
+        "answer_span": "Tesla discloses in its risk factors that it is \"highly dependent on the services of Elon Musk, Technoking of Tesla and our Chief Executive Officer\" [0001628280-25-003063:item-1a-p016] [0001628280-26-003952:item-1a-p016] [0001628280-24-002390:item-1a-p015].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p015",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "Tesla warns that the loss of services of key employees, including in particular Mr. Musk, could disrupt operations or delay the development, introduction, and ramp of its products and services.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The loss of the services of any of our key employees or any significant portion of our workforce could disrupt our operations or delay the development, introduction and ramp of our products and services. In particular, we are highly dependent on the services of Elon Musk, Technoking of Tesla and our Chief Executive Officer.",
+        "answer_span": "The company warns that the loss of services of key employees, including in particular Mr. Musk, could disrupt operations or delay the development, introduction, and ramp of its products and services [0001628280-26-003952:item-1a-p016] [0001628280-24-002390:item-1a-p015].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p015",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "Tesla notes that none of its key employees, including Mr. Musk, is bound by an employment agreement for any specific term, and it may not be able to successfully attract and retain senior leadership necessary to grow its business.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "None of our key employees is bound by an employment agreement for any specific term and we may not be able to successfully attract and retain senior leadership necessary to grow our business.",
+        "answer_span": "Tesla further notes that none of its key employees, including Mr. Musk, is bound by an employment agreement for any specific term, and it may not be able to successfully attract and retain senior leadership necessary to grow its business [0001628280-26-003952:item-1a-p016] [0001628280-24-002390:item-1a-p015].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p015",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-4",
+        "text": "Tesla states that although Mr. Musk spends significant time with Tesla and is highly active in its management, he does not devote his full time and attention to Tesla.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Although Mr. Musk spends significant time with Tesla and is highly active in our management, he does not devote his full time and attention to Tesla.",
+        "answer_span": "Regarding Mr. Musk's time commitment, Tesla states that although Mr. Musk spends significant time with Tesla and is highly active in its management, he does not devote his full time and attention to Tesla [0001628280-25-003063:item-1a-p016] [0001628280-26-003952:item-1a-p017] [0001628280-24-002390:item-1a-p016].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p017",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-5",
+        "text": "In the 2025 10-K filed January 30, 2025, Tesla discloses that Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X Corp., X.AI Corp., Neuralink Corp. and The Boring Company, and is involved in other ventures and with the Department of Government Efficiency.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "For example: Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X Corp., X.AI Corp., Neuralink Corp. and The Boring Company, and is involved in other ventures and with the Department of Government Efficiency.",
+        "answer_span": "In the 2025 10-K filed January 30, 2025, Tesla discloses that Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X Corp., X.AI Corp., Neuralink Corp. and The Boring Company, and is involved in other ventures and with the Department of Government Efficiency [0001628280-25-003063:item-1a-p016].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-6",
+        "text": "In the 2024 10-K filed January 29, 2024, Tesla discloses that Mr. Musk serves as Chief Executive Officer and Chief Technical Officer of Space Exploration Technologies Corp., Chairman and Chief Technical Officer of X Corp., and is involved in other emerging technology ventures.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Mr. Musk also currently serves as Chief Executive Officer and Chief Technical Officer of Space Exploration Technologies Corp., a developer and manufacturer of space launch vehicles, Chairman and Chief Technical Officer of X Corp., a social media company, and is involved in other emerging technology ventures.",
+        "answer_span": "In the 2024 10-K filed January 29, 2024, Tesla similarly discloses that Mr. Musk serves as Chief Executive Officer and Chief Technical Officer of Space Exploration Technologies Corp., Chairman and Chief Technical Officer of X Corp., and is involved in other emerging technology ventures [0001628280-24-002390:item-1a-p016].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p016",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-7",
+        "text": "In the 2026 10-K filed January 29, 2026, Tesla discloses that Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X.AI Holdings Corp. (\"xAI\"), Neuralink Corp. and The Boring Company, and is involved in other ventures.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X.AI Holdings Corp. (“xAI”), Neuralink Corp. and The Boring Company, and is involved in other ventures.",
+        "answer_span": "In the 2026 10-K filed January 29, 2026, Tesla discloses that Mr. Musk also currently holds management positions at Space Exploration Technologies Corp., X.AI Holdings Corp. (\"xAI\"), Neuralink Corp. and The Boring Company, and is involved in other ventures [0001628280-26-003952:item-1a-p017].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p017",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-8",
+        "text": "Certain banking institutions have made extensions of credit to Mr. Musk, a portion of which was used to purchase shares of Tesla common stock, and these loans are partially secured by pledges of Tesla common stock owned by Mr. Musk.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Certain banking institutions have made extensions of credit to Elon Musk, our Chief Executive Officer, a portion of which was used to purchase shares of common stock in certain of our public offerings and private placements at the same prices offered to third-party participants in such offerings and placements. We are not a party to these loans, which are partially secured by pledges of a portion of the Tesla common stock currently owned by Mr. Musk.",
+        "answer_span": "Certain banking institutions have made extensions of credit to Mr. Musk, a portion of which was used to purchase shares of Tesla common stock, and these loans are partially secured by pledges of Tesla common stock owned by Mr. Musk [0001628280-25-003063:item-1a-p034] [0001628280-24-002390:item-1a-p034].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1a-p034",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p034",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-9",
+        "text": "If the price of Tesla's common stock were to decline substantially, Mr. Musk may be forced to sell shares to satisfy his loan obligations, which could cause the stock price to decline further.",
+        "claim_type": "forward_looking",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "attribution",
+        "supporting_span": "If the price of our common stock were to decline substantially, Mr. Musk may be forced by one or more of the banking institutions to sell shares of Tesla common stock to satisfy his loan obligations if he could not do so through other means. Any such sales could cause the price of our common stock to decline further.",
+        "answer_span": "If the price of Tesla's common stock were to decline substantially, Mr. Musk may be forced to sell shares to satisfy his loan obligations, which could cause the stock price to decline further [0001628280-25-003063:item-1a-p034] [0001628280-24-002390:item-1a-p034].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-25-003063:item-1a-p034",
+            "doc_id": "TSLA-10-K-0001628280-25-003063",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-25-003063",
+            "filing_date": "2025-01-30"
+          },
+          {
+            "chunk_id": "0001628280-24-002390:item-1a-p034",
+            "doc_id": "TSLA-10-K-0001628280-24-002390",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-24-002390",
+            "filing_date": "2024-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-10",
+        "text": "In the 2026 10-K, Tesla adds that Mr. Musk may also sell a portion of his shares to satisfy tax obligations relating to the 2018 CEO Performance Award.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Mr. Musk may also sell a portion of his shares in order to satisfy tax obligations relating to the 2018 CEO Performance Award.",
+        "answer_span": "In the 2026 10-K, Tesla adds that Mr. Musk may also sell a portion of his shares to satisfy tax obligations relating to the 2018 CEO Performance Award [0001628280-26-003952:item-1a-p035].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p035",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-11",
+        "text": "The 2026 10-K discusses the 2025 CEO Performance Award, noting that the product goals were designed to incentivize Elon Musk to devote time and energy to development of specific products and services, and that misalignment of consumer demand with these technologies could impair Tesla's ability to realize returns on related investments.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "The product goals were designed to incentivize Elon Musk to devote time and energy to development of these products and services, as these products and services are directionally consistent with Mr. Musk’s vision for the future of our company. ... As a result, misalignment of consumer demand and the technologies and initiatives associated with the 2025 CEO Performance Award, including the product goals, may impair our ability to realize returns on such investments and could lead to strategic misalignment, underperformance or write-downs of related assets, all of which could have a negative impact on our financial performance and stock price.",
+        "answer_span": "The 2026 10-K also discusses the 2025 CEO Performance Award, noting that the product goals were designed to incentivize Elon Musk to devote time and energy to development of specific products and services, and that misalignment of consumer demand with these technologies could impair Tesla's ability to realize returns on related investments [0001628280-26-003952:item-1a-p034].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001628280-26-003952:item-1a-p034",
+            "doc_id": "TSLA-10-K-0001628280-26-003952",
+            "ticker": "TSLA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001628280-26-003952",
+            "filing_date": "2026-01-29"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 38202,
+      "cost_usd_used": 0.034996625999999996
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

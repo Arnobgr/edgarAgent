@@ -1,0 +1,98 @@
+{
+  "job_id": "272bf328c55a",
+  "source": "recorded",
+  "created_at": "2026-10-17T10:52:55.977718+00:00",
+  "result": {
+    "run_id": "272bf328c55a",
+    "question": "How much did Nvidia spend on research and development in its latest fiscal year (FY2026)?",
+    "answer": "NVIDIA spent $18,497 million (approximately $18.5 billion) on research and development in fiscal year 2026 (the year ended January 25, 2026), as reported in its Consolidated Statements of Income in the 10-K filing [0001045810-26-000021:item-15-p005]. This is corroborated by the XBRL-tagged fact for us-gaap:ResearchAndDevelopmentExpense, which records $18,497,000,000 USD for the period ending 2026-01-25 [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25]. R&D represented 8.6% of revenue in FY2026 [0001045810-26-000021:item-7-p007].",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "How much did Nvidia spend on research and development in its latest fiscal year (FY2026)?",
+        "rationale": "single-part question",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-1-1",
+        "text": "NVIDIA spent $18,497 million on research and development in fiscal year 2026 (the year ended January 25, 2026), as reported in its Consolidated Statements of Income in the 10-K filing.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 18,497,000,000 usd ($18,497 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "NVIDIA spent $18,497 million (approximately $18.5 billion) on research and development in fiscal year 2026 (the year ended January 25, 2026), as reported in its Consolidated Statements of Income in the 10-K filing [0001045810-26-000021:item-15-p005].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-15-p005",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 15",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-2",
+        "text": "The XBRL-tagged fact for us-gaap:ResearchAndDevelopmentExpense records $18,497,000,000 USD for NVIDIA for the period ending 2026-01-25.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:ResearchAndDevelopmentExpense (Research and development) = 18,497,000,000 usd ($18,497 million) for FY 2026, period ending 2026-01-25, 10-K acc 0001045810-26-000021",
+        "answer_span": "This is corroborated by the XBRL-tagged fact for us-gaap:ResearchAndDevelopmentExpense, which records $18,497,000,000 USD for the period ending 2026-01-25 [xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "xbrl:0001045810-26-000021:us-gaap:ResearchAndDevelopmentExpense:2026-01-25",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "XBRL facts",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-1-3",
+        "text": "Research and development represented 8.6% of NVIDIA's revenue in FY2026.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL ratio us-gaap:ResearchAndDevelopmentExpense (Research and development) / us-gaap:Revenues (Revenue) = 18,497,000,000 / 215,938,000,000 = 0.0857 for FY 2026, acc 0001045810-26-000021",
+        "answer_span": "R&D represented 8.6% of revenue in FY2026 [0001045810-26-000021:item-7-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-7-p007",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 7",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      }
+    ],
+    "retracted": [],
+    "verify_iterations": 1,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 12410,
+      "cost_usd_used": 0.005416471
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}

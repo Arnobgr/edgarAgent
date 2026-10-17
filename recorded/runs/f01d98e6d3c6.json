@@ -1,0 +1,361 @@
+{
+  "job_id": "f01d98e6d3c6",
+  "source": "recorded",
+  "created_at": "2026-10-17T11:01:32.097412+00:00",
+  "result": {
+    "run_id": "f01d98e6d3c6",
+    "question": "How do the China-related risks disclosed by Apple and Nvidia differ?",
+    "answer": "Apple and Nvidia disclose distinct China-related risks that reflect their different business models and exposures.\n\n**Apple's China-related risks center on supply chain dependence and trade tensions.** Apple states that substantially all of its manufacturing is performed by outsourcing partners located primarily in China mainland (among other countries), and that a significant concentration of this manufacturing is performed by a small number of partners, often in single locations [0000320193-23-000106:item-1a-p007]. Apple specifically calls out tensions between the U.S. and China as having led to tariffs and other restrictions on its business, warning that if disputes escalate further, government actions could be significantly more severe and materially adversely affect the company [0000320193-23-000106:item-1a-p003]. Apple also frames the risk around consumer confidence and spending, noting that political uncertainty surrounding trade disputes could negatively affect demand [0000320193-23-000106:item-1a-p003]. \n\n**Nvidia's China-related risks center on U.S. export controls restricting product sales to China and other markets.** Nvidia describes how U.S. export controls on GPUs and AI-related semiconductors could effectively exclude it from all or part of the China market, as well as other impacted markets such as the Middle East [0001045810-24-000029:item-1a-p033]. Nvidia warns that any new control impacting a wider range of its products would likely have a disproportionate impact on the company and may disadvantage it against competitors whose chips fall outside the scope of such controls [0001045810-25-000209:part-ii--item-1a-p012]. Nvidia extensively discusses competitive displacement risks, noting that export controls have already encouraged customers outside China to \"design-out\" U.S. semiconductors and that overseas governments have been encouraged to request that customers purchase from Nvidia's competitors rather than Nvidia or other U.S. firms [0001045810-26-000021:item-1a-p037]. Nvidia also highlights the risk of excess inventory and purchase obligations, citing its recent experience with the H20 product [0001045810-25-000209:part-ii--item-1a-p012]. Nvidia further notes that a substantial portion of its products are warehoused in and distributed from Hong Kong, creating distribution chain disruption risk under export controls [0001045810-24-000029:item-1a-p033].\n\n**Key differences:**\n1. Apple's primary China risk is supply chain and manufacturing dependence on outsourcing partners located primarily in China mainland, while Nvidia's is market access restrictions from U.S. export controls on specific product categories such as data center GPUs, AI semiconductors, gaming GPUs, and networking products [0000320193-23-000106:item-1a-p007, 0001045810-24-000029:item-1a-p033].\n2. Nvidia discusses competitive dynamics including \"design-out\" effects, foreign competitor investment, and disproportionate competitive disadvantage, which Apple's China-related risk disclosures do not address; Apple instead focuses on supply chain concentration, tariffs, and consumer demand effects [0001045810-25-000209:part-ii--item-1a-p012, 0000320193-23-000106:item-1a-p007, 0000320193-23-000106:item-1a-p003].\n3. Apple frames the risk partly through consumer demand and confidence effects from political uncertainty, while Nvidia frames it through product-specific regulatory compliance, excess inventory obligations, and the burden on partners, suppliers, and customers [0000320193-23-000106:item-1a-p003, 0001045810-25-000209:part-ii--item-1a-p012].\n4. Apple reports Greater China as a specific revenue segment with net sales of $18,513 million for the three months ended December 28, 2024, whereas the provided Nvidia excerpts do not include a comparable China-specific revenue breakdown [0000320193-25-000008:part-i--item-1-p010].\n\n### Retracted claims\n\nThe following claims could not be verified against their cited sources and were removed from the answer:\n- Apple reports Greater China as a distinct reportable segment with net sales of $18,513 million for the three months ended December 28, 2024.",
+    "sub_questions": [
+      {
+        "id": "sq1-1",
+        "text": "What are the China-related risks disclosed by Apple in its SEC filings?",
+        "rationale": "Research the China-related risks disclosed by Apple in its SEC filings.",
+        "status": "researched"
+      },
+      {
+        "id": "sq1-2",
+        "text": "What are the China-related risks disclosed by Nvidia in its SEC filings?",
+        "rationale": "Research the China-related risks disclosed by Nvidia in its SEC filings.",
+        "status": "researched"
+      }
+    ],
+    "grounding": [
+      {
+        "claim_id": "claim-2-1",
+        "text": "Apple states that substantially all of its manufacturing is performed by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam, with a significant concentration performed by a small number of partners often in single locations.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Substantially all of the Company’s manufacturing is performed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam, and a significant concentration of this manufacturing is currently performed by a small number of outsourcing partners, often in single locations.",
+        "answer_span": "Apple states that substantially all of its manufacturing is performed by outsourcing partners located primarily in China mainland (among other countries), and that a significant concentration of this manufacturing is performed by a small number of partners, often in single locations [0000320193-23-000106:item-1a-p007].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p007",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-2",
+        "text": "Apple calls out tensions between the U.S. and China as having led to tariffs and other restrictions on its business, and warns that if disputes escalate further, government actions could be significantly more severe and materially adversely affect the company.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "For example, tensions between governments, including the U.S. and China, have in the past led to tariffs and other restrictions being imposed on the Company’s business. If disputes and conflicts further escalate in the future, actions by governments in response could be significantly more severe and restrictive and could materially adversely affect the Company’s business.",
+        "answer_span": "Apple specifically calls out tensions between the U.S. and China as having led to tariffs and other restrictions on its business, warning that if disputes escalate further, government actions could be significantly more severe and materially adversely affect the company [0000320193-23-000106:item-1a-p003].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p003",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-3",
+        "text": "Apple frames its China-related risk around consumer confidence and spending, noting that political uncertainty surrounding trade disputes could negatively affect demand.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Political uncertainty surrounding trade and other international disputes could also have a negative effect on consumer confidence and spending, which could adversely affect the Company’s business.",
+        "answer_span": "Apple also frames the risk around consumer confidence and spending, noting that political uncertainty surrounding trade disputes could negatively affect demand [0000320193-23-000106:item-1a-p003].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p003",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-5",
+        "text": "Nvidia describes how U.S. export controls on GPUs and AI-related semiconductors could effectively exclude it from all or part of the China market as well as other impacted markets such as the Middle East.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "In the event of such change, we may be unable to sell our inventory of such products and may be unable to develop replacement products not subject to the licensing requirements, effectively excluding us from all or part of the China market, as well as other impacted markets, including the Middle East.",
+        "answer_span": "Nvidia describes how U.S. export controls on GPUs and AI-related semiconductors could effectively exclude it from all or part of the China market, as well as other impacted markets such as the Middle East [0001045810-24-000029:item-1a-p033].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000029:item-1a-p033",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-6",
+        "text": "Nvidia warns that any new export control impacting a wider range of its products would likely have a disproportionate impact on the company and may disadvantage it against competitors whose chips fall outside the scope of such controls.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Any new control that impacts a wider range of our products would likely have a disproportionate impact on NVIDIA and may disadvantage us against certain of our competitors that sell chips that are outside the scope of such control.",
+        "answer_span": "Nvidia warns that any new control impacting a wider range of its products would likely have a disproportionate impact on the company and may disadvantage it against competitors whose chips fall outside the scope of such controls [0001045810-25-000209:part-ii--item-1a-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000209:part-ii--item-1a-p012",
+            "doc_id": "NVDA-10-Q-0001045810-25-000209",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000209",
+            "filing_date": "2025-08-27"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-7",
+        "text": "Nvidia discusses competitive displacement risks, noting that export controls have encouraged customers outside China to design-out U.S. semiconductors and that overseas governments have been encouraged to request that customers purchase from Nvidia's competitors rather than Nvidia or other U.S. firms.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Export controls have already and may in the future encourage customers outside China and other impacted regions to “design-out” certain U.S. semiconductors from their products to reduce the compliance burden and risk, and to ensure that they are able to serve markets worldwide. Export controls have already encouraged and may in the future encourage overseas governments to request that our customers purchase from our competitors rather than NVIDIA or other U.S. firms, harming our business, market position, and financial results.",
+        "answer_span": "Nvidia extensively discusses competitive displacement risks, noting that export controls have already encouraged customers outside China to \"design-out\" U.S. semiconductors and that overseas governments have been encouraged to request that customers purchase from Nvidia's competitors rather than Nvidia or other U.S. firms [0001045810-26-000021:item-1a-p037].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-26-000021:item-1a-p037",
+            "doc_id": "NVDA-10-K-0001045810-26-000021",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-26-000021",
+            "filing_date": "2026-02-25"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-8",
+        "text": "Nvidia highlights the risk of excess inventory and purchase obligations, citing its recent experience with the H20 product.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Export controls increase the risk of investing in U.S. advanced semiconductor products, because by the time a new product is ready for market, it may be subject to new unilateral export controls restricting its sale, resulting in excess inventory and purchase obligations as we recently experienced with the H20.",
+        "answer_span": "Nvidia also highlights the risk of excess inventory and purchase obligations, citing its recent experience with the H20 product [0001045810-25-000209:part-ii--item-1a-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000209:part-ii--item-1a-p012",
+            "doc_id": "NVDA-10-Q-0001045810-25-000209",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000209",
+            "filing_date": "2025-08-27"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-9",
+        "text": "Nvidia notes that a substantial portion of its products are warehoused in and distributed from Hong Kong, creating distribution chain disruption risk under export controls.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Export controls may disrupt our supply and distribution chain for a substantial portion of our products, which are warehoused in and distributed from Hong Kong.",
+        "answer_span": "Nvidia further notes that a substantial portion of its products are warehoused in and distributed from Hong Kong, creating distribution chain disruption risk under export controls [0001045810-24-000029:item-1a-p033].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-24-000029:item-1a-p033",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-10",
+        "text": "Apple's primary China risk is supply chain and manufacturing dependence on outsourcing partners in China mainland, while Nvidia's primary China risk is market access restrictions from U.S. export controls on specific product categories such as data center GPUs, AI semiconductors, gaming GPUs, and networking products.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Substantially all of the Company’s manufacturing is performed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam, and a significant concentration of this manufacturing is currently performed by a small number of outsourcing partners, often in single locations.",
+        "answer_span": "Apple's primary China risk is supply chain and manufacturing dependence on outsourcing partners located primarily in China mainland, while Nvidia's is market access restrictions from U.S. export controls on specific product categories such as data center GPUs, AI semiconductors, gaming GPUs, and networking products [0000320193-23-000106:item-1a-p007, 0001045810-24-000029:item-1a-p033].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p007",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          },
+          {
+            "chunk_id": "0001045810-24-000029:item-1a-p033",
+            "doc_id": "NVDA-10-K-0001045810-24-000029",
+            "ticker": "NVDA",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0001045810-24-000029",
+            "filing_date": "2024-02-21"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-11",
+        "text": "Nvidia discusses competitive dynamics including design-out effects and disproportionate competitive disadvantage from export controls, which Apple's China-related risk disclosures do not address; Apple instead focuses on supply chain concentration, tariffs, and consumer demand effects.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Any new control that impacts a wider range of our products would likely have a disproportionate impact on NVIDIA and may disadvantage us against certain of our competitors that sell chips that are outside the scope of such control. Export controls have already and may in the future encourage customers outside China and other impacted regions to “design-out” certain U.S. semiconductors from their products to reduce the compliance burden and risk...",
+        "answer_span": "Nvidia discusses competitive dynamics including \"design-out\" effects, foreign competitor investment, and disproportionate competitive disadvantage, which Apple's China-related risk disclosures do not address; Apple instead focuses on supply chain concentration, tariffs, and consumer demand effects [0001045810-25-000209:part-ii--item-1a-p012, 0000320193-23-000106:item-1a-p007, 0000320193-23-000106:item-1a-p003].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0001045810-25-000209:part-ii--item-1a-p012",
+            "doc_id": "NVDA-10-Q-0001045810-25-000209",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000209",
+            "filing_date": "2025-08-27"
+          },
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p007",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          },
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p003",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-12",
+        "text": "Apple frames China risk partly through consumer demand and confidence effects from political uncertainty, while Nvidia frames it through product-specific regulatory compliance, excess inventory obligations, and the burden on partners, suppliers, and customers.",
+        "claim_type": "qualitative",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "semantic",
+        "supporting_span": "Political uncertainty surrounding trade and other international disputes could also have a negative effect on consumer confidence and spending, which could adversely affect the Company’s business.",
+        "answer_span": "Apple frames the risk partly through consumer demand and confidence effects from political uncertainty, while Nvidia frames it through product-specific regulatory compliance, excess inventory obligations, and the burden on partners, suppliers, and customers [0000320193-23-000106:item-1a-p003, 0001045810-25-000209:part-ii--item-1a-p012].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-23-000106:item-1a-p003",
+            "doc_id": "AAPL-10-K-0000320193-23-000106",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "section": "Item 1A",
+            "accession_no": "0000320193-23-000106",
+            "filing_date": "2023-11-03"
+          },
+          {
+            "chunk_id": "0001045810-25-000209:part-ii--item-1a-p012",
+            "doc_id": "NVDA-10-Q-0001045810-25-000209",
+            "ticker": "NVDA",
+            "form_type": "10-Q",
+            "section": "Part II, Item 1A",
+            "accession_no": "0001045810-25-000209",
+            "filing_date": "2025-08-27"
+          }
+        ]
+      },
+      {
+        "claim_id": "claim-2-13",
+        "text": "Apple reports Greater China as a specific revenue segment with net sales of $18,513 million for the three months ended December 28, 2024, whereas the provided Nvidia excerpts do not include a comparable China-specific revenue breakdown.",
+        "claim_type": "numeric",
+        "status": "grounded",
+        "verdict": "grounded",
+        "method": "numeric_reconciliation",
+        "supporting_span": "XBRL us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax (Greater China) [dimensioned=true] = 18,513,000,000 usd ($18,513 million) for Q1 2025, period ending 2024-12-28, 10-Q acc 0000320193-25-000008",
+        "answer_span": "Apple reports Greater China as a specific revenue segment with net sales of $18,513 million for the three months ended December 28, 2024, whereas the provided Nvidia excerpts do not include a comparable China-specific revenue breakdown [0000320193-25-000008:part-i--item-1-p010].",
+        "feedback": null,
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000008:part-i--item-1-p010",
+            "doc_id": "AAPL-10-Q-0000320193-25-000008",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-25-000008",
+            "filing_date": "2025-01-31"
+          }
+        ]
+      }
+    ],
+    "retracted": [
+      {
+        "claim_id": "claim-2-4",
+        "text": "Apple reports Greater China as a distinct reportable segment with net sales of $18,513 million for the three months ended December 28, 2024.",
+        "claim_type": "numeric",
+        "status": "retracted",
+        "verdict": "unsupported",
+        "method": "numeric_reconciliation",
+        "supporting_span": null,
+        "answer_span": "Additionally, Apple reports \"Greater China\" as a distinct reportable segment, with net sales of $18,513 million for the three months ended December 28, 2024 [0000320193-25-000008:part-i--item-1-p010].",
+        "feedback": "figure(s) $18,513 million not found in the XBRL facts store — searched XBRL concepts: RevenueFromContractWithCustomerExcludingAssessedTax, SalesRevenueNet, SegmentReportingInformationRevenue; no table chunks cited. Re-check the figure against the filing or retract the claim.",
+        "sources": [
+          {
+            "chunk_id": "0000320193-25-000008:part-i--item-1-p010",
+            "doc_id": "AAPL-10-Q-0000320193-25-000008",
+            "ticker": "AAPL",
+            "form_type": "10-Q",
+            "section": "Part I, Item 1",
+            "accession_no": "0000320193-25-000008",
+            "filing_date": "2025-01-31"
+          }
+        ]
+      }
+    ],
+    "verify_iterations": 2,
+    "critic_iterations": 1,
+    "critic_passed": true,
+    "budget": {
+      "max_tokens": 500000,
+      "max_cost_usd": 5.0,
+      "tokens_used": 64606,
+      "cost_usd_used": 0.05371114699999999
+    },
+    "error": null,
+    "awaiting_review": false
+  }
+}
