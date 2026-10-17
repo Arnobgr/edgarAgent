@@ -13,9 +13,10 @@ local-only). `plans/00-overview.md` resolves its open decisions and defines
 conventions; each phase has a self-contained plan in `plans/`. **Phase 3 is
 complete. Phase 4 is deployed on the private path** (2026-08-05) — the service
 answers real questions on the VPS, reachable over the tailnet and nothing else,
-with both crons installed and each proven by an actual run. The corpus is on
-the box and was counted equal to the developer's: 28,550 facts, 78 filings, 34
-accessions, 4,181 Qdrant points, same dense+sparse config.
+with both crons installed and each proven by an actual run. The corpus on the
+box was replaced on 2026-10-17 with the re-ingested one (ADR 0048) and counted
+equal to the developer's: 31,023 facts, 85 filings, 4,591 Qdrant points, same
+dense+sparse config (July: 28,550 / 78 / 4,181, kept in `/srv/fie-import/`).
 
 **The public path went up on 2026-08-06** — nginx vhost, Let's Encrypt cert,
 Turnstile enforced, fail2ban armed on the real log, all four neighbouring

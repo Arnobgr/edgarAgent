@@ -41,8 +41,8 @@ not data. Two things must travel from the machine that ingested:
 
 | Item | Size | Read by |
 |---|---|---|
-| `data/ingest.db` | 13 MB | every numeric verification and every fact lookup |
-| the Qdrant collection | 71 MB as a snapshot | every retrieval |
+| `data/ingest.db` | 14 MB | every numeric verification and every fact lookup |
+| the Qdrant collection | 81 MB as a snapshot | every retrieval |
 
 **Re-ingesting on the VPS is not an option, by design.** `run_ingest` always
 calls the acquire stage, which raises without `EDGAR_IDENTITY` — and that
@@ -83,6 +83,41 @@ Verify, and verify the *rows* rather than the file:
 curl -s http://127.0.0.1:8412/healthz
 # {"status":"ok","qdrant":true,"facts_store":true,...}
 ```
+
+### Replacing a live corpus
+
+Done once, on 2026-10-17, after the re-ingest that ADR 0048 needed. Three
+things differ from a first seeding. The old corpus is the rollback, so it is
+kept. The service is serving, so it is stopped while `ingest.db` changes;
+otherwise SQLite would have the file replaced under an open connection. And
+`/healthz` cannot tell one corpus from another, so the rows are counted.
+
+```bash
+# On the Mac: snapshot as above, then ship under dated names with checksums.
+shasum -a 256 ingest-<date>.db qdrant-<date>.snapshot > SHA256SUMS.txt
+scp ingest-<date>.db qdrant-<date>.snapshot SHA256SUMS.txt vps:/srv/fie-import/
+```
+
+```bash
+# On the VPS
+cd /srv/fie-import && sha256sum -c SHA256SUMS.txt
+V=$(docker volume inspect fie_fie_api_data --format '{{.Mountpoint}}')
+cp -p "$V/ingest.db" /srv/fie-import/ingest-<old-date>.db   # the rollback
+curl -s http://127.0.0.1:8412/healthz                       # jobs_in_flight must be 0
+docker stop fie-fie-api-1
+docker run --rm --network fie_default -v /srv/fie-import:/snap:ro docker.io/curlimages/curl \
+  -sS -X POST "http://fie-qdrant:6333/collections/$COL/snapshots/upload?priority=snapshot&wait=true" \
+  -F "snapshot=@/snap/qdrant-<date>.snapshot"
+cp /srv/fie-import/ingest-<date>.db "$V/ingest.db" && chown 10001:10001 "$V/ingest.db"
+docker start fie-fie-api-1
+```
+
+Then count `points_count` in Qdrant and the facts and embedded filings in
+`ingest.db`, and compare them with the Mac. Rolling back is the same
+procedure with the old files. The answer cache in `api.db` is keyed on the
+question alone and never expires, so it keeps serving answers made from the
+old corpus. On 2026-10-17 it held four August answers whose figures had not
+changed, and it was left alone.
 
 ## The deploy itself
 
