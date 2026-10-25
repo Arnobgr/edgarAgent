@@ -9,8 +9,8 @@ research, and if it still fails, its sentence is cut from the answer and listed
 as retracted.
 
 **Live:** [edgaragent.pages.dev](https://edgaragent.pages.dev/) serves recorded
-runs from the current eval baseline. The API behind live questions is at
-`https://api.example.com`, protected by Turnstile.
+runs from the current eval baseline. Live questions go to the API on a
+single VPS behind nginx, protected by Turnstile.
 
 ![An answer with its claims marked by verdict, and the grounding table beneath it](docs/grounding-table.png)
 

@@ -123,3 +123,23 @@ that can break a deploy.
   default — which for `api_key` means the service refuses to boot and for
   `turnstile_secret_key` means it refuses every submission. Loud in both
   cases, but by luck of which defaults are unsafe, not by design.
+
+## Amendment (2026-10-25): the ciphertext leaves git
+
+The repository is being made public, and **a public `secrets.enc.yaml` is a
+standing offer**: anyone can keep a copy today and decrypt it the day the age
+key leaks, and rotating afterwards does not recall the copies. SOPS is built to
+survive that, but the file protects nothing by being public, so it now lives
+on the Mac and on the box only, is listed in `.gitignore`, and was removed from
+every commit when the history was rewritten for publication.
+
+What changes: the box gets the file by `scp` to `/opt/fie/`, not by
+`git pull` (`docs/deploy.md`). What is lost is the first benefit above —
+**rotation is no longer a visible commit and the secrets have no version
+history.** That was the price, and it is a small one for seven values. The
+loss-of-key limit below now covers the file too: it must sit in the password
+manager beside the age key, because `deploy/backup.sh` archives the data
+volume and not `/opt/fie`.
+
+`deploy/decrypt-secrets.sh`, compose secrets and the key-name rule are
+unchanged.

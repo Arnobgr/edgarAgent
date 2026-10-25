@@ -150,13 +150,15 @@ running. Flipping first costs nothing, because the box is still tailnet-only at
 that moment, and it closes the window rather than relying on `deploy.sh`'s
 interlock to catch a mistake.
 
-**1. Pull, then check the key and not the file.** The checkout carries
-`secrets.enc.yaml`, so a box that has not pulled decrypts the *old* one and
-`sops` reports success either way. On 2026-08-06 that left a 5-byte placeholder
-where the Turnstile secret belonged. Compare lengths, never contents:
+**1. Copy, then check the key and not the file.** `secrets.enc.yaml` is not
+in git (ADR 0029, amendment), so a box that was not sent the new copy decrypts
+the *old* one and `sops` reports success either way. On 2026-08-06 that left a
+5-byte placeholder where the Turnstile secret belonged. Compare lengths, never
+contents:
 
 ```bash
-cd /opt/fie && git pull --ff-only && ./deploy/decrypt-secrets.sh
+scp secrets.enc.yaml vps:/opt/fie/                                   # from the Mac
+cd /opt/fie && git pull --ff-only && ./deploy/decrypt-secrets.sh     # on the box
 wc -c < ./secrets/turnstile_secret_key   # 35. A placeholder is 5.
 ```
 
@@ -231,7 +233,8 @@ is **not** the box — the point is a real client over the real network. Take
 the key from the box rather than retyping it:
 
 ```bash
-FIE_API_KEY="$(ssh vps cat /opt/fie/secrets/api_key)" ./scripts/burst-test.sh
+FIE_API_KEY="$(ssh vps cat /opt/fie/secrets/api_key)" \
+FIE_NEIGHBOUR_URL=https://<another site on the box> ./scripts/burst-test.sh
 ```
 
 The script prints; it does not judge. **These numbers are the assertion**,
@@ -305,8 +308,8 @@ all three.** The key exists in two places that never learn about each other:
 the encrypted store this box decrypts, and the Cloudflare Pages build that
 bakes it into the SPA bundle. Rotating it means
 
-1. edit `secrets.enc.yaml`, commit, push;
-2. **on the box**: `git pull` then `deploy/deploy.sh` — the pull alone changes
+1. `sops secrets.enc.yaml`, edit, and `scp` it to `/opt/fie/` on the box;
+2. **on the box**: `deploy/deploy.sh` — the copy alone changes
    nothing, because the service reads `secrets/`, which only
    `decrypt-secrets.sh` rewrites and only a container restart re-reads;
 3. **in Cloudflare Pages**: update `VITE_API_KEY` *and trigger a fresh

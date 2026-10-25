@@ -86,9 +86,9 @@ chmod 600 "$HOME/Library/Application Support/sops/age/keys.txt"
 # encrypted later spends that gap as plaintext under a name that looks safe.
 cp secrets.example.yaml secrets.enc.yaml
 sops --encrypt --in-place secrets.enc.yaml
-sops secrets.enc.yaml        # edit values; commit the encrypted file
+sops secrets.enc.yaml        # edit values; the file stays out of git (ADR 0029)
 
-# Verify before every commit. Both counts must be non-zero.
+# Verify before every copy to the box. Both counts must be non-zero.
 grep -c '^sops:' secrets.enc.yaml
 grep -c 'ENC\[AES256_GCM' secrets.enc.yaml
 
@@ -109,8 +109,10 @@ than an error.
 
 ### Rotation
 
-Edit `sops secrets.enc.yaml`, commit, and run `deploy/deploy.sh`. Rotation is
-a visible commit, which is most of why SOPS was chosen.
+Edit `sops secrets.enc.yaml`, `scp` it to `/opt/fie/` on the box, and run
+`deploy/deploy.sh`. Rotation used to be a visible commit, which was most of
+why SOPS was chosen; the ciphertext left git when the repository went public,
+and that benefit went with it (ADR 0029, amendment).
 
 ## Release checklist
 
@@ -636,7 +638,7 @@ telemetry. Each is recorded where it belongs above.
 
 1. Rotate at the provider first — the leaked key stops working before
    anything else happens.
-2. `sops secrets.enc.yaml`, update, commit, `deploy/deploy.sh`.
+2. `sops secrets.enc.yaml`, update, copy to the box, `deploy/deploy.sh`.
 3. Check spend: `GET /v1/admin/spend` from the box, and the provider
    dashboard. The governor's ledger is in `data/api.db` and survives restarts.
 4. If it was in a commit, rotating is the fix. Rewriting history is not —

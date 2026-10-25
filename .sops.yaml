@@ -2,7 +2,7 @@
 #
 # Its whole job is to make `sops secrets.enc.yaml` work with no flags on both
 # the Mac and the VPS, so rotating a secret is `sops secrets.enc.yaml`, edit,
-# save, commit — and never a command with a key id pasted into it.
+# save, copy to the box — and never a command with a key id pasted into it.
 #
 # **The recipient below is a placeholder and SOPS will refuse it.** That is
 # deliberate: a syntactically valid stand-in would encrypt to a key nobody

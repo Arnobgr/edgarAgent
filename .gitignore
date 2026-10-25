@@ -26,6 +26,9 @@ eval/retrieval_queries.candidates.jsonl
 
 # Decrypted at deploy time from secrets.enc.yaml; never in git.
 secrets/
+# The ciphertext itself lives on the Mac and the box, not in git (ADR 0029,
+# amendment).
+secrets.enc.yaml
 
 # Frontend. `frontend/public/recorded` is a committed symlink to `recorded/`,
 # not a copy — Vite dereferences it into the build.

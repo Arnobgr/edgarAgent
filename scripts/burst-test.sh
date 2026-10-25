@@ -19,7 +19,7 @@
 set -euo pipefail
 
 HOST="${1:-https://fie.159-69-91-118.sslip.io}"
-NEIGHBOUR="${FIE_NEIGHBOUR_URL:-https://rec.neighbour-c.example}"
+NEIGHBOUR="${FIE_NEIGHBOUR_URL:?set FIE_NEIGHBOUR_URL to another site served by the same nginx}"
 API_KEY="${FIE_API_KEY:?set FIE_API_KEY}"
 
 codes() { sort | uniq -c | sort -rn | sed 's/^/    /'; }
