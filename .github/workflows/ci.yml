@@ -23,6 +23,9 @@ on:
   # which is precisely what a push-triggered audit never sees (ADR 0041).
   schedule:
     - cron: "17 6 * * 1"
+  # Re-run on demand. Runnable only with write access, and it publishes no
+  # image: the ghcr job still requires a push to `main`.
+  workflow_dispatch:
 
 # A second push to the same branch makes the first run's answer worthless.
 concurrency:
