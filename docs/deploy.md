@@ -15,15 +15,13 @@ directory: `~/Library/Application Support/sops/age/` on macOS,
 `identity did not match any of the recipients`, which reads like a wrong key
 and is not one.
 
-**A read-only deploy key on the VPS**, because the repository is private and
-`ghcr_token` only carries `read:packages` — it can pull an image and cannot
-clone code:
+**The checkout, over HTTPS.** The repository is public, so the box clones
+and pulls with no credential at all. The deploy key it used while the
+repository was private is no longer needed, and the box holds nothing that
+could push:
 
 ```bash
-ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_fie_deploy -C 'fie-deploy@vps'
-# Add the .pub half at GitHub → repo → Settings → Deploy keys.
-# Leave "Allow write access" UNCHECKED.
-git clone --branch main git@github.com:Arnobgr/edgarAgent.git /opt/fie
+git clone --branch main https://github.com/Arnobgr/edgarAgent.git /opt/fie
 ```
 
 **`sops` on the VPS**, matching the version on the Mac:
