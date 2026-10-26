@@ -84,6 +84,16 @@ cat "$body"; echo; rm -f "$body"
     exit 1
 }
 
+# Every deploy used to leave the previous image behind, ~900 MB each, until
+# superseded images held 7.5 GB of a 38 GB disk. Pruning only after the smoke
+# test passes means a failed deploy keeps the old image for a local rollback;
+# after a good one, rollback pulls a `sha-*` tag back from GHCR. **The label
+# filter is load-bearing**: a bare `prune -a` would also delete the
+# neighbours' images that have no container running at that moment.
+echo "==> Pruning superseded fie images"
+docker image prune -af \
+    --filter "label=org.opencontainers.image.source=https://github.com/Arnobgr/edgarAgent"
+
 if [[ "$expect" == 202 ]]; then
     echo "==> Done. Poll the job id above; watch the trace in Langfuse Cloud."
 else

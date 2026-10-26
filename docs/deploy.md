@@ -127,7 +127,14 @@ FIE_TURNSTILE_REQUIRED=false ./deploy/deploy.sh   # private path, see below
 
 `deploy.sh` decrypts secrets, logs in to GHCR, pulls, starts, waits for
 `/healthz` to report `qdrant:true`, and submits one canned question — asserting
-the status code that the path it is deploying is supposed to return.
+the status code that the path it is deploying is supposed to return. Only
+then does it prune the fie images no container is using, selected by the
+`org.opencontainers.image.source` label CI stamps on them. Before that step
+existed, superseded images reached 7.5 GB. Never widen it to a bare
+`docker image prune -a`: the box is shared, and that deletes any neighbour's
+image that happens to have no running container. To roll back after a good
+deploy, pull the previous build from GHCR:
+`FIE_IMAGE=ghcr.io/arnobgr/fie:sha-<commit> ./deploy/deploy.sh`.
 
 ### The private path
 
