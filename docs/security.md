@@ -53,17 +53,20 @@ into `docker inspect`, crash dumps, child processes and any library that dumps
 | `ghcr_token` | **✗** | **✗** | — (deploy tooling only) |
 
 `ghcr_token` is the one entry in `secrets.enc.yaml` that names no `Settings`
-field. It exists because the repository is private, so GHCR made the container
-package private too and an anonymous pull gets a 403. It is a classic GitHub
+field. It exists because the container package is private and an anonymous
+pull gets a 403. It is a classic GitHub
 token scoped to **`read:packages` and nothing else** — it cannot write a
 package and it cannot reach a machine, which is what separates it from the
 tailnet credential ADR 0037 refused. `deploy/deploy.sh` uses it for one
 `docker login` and the application never sees it.
 
-**This is temporary by plan.** The repository goes public after the final
-phase, following a pass to remove dead code, stale docs and any PII. At that
-point: make the package public, delete `ghcr_token` from the store, and delete
-the login block from `deploy.sh`.
+**The plan was to make the package public with the repository; it stays
+private instead.** The repository went public after its history was rewritten
+to remove personal and host details. The images built before that rewrite were
+not rewritten: `.dockerignore` excluded `docs/` and `plans/` but not `src/`,
+`deploy/`, `scripts/` or `secrets.enc.yaml`, so every one of them carries
+files the public history no longer has. A public package would publish them
+all, so the token and the login block stay.
 
 `EDGAR_IDENTITY` is the most sensitive value in the project — it is personal
 data, required by SEC's user-agent policy, and this repo's history has been

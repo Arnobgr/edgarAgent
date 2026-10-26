@@ -32,12 +32,14 @@ fi
 echo "==> Decrypting secrets"
 ./deploy/decrypt-secrets.sh
 
-# The repository is private, so GHCR made the package private too, and an
-# anonymous pull gets a 403. The token is scoped to `read:packages` and
-# nothing else — it cannot write a package and it cannot reach a machine,
-# which is what makes it a different animal from the tailnet credential
-# ADR 0037 refused. When the repository goes public after the final phase,
-# make the package public and delete this block along with `ghcr_token`.
+# The package is private, so an anonymous pull gets a 403. The token is
+# scoped to `read:packages` and nothing else — it cannot write a package and
+# it cannot reach a machine, which is what makes it a different animal from
+# the tailnet credential ADR 0037 refused. **The package stays private although
+# the repository is public**: images built before the history was rewritten
+# for publication carry files the public history no longer has, because
+# `.dockerignore` excluded `docs/` and `plans/` but not the rest. Making the
+# package public would publish every one of them.
 if [[ -f ./secrets/ghcr_token ]]; then
     echo "==> Logging in to ghcr.io"
     docker login ghcr.io -u "${GHCR_USER:-Arnobgr}" --password-stdin < ./secrets/ghcr_token
