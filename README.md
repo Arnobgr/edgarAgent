@@ -44,7 +44,7 @@ retractions, and that era's 0.000 meant nothing (ADR 0021).
 `hallucination_rate` is the only ratcheted metric. Every other metric is an
 absolute floor, because one claim in 200 moves a rate by 0.005 and the judge
 alone flips on about 1 span in 27 (ADRs 0039 and 0043). The full history of
-readings, and what moved each one, is in `CLAUDE.md` and the ADRs.
+readings, and what moved each one, is in `docs/eval-history.md` and the ADRs.
 
 ## How it works
 
@@ -293,3 +293,7 @@ make check       # all three
 
 Python 3.12, `uv` for everything. Tests never touch the network. The frontend
 has its own suite (`cd frontend && npx vitest run`).
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).

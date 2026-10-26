@@ -3,6 +3,8 @@ name = "fie"
 version = "0.1.0"
 description = "Financial Intelligence Engine — multi-agent verification over SEC filings"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Arnobgr", email = "90406956+Arnobgr@users.noreply.github.com" }
 ]

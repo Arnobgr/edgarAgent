@@ -6,6 +6,8 @@ data/
 .git/
 .env
 .env.example
+# Encrypted, but still not the image's business (ADR 0029, amendment).
+secrets.enc.yaml
 
 __pycache__/
 *.py[cod]
